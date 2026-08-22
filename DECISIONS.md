@@ -131,6 +131,21 @@ not an approved production session calendar. SL/TP orders protect the full curre
 form an OCO pair. Account advisory locks and quote-sequence event keys make trigger, cancellation,
 and replay outcomes atomic and idempotent.
 
+## D-017 — Durable deterministic mock candle history
+
+Status: Accepted for development
+
+Phase 6 uses explicitly sourced deterministic `MOCK_SEED` one-minute candles for browser-terminal
+development, persisted in PostgreSQL under the canonical `(symbol, timeframe, openTime)` key.
+Higher development timeframes are derived only from complete finalized UTC-aligned one-minute
+buckets with exact Decimal OHLC aggregation; forming mock candles use the exact bid/ask midpoint.
+Concurrent identical local range requests coalesce in the service process; Valkey may cache hot
+results and current quotes but remains rebuildable. Missing mock history returns an explicit
+incomplete/empty response and is never silently fabricated as live or production provider data.
+This establishes the backend-owned chart boundary required by
+`10_MARKET_DATA_CACHING_AND_CANDLES.md` without authorizing an upstream provider, commercial data
+use, or production backfill/rate-limit behavior.
+
 ## Pending decisions
 
 - starting balance per tier

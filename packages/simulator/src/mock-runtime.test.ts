@@ -24,9 +24,11 @@ describe('MockSimulatorRuntime', () => {
       accounts: [],
       recoveredAt: new Date('2026-08-24T09:00:00.000Z'),
     });
+    const publish = vi.fn().mockResolvedValue(undefined);
     const runtime = new MockSimulatorRuntime({
       processor: { processQuote },
       provider,
+      quotePublisher: { publish },
       recover,
     });
 
@@ -35,6 +37,17 @@ describe('MockSimulatorRuntime', () => {
     expect(recover).toHaveBeenCalledOnce();
     expect(result.processedQuotes).toBe(4);
     expect(processQuote).toHaveBeenCalledTimes(4);
+    expect(publish).toHaveBeenCalledTimes(4);
     expect(seeds[0]?.timestamp.toISOString()).toBe('2026-08-24T09:00:00.000Z');
+    expect(seeds[3]?.sequence).toBe(4n);
+  });
+
+  it('can continue a monotonic quote sequence across worker cycles', () => {
+    const seeds = createDevelopmentMockQuoteSeeds(
+      new Date('2026-08-24T09:00:05.000Z'),
+      5n,
+    );
+
+    expect(seeds.map((seed) => seed.sequence)).toEqual([5n, 6n, 7n, 8n]);
   });
 });

@@ -9,6 +9,10 @@ import {
   serviceEnvSchema,
 } from '@profitopath/shared';
 import { config } from 'dotenv';
+import { getToken } from 'next-auth/jwt';
+import { WebSocket, WebSocketServer } from 'ws';
+
+import { parseCandleDelta, parseQuoteDelta } from './protocol';
 
 config({ path: '../../.env', quiet: true });
 
@@ -19,6 +23,113 @@ const env = serviceEnvSchema.parse({
 const logger = createLogger({ service: 'realtime', version: '0.1.0' });
 const valkey = createValkeyClient(env.VALKEY_URL, (error) => {
   logger.warn({ error }, 'Valkey connection error');
+});
+const quoteSubscriber = valkey.duplicate();
+quoteSubscriber.on('error', (error) => {
+  logger.warn({ error }, 'Realtime quote subscriber error');
+});
+
+interface SocketContext {
+  accountId: string;
+  userId: string;
+}
+
+const sockets = new Map<WebSocket, SocketContext>();
+const websocketServer = new WebSocketServer({ noServer: true });
+
+function requestCookies(header: string | undefined): Record<string, string> {
+  if (header === undefined) {
+    return {};
+  }
+  return Object.fromEntries(
+    header.split(';').flatMap((part) => {
+      const separator = part.indexOf('=');
+      if (separator < 1) {
+        return [];
+      }
+      return [
+        [
+          part.slice(0, separator).trim(),
+          decodeURIComponent(part.slice(separator + 1).trim()),
+        ],
+      ];
+    }),
+  );
+}
+
+async function accountSnapshot(accountId: string, userId: string) {
+  const account = await database.tradingAccount.findFirst({
+    include: {
+      orders: {
+        orderBy: { submittedAt: 'desc' },
+        take: 100,
+        where: { status: { in: ['ACCEPTED', 'PARTIALLY_FILLED'] } },
+      },
+      positions: { where: { status: 'OPEN' } },
+      snapshots: { orderBy: { sequence: 'desc' }, take: 1 },
+    },
+    where: { competitionEntry: { userId }, id: accountId },
+  });
+  if (account === null) {
+    return null;
+  }
+  const snapshot = account.snapshots[0];
+  return {
+    account: {
+      balanceMinor: account.balanceMinor.toString(),
+      id: account.id,
+      status: account.status,
+    },
+    kind: 'snapshot' as const,
+    orders: account.orders.map((order) => ({
+      id: order.id,
+      quantity: order.quantity.toString(),
+      side: order.side,
+      status: order.status,
+      symbol: order.symbol,
+      type: order.type,
+    })),
+    positions: account.positions.map((position) => ({
+      averageEntryPrice: position.averageEntryPrice.toString(),
+      id: position.id,
+      quantity: position.quantity.toString(),
+      side: position.side,
+      symbol: position.symbol,
+    })),
+    risk: {
+      equityMinor:
+        snapshot?.equityMinor.toString() ?? account.balanceMinor.toString(),
+      marginFreeMinor:
+        snapshot?.marginFreeMinor.toString() ?? account.balanceMinor.toString(),
+      marginUsedMinor: snapshot?.marginUsedMinor.toString() ?? '0',
+      unrealizedPnlMinor: snapshot?.unrealizedPnlMinor.toString() ?? '0',
+    },
+    version: snapshot?.sequence.toString() ?? '0',
+  };
+}
+
+async function sendSnapshot(socket: WebSocket, context: SocketContext) {
+  const snapshot = await accountSnapshot(context.accountId, context.userId);
+  if (snapshot === null) {
+    socket.close(4404, 'Account not found');
+    return;
+  }
+  socket.send(JSON.stringify(snapshot));
+}
+
+websocketServer.on('connection', (socket) => {
+  const context = sockets.get(socket);
+  if (context === undefined) {
+    socket.close(4401, 'Unauthorized');
+    return;
+  }
+  void sendSnapshot(socket, context);
+  socket.on('message', (message) => {
+    if (message.toString() === 'resync') {
+      void sendSnapshot(socket, context);
+    }
+  });
+  socket.on('close', () => sockets.delete(socket));
 });
 
 const server = createServer(async (request, response) => {
@@ -43,6 +154,69 @@ const server = createServer(async (request, response) => {
   response.end(JSON.stringify({ error: 'not_found' }));
 });
 
+server.on('upgrade', async (request, socket, head) => {
+  try {
+    const origin = request.headers.origin;
+    if (origin !== undefined && origin !== new URL(env.NEXTAUTH_URL).origin) {
+      socket.destroy();
+      return;
+    }
+    const requestUrl = new URL(request.url ?? '/', env.NEXTAUTH_URL);
+    const accountId = requestUrl.searchParams.get('accountId');
+    const authRequest = Object.assign(request, {
+      cookies: requestCookies(request.headers.cookie),
+    });
+    const token = await getToken({
+      req: authRequest,
+      secret: env.NEXTAUTH_SECRET,
+    });
+    if (
+      accountId === null ||
+      token?.sub === undefined ||
+      token.status !== 'ACTIVE'
+    ) {
+      socket.destroy();
+      return;
+    }
+    const account = await database.tradingAccount.findFirst({
+      select: { id: true },
+      where: { competitionEntry: { userId: token.sub }, id: accountId },
+    });
+    if (account === null) {
+      socket.destroy();
+      return;
+    }
+    websocketServer.handleUpgrade(request, socket, head, (websocket) => {
+      sockets.set(websocket, { accountId, userId: token.sub! });
+      websocketServer.emit('connection', websocket, request);
+    });
+  } catch (error) {
+    logger.warn({ error }, 'Realtime upgrade rejected');
+    socket.destroy();
+  }
+});
+
+await quoteSubscriber.connect();
+await quoteSubscriber.subscribe('market:quotes:v1', 'market:candles:v1');
+quoteSubscriber.on('message', (channel, message) => {
+  const delta =
+    channel === 'market:candles:v1'
+      ? parseCandleDelta(message)
+      : parseQuoteDelta(message);
+  if (delta === null) {
+    return;
+  }
+  const envelope = JSON.stringify({
+    ...delta,
+    accountState: 'RESYNC_REQUIRED',
+  });
+  for (const socket of sockets.keys()) {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(envelope);
+    }
+  }
+});
+
 server.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, 'Realtime service listening');
 });
@@ -50,6 +224,11 @@ server.listen(env.PORT, () => {
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Realtime service shutting down');
   server.close();
+  for (const socket of sockets.keys()) {
+    socket.close(1001, 'Service shutdown');
+  }
+  websocketServer.close();
+  quoteSubscriber.disconnect();
   valkey.disconnect();
   await database.$disconnect();
 }

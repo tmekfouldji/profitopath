@@ -135,6 +135,13 @@ OCO protection, cancellation, UTC 24x5 development hours, weekly-cutoff expiry, 
 Executable bid/ask triggers and gap fills are deterministic; these mock hours and prices are not
 approved production market rules.
 
+Phase 6 adds the account-owned browser terminal, PostgreSQL-backed deterministic mock candle
+history, server-built forming candles, authenticated WebSocket snapshot/resync, rebuildable Valkey
+quotes, authoritative order/protection actions, risk metrics, persistent ledger history, and older
+chart-range loading. Set `MOCK_MARKET_DATA_ENABLED=true` while running the development services to
+publish mock live quotes; the ticket pauses when the server quote is missing or stale. No browser
+calls a market-data provider, and no real provider is configured.
+
 Run the complete local quality gate with:
 
 ```bash

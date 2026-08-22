@@ -429,6 +429,27 @@ model InstrumentConfiguration {
   @@index([active, symbol])
 }
 
+model MarketCandle {
+  id          String   @id @default(uuid()) @db.Uuid
+  symbol      String   @db.VarChar(32)
+  timeframe   String   @db.VarChar(8)
+  openTime    DateTime @db.Timestamptz(3)
+  closeTime   DateTime @db.Timestamptz(3)
+  open        Decimal  @db.Decimal(30, 12)
+  high        Decimal  @db.Decimal(30, 12)
+  low         Decimal  @db.Decimal(30, 12)
+  close       Decimal  @db.Decimal(30, 12)
+  volume      Decimal? @db.Decimal(38, 12)
+  source      String   @db.VarChar(32)
+  isFinal     Boolean
+  dataVersion Int      @default(1)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([symbol, timeframe, openTime])
+  @@index([symbol, timeframe, isFinal, openTime])
+}
+
 model AccountBalanceLedgerEntry {
   id                String            @id @default(uuid()) @db.Uuid
   tradingAccountId  String            @db.Uuid

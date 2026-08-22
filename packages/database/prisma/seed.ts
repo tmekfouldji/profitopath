@@ -1,6 +1,7 @@
 import { parseSeedEnv } from '@profitopath/shared';
 
 import { database } from '../src/client';
+import { createDevelopmentCandleSeeds } from './candle-seeds';
 import { createDevelopmentCompetitionSeed } from './competition-seed';
 import { createDevelopmentInstrumentSeeds } from './instrument-seeds';
 import { createTierSeeds } from './tier-seeds';
@@ -44,6 +45,11 @@ async function seed(): Promise<void> {
   );
 
   const competition = createDevelopmentCompetitionSeed(new Date());
+  const candles = createDevelopmentCandleSeeds(competition.tradingStartsAt);
+  await database.marketCandle.createMany({
+    data: [...candles],
+    skipDuplicates: true,
+  });
   await database.competition.upsert({
     create: competition,
     update: {

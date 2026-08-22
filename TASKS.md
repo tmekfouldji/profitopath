@@ -220,8 +220,47 @@ Rules:
 
 ## Active — Phase 6 (starting)
 
-- [~] P6-001 Expand the browser-terminal milestone into concrete acceptance-tested tasks.
+- [x] P6-001 Expand the browser-terminal milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover authoritative account state/commands, backend-owned mock
     candle history, live quote/account updates, chart/order/position/pending/history UI, responsive
     accessibility, reconnect/resync behavior, tests, and the quality gate without browser-owned
     trading truth or a real market-data provider.
+- [x] P6-002 Implement the durable mock candle service and historical/live aggregation boundary.
+  - Acceptance: PostgreSQL stores exact unique base/derived candles; deterministic mock 1m history
+    seeds idempotently; finalized 5m/15m/1h bars aggregate only complete canonical UTC buckets;
+    identical range loads coalesce; ordering/pagination are deterministic; no real provider or fake
+    fallback is introduced; and the service follows `10_MARKET_DATA_CACHING_AND_CANDLES.md`.
+- [x] P6-003 Add shared hot quote publication and server-side terminal command adapters.
+  - Acceptance: the worker publishes validated normalized mock quotes to rebuildable Valkey state;
+    authenticated web commands read server quotes, re-check account ownership, call the simulator
+    for market/limit/stop/cancel/protection actions, and fail closed when quotes are absent/stale.
+- [x] P6-004 Implement the account-owned terminal read model and backend candle/marker endpoints.
+  - Acceptance: one ownership-scoped server query/API returns account metrics, open positions,
+    accepted orders, immutable order/execution/trade history, current quotes, and PostgreSQL-backed
+    candles/ledger markers with bounded validated ranges and no provider credentials in the browser.
+- [x] P6-005 Implement authenticated realtime quote/account resync contracts.
+  - Acceptance: the gateway authenticates account ownership, emits typed sequence/version envelopes,
+    supports reconnect snapshots before deltas, exposes stale/disconnected state, and never accepts
+    authoritative browser calculations or mutation events.
+- [x] P6-006 Build the historical/live candlestick workspace with trade markers and older-range loading.
+  - Acceptance: Lightweight Charts renders backend candles, current forming updates, execution/trade
+    markers, timeframe controls, loading/empty/stale states, and deduplicated historical/live handoff;
+    scrolling left requests only an older bounded range from our backend.
+- [x] P6-007 Build the authoritative market/pending/protection order ticket.
+  - Acceptance: the signed-in owner can submit market/limit/stop, choose side/quantity/price, set or
+    clear SL/TP, see exact server rejection/acceptance/fill outcomes, and never compute fills locally.
+- [x] P6-008 Build positions, pending orders, order/execution/trade history, and risk/account panels.
+  - Acceptance: dense desktop and usable mobile tables expose cancel/protection actions, bid/ask,
+    balance/equity/P&L/margin/free margin/drawdown, timestamps and reasons from authoritative state,
+    with useful empty/error states and complete fictitious-capital labeling.
+- [x] P6-009 Complete responsive, keyboard, reduced-motion, and reconnect/resync terminal UX.
+  - Acceptance: the established trading-desk identity is preserved, the competition/risk rail is the
+    terminal signature, controls remain keyboard/screen-reader usable, mobile prioritizes action and
+    risk, and stale/disconnected/resync states cannot be mistaken for live execution availability.
+- [x] P6-010 Add unit, PostgreSQL, Valkey, API/action, and browser coverage for Phase 6.
+  - Acceptance: tests cover candle persistence/dedup/aggregation/incomplete buckets/handoff/ranges,
+    ownership and validation, trade-marker reload, command results, stale data, realtime resync, and
+    responsive terminal interactions without contacting a real provider.
+- [~] P6-011 Pass the Phase 6 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
+    browser checks, and service-backed CI pass; the exact Phase 7 risk task and limitations are recorded.

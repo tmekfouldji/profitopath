@@ -100,4 +100,22 @@
 - Verified the pending-order migration, idempotent seed, all 62 tests, and production build against
   PostgreSQL/Valkey service containers in GitHub Actions.
 
+### Browser trading terminal and candles
+
+- Added exact PostgreSQL `MarketCandle` persistence, deterministic weekday-aligned one-minute mock
+  history, complete UTC higher-timeframe aggregation, concurrent range coalescing, and a
+  server-owned historical/live candle handoff without adding a real provider.
+- Added rebuildable Valkey quote publication with expiry/staleness enforcement, monotonic worker
+  sequences, server-side forming/final candle publication, and closed-market quote suspension.
+- Added account-owned market/limit/stop/cancel/protection actions plus bounded candle and complete
+  terminal snapshot endpoints; all fills, margin checks, risk, and persistence remain server-owned.
+- Added authenticated account-scoped WebSocket upgrades, snapshot-before-delta resync, validated
+  quote/candle envelopes, stale/offline states, and reconnect behavior.
+- Replaced the placeholder with a responsive Lightweight Charts trading workspace, competition risk
+  rail, quote/order ticket, account metrics, position protection, pending orders, executions, closed
+  trades, persistent markers, older-range loading, and explicit fictitious-capital labeling.
+- Added unit and PostgreSQL integration coverage for candle aggregation/deduplication/handoff,
+  coalescing, quote cache loss/staleness, live candle finalization, realtime protocols, terminal
+  ownership, and ledger-marker reconstruction.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

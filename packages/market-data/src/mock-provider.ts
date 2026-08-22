@@ -12,6 +12,7 @@ import type {
 export interface MockQuoteSeed {
   ask: string;
   bid: string;
+  sequence?: bigint;
   symbol: string;
   timestamp: Date;
 }
@@ -42,7 +43,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
       const quote: Quote = {
         ask: new Decimal(seed.ask),
         bid: new Decimal(seed.bid),
-        sequence: BigInt(index + 1),
+        sequence: seed.sequence ?? BigInt(index + 1),
         symbol: normalizeSymbol(seed.symbol),
         timestamp: new Date(seed.timestamp),
       };
