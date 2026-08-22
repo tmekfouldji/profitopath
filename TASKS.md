@@ -309,10 +309,49 @@ Rules:
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 8 task and limitations are recorded.
 
-## Active — Phase 8 (starting)
+## Active — Phase 8
 
-- [ ] P8-001 Expand the company-funded prize/admin milestone into concrete acceptance-tested tasks.
+- [x] P8-001 Expand the company-funded prize/admin milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover prize-ledger derivation from immutable standings, winner
     review, fifth-place free-entry credits, manual KYC status, dual-control payout approval,
     transaction-reference recording, reconciliation, audit evidence, tests, and the quality gate;
     development work does not silently approve prize economics, custody, or production payouts.
+- [x] P8-002 Extend the durable prize, compliance-review, payout, and free-entry-credit schema.
+  - Acceptance: PostgreSQL records immutable prize-source provenance, explicit winner/KYC review
+    evidence, separate prize and payout approvers, manual transaction/reconciliation evidence, and
+    individually redeemable fifth-place credits; constraints prevent duplicate awards/credits and
+    no customer stored-value balance is introduced.
+- [~] P8-003 Derive an idempotent prize ledger only from immutable finalized standings.
+  - Acceptance: an audited admin command locks one finalized competition, attaches configured
+    development prize rows to exact standing entry/rank/source hash, refuses amount/currency
+    invention or mutation, flags tied-rank ambiguity for manual policy review, and replays safely.
+- [ ] P8-004 Add winner review and manual KYC state transitions.
+  - Acceptance: authorized admins confirm or reject the derived winner with required reasons,
+    record explicit not-started/pending/approved/rejected KYC states, cannot approve a prize before
+    winner and KYC approval, and every actor/before/after transition is append-only audited.
+- [ ] P8-005 Add dual-control prize and payout approval.
+  - Acceptance: prize approval creates an exact matching pending payout; a different administrator
+    must approve the payout; invalid, same-actor, duplicate, and concurrent commands fail closed or
+    replay idempotently without changing amounts/currency.
+- [ ] P8-006 Record manual payout completion and reconciliation evidence.
+  - Acceptance: no provider call is made; audited commands move approved payouts through processing,
+    record a unique non-secret transaction reference before paid, reconcile exact prize/payout
+    amount/currency/status with a second actor and required note, and preserve failure/cancellation
+    history.
+- [ ] P8-007 Issue and expose fifth-place free-entry credits without stored customer value.
+  - Acceptance: a paid/reconciled fifth-place prize issues exactly the configured count of
+    single-use access credits to the winner, duplicate issuance is impossible, credit status and
+    source are queryable by admins/traders, and payment/checkout redemption remains out of scope
+    unless separately acceptance-tested.
+- [ ] P8-008 Add the restricted prize operations UI and trader prize/credit read model.
+  - Acceptance: ADMIN-only controls present authoritative provenance, review/KYC/approval/payout/
+    reconciliation state and valid next actions; traders see only their own prize and credit status,
+    all money is company-funded, and development/manual limitations are explicit.
+- [ ] P8-009 Add the Phase 8 correctness, authorization, concurrency, persistence, and browser matrix.
+  - Acceptance: tests cover source-hash/rank derivation, ties, missing/unconfigured awards,
+    idempotency/concurrency, invalid transitions, dual control, KYC gating, exact money matching,
+    transaction-reference uniqueness, reconciliation, credit issuance, RBAC, audits, and rendering.
+- [ ] P8-010 Pass the Phase 8 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
+    browser checks, and service-backed CI pass; the exact Phase 9 gate and prohibited early provider
+    work are recorded.
