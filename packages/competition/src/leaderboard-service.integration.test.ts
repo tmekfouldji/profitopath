@@ -243,7 +243,13 @@ integrationTest('authoritative leaderboard service', () => {
     );
     if (finalized === undefined) throw new Error('Missing first finalization');
     expect(finalized.result.standings).toHaveLength(3);
-    expect(finalized.result.standings.slice(0, 2)).toMatchObject([
+    const rookieTierId = fixture.created[0]?.tier.id;
+    if (rookieTierId === undefined) throw new Error('Missing Rookie test tier');
+    expect(
+      finalized.result.standings.filter(
+        (standing) => standing.tierId === rookieTierId,
+      ),
+    ).toMatchObject([
       { isTied: true, rank: 1 },
       { isTied: true, rank: 1 },
     ]);
