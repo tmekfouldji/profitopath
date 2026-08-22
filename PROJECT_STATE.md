@@ -10,16 +10,16 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 6 — Browser trading terminal (starting)**
+- Current implementation phase: **Phase 7 — Competition + leaderboard (starting)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 5 are complete. The active milestone is Phase 6: the account-owned browser
-trading terminal, backed only by authoritative server commands/state and deterministic mock market
-data. No real market-data or payment provider is authorized.
+Phase 0 through Phase 6 are complete. The active milestone is Phase 7: deterministic weekly
+competition lifecycle, eligibility, tier-separated leaderboard ranking, freeze/finalize,
+authoritative recompute, and archived results. No real market-data or payment provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -100,26 +100,43 @@ All items above are complete, including the service-backed GitHub Actions run.
 - GitHub Actions run `32550829142` passed migration deploy, seed, Compose validation, all 62 tests,
   and production build
 
+## Phase 6 completion evidence
+
+- exact PostgreSQL mock candle persistence, idempotent weekday-aligned 1m history, and complete
+  Decimal 5m/15m/1h aggregation with deterministic UTC buckets and range coalescing
+- rebuildable Valkey quotes with expiry/staleness enforcement, monotonic worker sequences,
+  server-owned forming/final candle publication, and no closed-market mock publication
+- ownership-scoped terminal snapshots/candle APIs and authoritative market/limit/stop/cancel/SL/TP
+  server actions that fail closed without a current quote
+- authenticated account WebSocket upgrades, snapshot-before-delta resync, typed quote/candle
+  envelopes, stale/offline execution states, and reconnect handling
+- responsive Lightweight Charts terminal with bounded older-range loading, historical/live dedup,
+  persistent execution markers, risk rail, account metrics, order ticket, positions, pending orders,
+  executions, closed trades, and fictitious-capital disclosure
+- direct unit, API/action, browser-component, Valkey-boundary, and PostgreSQL integration coverage
+- GitHub Actions run `32552180252` passed migration deploy, seed, Compose validation, all 83 tests,
+  and production build
+
 ## Last completed task
 
-P5-009 — Phase 5 quality gate, persistent project memory, and handoff.
+P6-011 — Phase 6 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P6-001 — expand the Phase 6 browser-terminal work into concrete acceptance-tested tasks, applying
-`10_MARKET_DATA_CACHING_AND_CANDLES.md` to chart history and keeping every mutation server-owned.
+P7-001 — expand Phase 7 into concrete acceptance-tested weekly lifecycle and leaderboard tasks,
+keeping scoring/tie policies explicitly versioned and company prize economics unchanged.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 41 tests passed locally; 21 PostgreSQL integration tests skipped locally
+- `pnpm test`: 60 tests passed locally; 23 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- Phase 5 service-backed tests were not run locally because this workstation has no
+- Phase 6 service-backed tests were not run locally because this workstation has no
   Docker/PostgreSQL runtime
-- GitHub Actions CI run `32550829142`: passed migration deploy, seed, Compose validation, all 62
+- GitHub Actions CI run `32552180252`: passed migration deploy, seed, Compose validation, all 83
   tests, and production build
 
 ## Blockers
@@ -130,4 +147,5 @@ P6-001 — expand the Phase 6 browser-terminal work into concrete acceptance-tes
 - NOWPayments merchant acceptance not completed
 - SVG legal opinion not completed
 
-These blockers do **not** prevent Phase 0–8 mock development.
+These blockers do **not** prevent Phase 7 mock development when ranking rules remain explicitly
+versioned development policy and prize economics are not altered.

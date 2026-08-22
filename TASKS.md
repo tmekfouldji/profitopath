@@ -218,7 +218,7 @@ Rules:
   - GitHub Actions run `32550829142` passed migration deployment, seed, Compose validation, all 62
     tests, and production build with PostgreSQL/Valkey services.
 
-## Active — Phase 6 (starting)
+## Completed — Phase 6
 
 - [x] P6-001 Expand the browser-terminal milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover authoritative account state/commands, backend-owned mock
@@ -261,6 +261,13 @@ Rules:
   - Acceptance: tests cover candle persistence/dedup/aggregation/incomplete buckets/handoff/ranges,
     ownership and validation, trade-marker reload, command results, stale data, realtime resync, and
     responsive terminal interactions without contacting a real provider.
-- [~] P6-011 Pass the Phase 6 quality gate and update persistent project memory/handoff.
+- [x] P6-011 Pass the Phase 6 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 7 risk task and limitations are recorded.
+
+## Active — Phase 7 (starting)
+
+- [~] P7-001 Expand the weekly competition/leaderboard milestone into concrete acceptance-tested tasks.
+  - Acceptance: stable task IDs cover UTC lifecycle/cutoff, versioned eligibility/ranking/ties,
+    authoritative recompute, immutable finalization, public tier views, admin controls, archives,
+    concurrency/idempotency, tests, and the quality gate without silently approving prize economics.
