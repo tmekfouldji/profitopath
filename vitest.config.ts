@@ -23,6 +23,7 @@ export default defineConfig({
       reporter: ['text', 'json-summary'],
     },
     include: ['packages/**/*.test.{ts,tsx}', 'apps/**/*.test.{ts,tsx}'],
+    fileParallelism: false,
     passWithNoTests: false,
     restoreMocks: true,
   },

@@ -19,6 +19,9 @@ afterEach(async () => {
     await database.accountSnapshot.deleteMany({
       where: { tradingAccountId: fixture.accountId },
     });
+    await database.ruleBreach.deleteMany({
+      where: { tradingAccountId: fixture.accountId },
+    });
     await database.position.deleteMany({
       where: { tradingAccountId: fixture.accountId },
     });
