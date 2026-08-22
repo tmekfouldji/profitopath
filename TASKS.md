@@ -283,15 +283,15 @@ Rules:
   - Acceptance: scheduled competitions activate at/after start; active competitions freeze once at
     cutoff under a competition lock; accepted orders expire, accounts/entries complete or retain
     terminal failure status, cutoff score inputs are captured, and correlated audits are atomic.
-- [~] P7-005 Implement authoritative live recompute and immutable leaderboard finalization.
+- [x] P7-005 Implement authoritative live recompute and immutable leaderboard finalization.
   - Acceptance: recompute derives only from PostgreSQL account/snapshot/breach/entry state, is
     idempotent and tier-separated, produces a canonical result hash, supports true ties, and finalizes
     a frozen competition once without trusting cached/browser scores.
-- [~] P7-006 Implement audited admin lifecycle, disqualification, recompute, and finalize controls.
+- [x] P7-006 Implement audited admin lifecycle, disqualification, recompute, and finalize controls.
   - Acceptance: ADMIN authorization is server-side; reasons are required for disqualification;
     invalid transitions/finalize timing fail closed; each mutation is audited and concurrency-safe;
     prize amounts/allocation are not changed or auto-approved.
-- [ ] P7-007 Build public live/final tier leaderboards and archived competition views.
+- [~] P7-007 Build public live/final tier leaderboards and archived competition views.
   - Acceptance: visitors can view tier-separated eligible ranks and archives; final views use the
     immutable snapshot/hash; identities are display-safe; UTC status/as-of and development-policy
     labeling are explicit; useful empty/error states and true ties render correctly.

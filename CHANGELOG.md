@@ -134,5 +134,8 @@
 - Added a server-authorized weekly control room for due lifecycle processing, authoritative
   recompute/finalization, reason-required pre-finalization disqualification, and archival. Commands
   serialize with trading/lifecycle work, retain actor audits, and never alter prize economics.
+- Added public tier-separated live, cutoff-review, final, and archived leaderboard routes with
+  display-safe identities, explicit UTC/policy/rules provenance, true-tie labels, resilient empty
+  states, and immutable final-result hash disclosure.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

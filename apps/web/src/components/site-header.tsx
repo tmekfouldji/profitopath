@@ -18,6 +18,7 @@ export function SiteHeader({ user }: { user: HeaderUser | undefined }) {
       </Link>
       <nav aria-label="Primary navigation" className="primary-nav">
         <Link href="/competitions">Competitions</Link>
+        <Link href="/leaderboards">Leaderboards</Link>
         {user === undefined ? (
           <>
             <Link href="/login">Sign in</Link>
