@@ -250,6 +250,44 @@ integrationTest('mock checkout and provisioning', () => {
     });
   });
 
+  it('rejects late activation after the competition is frozen', async () => {
+    const fixture = await createFixture();
+    const provider = createProvider();
+    const checkout = await createCompetitionCheckout(
+      { ...fixture, now: new Date('2026-08-22T12:00:00.000Z') },
+      provider,
+    );
+    await database.competition.update({
+      data: { status: 'FROZEN' },
+      where: { id: fixture.competitionId },
+    });
+    const callback = provider.createSignedCallback({
+      amountMinor: 500,
+      currency: 'USD',
+      providerPaymentId: checkout.checkout.providerPaymentId,
+      status: 'CONFIRMED',
+    });
+    const event = await provider.verifyCallback(callback);
+
+    await expect(
+      processVerifiedPaymentEvent({
+        event,
+        payloadHash: hashPaymentEvent(event),
+      }),
+    ).rejects.toThrow('Competition no longer accepts entry activation');
+    const entry = await database.competitionEntry.findUniqueOrThrow({
+      include: { tradingAccount: true },
+      where: { id: checkout.competitionEntryId },
+    });
+    expect(entry.status).toBe('PENDING_PAYMENT');
+    expect(entry.tradingAccount).toBeNull();
+    await expect(
+      database.paymentProviderEvent.count({
+        where: { paymentId: checkout.paymentId },
+      }),
+    ).resolves.toBe(0);
+  });
+
   it('rejects a mismatched payment amount without persisting a receipt', async () => {
     const fixture = await createFixture();
     const provider = createProvider();

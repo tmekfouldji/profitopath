@@ -341,6 +341,27 @@ export async function processVerifiedPaymentEvent(
     if (payment === null || payment.competitionEntry === null) {
       throw new PaymentEventConflictError('Payment was not found');
     }
+    await transaction.$executeRaw`
+      SELECT pg_advisory_xact_lock(
+        hashtextextended(
+          ${`competition-lifecycle:${payment.competitionEntry.competitionId}`},
+          0
+        )
+      )
+    `;
+    const competition = await transaction.competition.findUniqueOrThrow({
+      select: { status: true },
+      where: { id: payment.competitionEntry.competitionId },
+    });
+    if (
+      input.event.status === 'CONFIRMED' &&
+      competition.status !== 'SCHEDULED' &&
+      competition.status !== 'ACTIVE'
+    ) {
+      throw new PaymentEventConflictError(
+        'Competition no longer accepts entry activation',
+      );
+    }
     if (
       payment.amountMinor !== input.event.amountMinor ||
       payment.currency !== input.event.currency ||

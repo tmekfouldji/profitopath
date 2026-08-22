@@ -170,6 +170,9 @@ importers:
 
   packages/competition:
     dependencies:
+      '@profitopath/database':
+        specifier: workspace:*
+        version: link:../database
       '@profitopath/shared':
         specifier: workspace:*
         version: link:../shared

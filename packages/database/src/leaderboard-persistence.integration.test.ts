@@ -15,7 +15,7 @@ integrationTest('leaderboard persistence', () => {
       });
       const tier = await transaction.challengeTier.create({
         data: {
-          code: `LB-${suffix}`,
+          code: `LB-${suffix.slice(0, 8)}`,
           currency: 'USD',
           entryFeeMinor: 500,
           maxDrawdownMinor: 100_000n,

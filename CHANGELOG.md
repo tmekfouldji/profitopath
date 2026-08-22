@@ -125,5 +125,8 @@
   fallback display ordering, and explicit invalid-input rejection.
 - Added durable versioned cutoff score inputs and indexed immutable finalized standings with exact
   performance/drawdown values, authoritative timestamps, tier relations, and uniqueness guards.
+- Added serialized UTC activation/freeze processing with competition and simulator-account locks,
+  cutoff order expiry, exact last-snapshot score capture, account/entry completion, restart-safe
+  idempotency, correlated audits, and late-payment exclusion after freeze.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

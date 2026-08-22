@@ -159,6 +159,19 @@ is used only for deterministic display order and does not break the tie. Postgre
 cutoff inputs and the policy version must be retained with final results. Changing these semantics
 requires a new policy/rules version. This decision does not alter or approve prize allocations.
 
+## D-019 — Weekly cutoff uses the last authoritative valuation
+
+Status: Accepted for development
+
+At the configured UTC competition end, Phase 7 serializes against each simulator account, expires
+accepted orders, captures the latest PostgreSQL account snapshot at or before cutoff, completes
+still-active accounts/entries, and freezes the competition. Open positions are not assigned an
+invented cutoff fill or synthetic execution; their last authoritative server valuation is retained
+as the development leaderboard equity input. Missing snapshots are explicitly ineligible rather
+than fabricated. Cutoff score inputs, maximum observed drawdown, final-score time, policy version,
+and audit correlation are persisted. Final production rules may instead require a documented
+provider close/forced-liquidation policy; adopting one requires a new rules version.
+
 ## Pending decisions
 
 - starting balance per tier
