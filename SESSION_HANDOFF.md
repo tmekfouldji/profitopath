@@ -4,36 +4,34 @@ Codex must rewrite this file at the end of every substantial work session.
 
 ## Current handoff
 
-Phase 0 through Phase 3 are complete. Phase 4 is next and has not started.
+Phase 0 through Phase 4 are complete. Phase 5 task expansion is now active.
 
 ### Start next session by
 
 1. Read `AGENTS.md` and every required project-memory / architecture file.
-2. Inspect Git status, recent commits, and GitHub Actions run `32549129070`.
-3. Expand Phase 4 into acceptance-tested tasks in `TASKS.md` and mark P4-001 in progress.
-4. Implement only deterministic mock market data and the persisted simulator core; reread and apply
-   `10_MARKET_DATA_CACHING_AND_CANDLES.md` to every overlapping pricing boundary.
+2. Inspect Git status, recent commits, and GitHub Actions run `32550183420`.
+3. Continue P5-001 by expanding Phase 5 into acceptance-tested tasks, then start the first
+   implementation task.
+4. Keep all trigger evaluation server-side on normalized deterministic quotes; do not add a real
+   market-data provider or historical candle implementation.
 
 ### Current active phase
 
-Phase 4 — mock market data + simulator core (not started).
+Phase 5 — pending orders / SL / TP (P5-001 in progress).
 
 ### Work completed
 
-- Expanded and completed Phase 3 tasks P3-001 through P3-009.
-- Added a deterministic signed mock provider with idempotent checkout creation, payment lookup, and
-  confirmed/failed/expired callback verification.
-- Added a forward-only migration for checkout URL/expiry and immutable provider-event receipts with
-  provider-scoped uniqueness and normalized payload hashes.
-- Added eligibility-controlled checkout reservation that reuses one pending entry and payment.
-- Added exact-amount payment processing serialized by PostgreSQL advisory transaction locks.
-- Added one-transaction confirmation, entry activation, active simulated account provisioning,
-  initial-balance ledger creation, and correlated immutable audits.
-- Added authenticated competition checkout, explicit fictitious-capital disclosure, dashboard
-  completion state, ownership checks, and protected admin payment/provisioning visibility.
-- Added five mock-provider unit tests and five PostgreSQL provisioning integration tests.
-- Recorded D-014 for durable serialized payment-event provisioning. No NOWPayments or real provider
-  code was added.
+- Expanded and completed Phase 4 tasks P4-001 through P4-011.
+- Added validated normalized quotes, deterministic replay, and explicit historical-data deferral.
+- Added versioned persisted development instrument specifications and an idempotent seed.
+- Added exact Decimal/integer accounting for fills, netting, P&L, margin, equity, and drawdown.
+- Added persistent idempotent market orders, executions, positions, closed trades, realized ledger
+  effects, snapshots, exact-boundary breaches, and correlated audits.
+- Added restart recovery and an opt-in worker-owned mock-feed runtime.
+- Corrected Decimal.js positive-zero handling so zero quantities are rejected and opening fills do
+  not create zero-value realized-P&L ledger entries.
+- Recorded D-015 for Phase 4 development instrument and rounding/risk semantics. No real provider or
+  historical candle implementation was added.
 
 ### Verification results
 
@@ -41,33 +39,31 @@ Phase 4 — mock market data + simulator core (not started).
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 22 passed locally; 8 PostgreSQL integration tests skipped locally
-- `pnpm build`: passed with the mock checkout route included
-- GitHub Actions run `32549129070`: passed migration deployment, idempotent seed, Compose
-  validation, all 30 tests, and production build against PostgreSQL/Valkey services
+- `pnpm test`: 37 passed locally; 13 PostgreSQL integration tests skipped locally
+- `pnpm build`: passed
+- GitHub Actions run `32550183420`: passed migration deployment, idempotent seed, Compose
+  validation, all 50 tests, and production build against PostgreSQL/Valkey services
 
-The first Phase 3 CI run exposed Prisma's inability to deserialize the PostgreSQL advisory lock's
-`void` result. Commit `ec37192` projects the lock query to a supported integer; the corrected full
-CI run passed. Docker and `psql` remain absent on this workstation, so the authenticated browser
-checkout was not interactively exercised locally. Its routes compiled, and its database behavior
-was exercised by service-backed CI.
+The first Phase 4 CI run exposed Decimal.js treating positive zero as `isPositive()`. Commit
+`3131874` uses strict greater-than-zero checks and adds regression coverage; the corrected full CI
+run passed. Docker and `psql` remain absent on this workstation, so PostgreSQL integration coverage
+is run in CI.
 
 ### Git state
 
-Git is on `main` with feature commit `b0b6a88` and PostgreSQL lock fix `ec37192`, tracking
-`origin/main` at `git@github.com:tmekfouldji/profitopath.git`. The documentation closeout commit
-containing this handoff follows those implementation commits.
+Git is on `main` with Phase 4 feature commit `636111a` and positive-zero fix `3131874`, tracking
+`origin/main` at `git@github.com:tmekfouldji/profitopath.git`. The documentation phase-boundary
+commit containing this handoff follows those implementation commits.
 
 ### Exact next task
 
-P4-001 — expand Phase 4 mock-market-data and simulator-core work into concrete acceptance-tested
-tasks. Preserve server authority, deterministic replay, exact Decimal/integer accounting,
-persistence/restart recovery, and the authoritative market-data boundaries in
-`10_MARKET_DATA_CACHING_AND_CANDLES.md`.
+P5-001 — expand Phase 5 pending-order, stop-loss/take-profit, and cancellation work into concrete
+acceptance-tested tasks. Preserve server authority, quote-sequence determinism, idempotent trigger /
+cancel races, persistence, recovery, and complete order/execution/trade history.
 
 ### Important blockers
 
-None for Phase 4 mock development. Product/legal rules in `PROJECT_STATE.md` remain configurable.
+None for Phase 5 mock development. Product/legal rules in `PROJECT_STATE.md` remain configurable.
 
 ### Do not start yet
 

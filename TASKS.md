@@ -124,7 +124,7 @@ Rules:
   - GitHub Actions run `32549129070` passed migration deployment, seed, Compose validation, all 30
     tests, and production build with PostgreSQL/Valkey services.
 
-## Active — Phase 4 (not started)
+## Completed — Phase 4
 
 - [x] P4-001 Expand mock-market-data and simulator-core work into concrete acceptance-tested tasks.
   - Acceptance: tasks preserve server authority, exact decimal/integer accounting, persistent
@@ -162,10 +162,22 @@ Rules:
 - [x] P4-009 Connect the worker-owned mock feed to simulator processing without adding live-provider work.
   - Acceptance: the worker can start the deterministic feed, process subscribed symbols, update
     server-side risk, report readiness/failure safely, and remain horizontally replaceable.
-- [~] P4-010 Add unit and PostgreSQL integration coverage for the Phase 4 correctness matrix.
+- [x] P4-010 Add unit and PostgreSQL integration coverage for the Phase 4 correctness matrix.
   - Acceptance: tests cover market order create/fill/reject, long/short and netting lifecycle, P&L,
     spread, margin, exact drawdown boundary, duplicate events, offline processing, restart recovery,
     transaction rollback, and deterministic replay.
-- [ ] P4-011 Pass the Phase 4 quality gate and update persistent project memory/handoff.
+- [x] P4-011 Pass the Phase 4 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, and
     service-backed CI pass; the exact Phase 5 task and unresolved configurable economics are recorded.
+  - Local formatter, Prisma validation/generation, typecheck, lint, 37 non-database tests, and
+    production build passed; 13 PostgreSQL tests were skipped because Docker/PostgreSQL are absent.
+  - GitHub Actions run `32550183420` passed migration deployment, seed, Compose validation, all 50
+    tests, and production build with PostgreSQL/Valkey services.
+
+## Active — Phase 5 (starting)
+
+- [~] P5-001 Expand pending-order, SL/TP, and cancellation work into concrete acceptance-tested tasks.
+  - Acceptance: Phase 5 has stable task IDs for persisted limit/stop orders, deterministic
+    server-side trigger evaluation, stop-loss/take-profit protection, cancellation races,
+    idempotency/recovery, audit/history completeness, tests, and the quality gate without adding a
+    real market-data provider or browser-authoritative execution.

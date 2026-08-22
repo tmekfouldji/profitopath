@@ -10,15 +10,16 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 4 — Mock market data + simulator core (not started)**
+- Current implementation phase: **Phase 5 — Pending orders / SL / TP (starting)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 3 are complete. The next milestone is Phase 4: deterministic mock market
-data and the persisted simulator core. No real market-data or payment provider is authorized.
+Phase 0 through Phase 4 are complete. The active milestone is Phase 5: persistent limit/stop
+orders, stop-loss/take-profit, and cancellation on the deterministic server-owned mock feed. No
+real market-data or payment provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -74,26 +75,39 @@ All items above are complete, including the service-backed GitHub Actions run.
   duplicates, exact starting balance, ledger idempotency, and invalid terminal transitions
 - GitHub Actions passed migration deploy, seed, Compose validation, all 30 tests, and build
 
+## Phase 4 completion evidence
+
+- normalized quote validation and deterministic mock quote replay with server-owned subscriptions
+- versioned exact EURUSD/GBPUSD development instrument configurations and idempotent seeds
+- Decimal-only spread, fill, netting, realized/unrealized P&L, margin, equity, and free-margin math
+- PostgreSQL-authoritative market orders, executions, positions, closed trades, balance ledger,
+  snapshots, drawdown breaches, and correlated audit events
+- account-level transaction serialization plus client-order, engine-event, and quote idempotency
+- static initial-balance development drawdown enforcement at the exact configured boundary
+- restart recovery from PostgreSQL and an opt-in worker-owned deterministic mock feed
+- local non-database tests and production build passed; GitHub Actions run `32550183420` passed the
+  migration, seed, Compose validation, all 50 tests, and production build
+
 ## Last completed task
 
-P3-009 — Phase 3 quality gate, persistent project memory, and handoff.
+P4-011 — Phase 4 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P4-001 — expand Phase 4 mock-market-data and simulator-core work into concrete acceptance-tested
-tasks, applying `10_MARKET_DATA_CACHING_AND_CANDLES.md` wherever pricing boundaries overlap.
+P5-001 — expand Phase 5 pending-order, stop-loss/take-profit, and cancellation work into concrete
+acceptance-tested tasks while preserving deterministic server-side trigger evaluation.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 22 tests passed locally; 8 PostgreSQL integration tests skipped locally
+- `pnpm test`: 37 tests passed locally; 13 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- Phase 3 interactive browser flow: not run locally because this workstation has no
-  Docker/PostgreSQL runtime; responsive CSS and all routes passed the production build
-- GitHub Actions CI run `32549129070`: passed migration deploy, seed, Compose validation, all 30
+- Phase 4 service-backed tests were not run locally because this workstation has no
+  Docker/PostgreSQL runtime
+- GitHub Actions CI run `32550183420`: passed migration deploy, seed, Compose validation, all 50
   tests, and production build
 
 ## Blockers

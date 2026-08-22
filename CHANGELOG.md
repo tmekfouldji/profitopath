@@ -79,5 +79,9 @@
   (`MOCK_MARKET_DATA_ENABLED`) that recovers before deterministic quote/risk processing.
 - Added unit and PostgreSQL integration coverage for deterministic feeds, arithmetic, order retries /
   rejection, netting, exact P&L and ledgers, duplicate quotes, offline drawdown, and restart recovery.
+- Verified the instrument migration, idempotent seed, all 50 tests, deterministic recovery/risk
+  processing, and production build against PostgreSQL/Valkey service containers in GitHub Actions.
+- Fixed positive-zero handling so zero order quantities are rejected and opening fills cannot emit
+  zero-value realized-P&L ledger entries.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.
