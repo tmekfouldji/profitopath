@@ -128,5 +128,8 @@
 - Added serialized UTC activation/freeze processing with competition and simulator-account locks,
   cutoff order expiry, exact last-snapshot score capture, account/entry completion, restart-safe
   idempotency, correlated audits, and late-payment exclusion after freeze.
+- Added PostgreSQL-only live leaderboard recomputation plus canonical SHA-256 final results, durable
+  true-tie standings, atomic frozen-to-finalized transition/audit, and duplicate-finalization
+  verification that fails closed if authoritative cutoff inputs no longer match.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

@@ -279,11 +279,11 @@ Rules:
   - Acceptance: PostgreSQL retains one versioned recomputable score input per entry plus indexed
     tier standings/finalization relations; exact values and authoritative timestamps survive restart,
     final results cannot be overwritten silently, and a forward-only migration is tested.
-- [~] P7-004 Implement serialized UTC competition activation and weekly freeze/cutoff.
+- [x] P7-004 Implement serialized UTC competition activation and weekly freeze/cutoff.
   - Acceptance: scheduled competitions activate at/after start; active competitions freeze once at
     cutoff under a competition lock; accepted orders expire, accounts/entries complete or retain
     terminal failure status, cutoff score inputs are captured, and correlated audits are atomic.
-- [ ] P7-005 Implement authoritative live recompute and immutable leaderboard finalization.
+- [~] P7-005 Implement authoritative live recompute and immutable leaderboard finalization.
   - Acceptance: recompute derives only from PostgreSQL account/snapshot/breach/entry state, is
     idempotent and tier-separated, produces a canonical result hash, supports true ties, and finalizes
     a frozen competition once without trusting cached/browser scores.
