@@ -97,5 +97,7 @@
 - Added unit and PostgreSQL integration coverage for trigger directions, market hours, replay,
   margin-at-trigger expiry, cancellation, long/short OCO protection, gap fills, cutoff expiry,
   restart recovery, and trigger/cancel serialization.
+- Verified the pending-order migration, idempotent seed, all 62 tests, and production build against
+  PostgreSQL/Valkey service containers in GitHub Actions.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

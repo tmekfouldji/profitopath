@@ -10,16 +10,16 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 5 — Pending orders / SL / TP (starting)**
+- Current implementation phase: **Phase 6 — Browser trading terminal (starting)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 4 are complete. The active milestone is Phase 5: persistent limit/stop
-orders, stop-loss/take-profit, and cancellation on the deterministic server-owned mock feed. No
-real market-data or payment provider is authorized.
+Phase 0 through Phase 5 are complete. The active milestone is Phase 6: the account-owned browser
+trading terminal, backed only by authoritative server commands/state and deterministic mock market
+data. No real market-data or payment provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -88,26 +88,38 @@ All items above are complete, including the service-backed GitHub Actions run.
 - local non-database tests and production build passed; GitHub Actions run `32550183420` passed the
   migration, seed, Compose validation, all 50 tests, and production build
 
+## Phase 5 completion evidence
+
+- durable limit/stop and linked full-position SL/TP orders with OCO and trigger quote metadata
+- versioned UTC 24x5 development market hours and exact executable bid/ask trigger policies
+- account-serialized, replay-safe quote triggers with deterministic limit/gap fill behavior
+- idempotent cancellation and terminal-state-safe trigger/cancel race handling
+- protection quantity reconciliation on net reductions/increases and atomic cleanup on close/reverse
+- active pending/protective order recovery, offline worker trigger-before-risk processing, and cutoff
+  expiry
+- GitHub Actions run `32550829142` passed migration deploy, seed, Compose validation, all 62 tests,
+  and production build
+
 ## Last completed task
 
-P4-011 — Phase 4 quality gate, persistent project memory, and handoff.
+P5-009 — Phase 5 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P5-001 — expand Phase 5 pending-order, stop-loss/take-profit, and cancellation work into concrete
-acceptance-tested tasks while preserving deterministic server-side trigger evaluation.
+P6-001 — expand the Phase 6 browser-terminal work into concrete acceptance-tested tasks, applying
+`10_MARKET_DATA_CACHING_AND_CANDLES.md` to chart history and keeping every mutation server-owned.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 37 tests passed locally; 13 PostgreSQL integration tests skipped locally
+- `pnpm test`: 41 tests passed locally; 21 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- Phase 4 service-backed tests were not run locally because this workstation has no
+- Phase 5 service-backed tests were not run locally because this workstation has no
   Docker/PostgreSQL runtime
-- GitHub Actions CI run `32550183420`: passed migration deploy, seed, Compose validation, all 50
+- GitHub Actions CI run `32550829142`: passed migration deploy, seed, Compose validation, all 62
   tests, and production build
 
 ## Blockers

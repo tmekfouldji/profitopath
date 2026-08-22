@@ -174,7 +174,7 @@ Rules:
   - GitHub Actions run `32550183420` passed migration deployment, seed, Compose validation, all 50
     tests, and production build with PostgreSQL/Valkey services.
 
-## Active — Phase 5 (starting)
+## Completed — Phase 5
 
 - [x] P5-001 Expand pending-order, SL/TP, and cancellation work into concrete acceptance-tested tasks.
   - Acceptance: Phase 5 has stable task IDs for persisted limit/stop orders, deterministic
@@ -205,11 +205,23 @@ Rules:
   - Acceptance: recovery includes accepted pending/protective orders, mock quote processing triggers
     orders before post-fill risk snapshots without a browser, closed-market quotes do not trigger,
     and accepted orders expire with audit evidence at competition cutoff.
-- [~] P5-008 Add unit and PostgreSQL integration coverage for the Phase 5 correctness matrix.
+- [x] P5-008 Add unit and PostgreSQL integration coverage for the Phase 5 correctness matrix.
   - Acceptance: tests cover buy/sell limit and stop, long/short SL/TP, gap prices, OCO, cancellation /
     trigger races, duplicate quotes, insufficient margin at trigger, closed market, cutoff expiry,
     offline behavior, and restart recovery.
-- [ ] P5-009 Pass the Phase 5 quality gate and update persistent project memory/handoff.
+- [x] P5-009 Pass the Phase 5 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, and
     service-backed CI pass; the exact Phase 6 browser-terminal task and remaining configurable
     economics are recorded.
+  - Local formatter, Prisma validation/generation, typecheck, lint, 41 non-database tests, and
+    production build passed; 21 PostgreSQL tests were skipped because Docker/PostgreSQL are absent.
+  - GitHub Actions run `32550829142` passed migration deployment, seed, Compose validation, all 62
+    tests, and production build with PostgreSQL/Valkey services.
+
+## Active — Phase 6 (starting)
+
+- [~] P6-001 Expand the browser-terminal milestone into concrete acceptance-tested tasks.
+  - Acceptance: stable task IDs cover authoritative account state/commands, backend-owned mock
+    candle history, live quote/account updates, chart/order/position/pending/history UI, responsive
+    accessibility, reconnect/resync behavior, tests, and the quality gate without browser-owned
+    trading truth or a real market-data provider.

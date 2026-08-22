@@ -4,34 +4,34 @@ Codex must rewrite this file at the end of every substantial work session.
 
 ## Current handoff
 
-Phase 0 through Phase 4 are complete. Phase 5 task expansion is now active.
+Phase 0 through Phase 5 are complete. Phase 6 task expansion is now active.
 
 ### Start next session by
 
 1. Read `AGENTS.md` and every required project-memory / architecture file.
-2. Inspect Git status, recent commits, and GitHub Actions run `32550183420`.
-3. Continue P5-001 by expanding Phase 5 into acceptance-tested tasks, then start the first
+2. Inspect Git status, recent commits, and GitHub Actions run `32550829142`.
+3. Continue P6-001 by expanding Phase 6 into acceptance-tested tasks, then start the first
    implementation task.
-4. Keep all trigger evaluation server-side on normalized deterministic quotes; do not add a real
-   market-data provider or historical candle implementation.
+4. Keep all commands and chart history backend-owned; apply
+   `10_MARKET_DATA_CACHING_AND_CANDLES.md` and do not add a real provider.
 
 ### Current active phase
 
-Phase 5 — pending orders / SL / TP (P5-001 in progress).
+Phase 6 — browser trading terminal (P6-001 in progress).
 
 ### Work completed
 
-- Expanded and completed Phase 4 tasks P4-001 through P4-011.
-- Added validated normalized quotes, deterministic replay, and explicit historical-data deferral.
-- Added versioned persisted development instrument specifications and an idempotent seed.
-- Added exact Decimal/integer accounting for fills, netting, P&L, margin, equity, and drawdown.
-- Added persistent idempotent market orders, executions, positions, closed trades, realized ledger
-  effects, snapshots, exact-boundary breaches, and correlated audits.
-- Added restart recovery and an opt-in worker-owned mock-feed runtime.
-- Corrected Decimal.js positive-zero handling so zero quantities are rejected and opening fills do
-  not create zero-value realized-P&L ledger entries.
-- Recorded D-015 for Phase 4 development instrument and rounding/risk semantics. No real provider or
-  historical candle implementation was added.
+- Expanded and completed Phase 5 tasks P5-001 through P5-009.
+- Added durable pending/protective metadata, trigger quote evidence, terminal reasons, active-scan
+  indexes, and a versioned development market schedule.
+- Added exact limit/stop and long/short SL/TP policies using executable bid/ask prices.
+- Added account-serialized quote triggering, current-quote/gap fills, replay idempotency, and margin
+  revalidation at trigger.
+- Added idempotent cancellation, full-position OCO protection, manual-size reconciliation, and
+  trigger/cancel race handling.
+- Extended worker processing and restart recovery to accepted orders, offline triggers, risk, closed
+  markets, and weekly cutoff expiry.
+- Recorded D-016 for reversible development pending/protection semantics. No real provider was added.
 
 ### Verification results
 
@@ -39,31 +39,29 @@ Phase 5 — pending orders / SL / TP (P5-001 in progress).
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 37 passed locally; 13 PostgreSQL integration tests skipped locally
+- `pnpm test`: 41 passed locally; 21 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
-- GitHub Actions run `32550183420`: passed migration deployment, idempotent seed, Compose
-  validation, all 50 tests, and production build against PostgreSQL/Valkey services
+- GitHub Actions run `32550829142`: passed migration deployment, idempotent seed, Compose
+  validation, all 62 tests, and production build against PostgreSQL/Valkey services
 
-The first Phase 4 CI run exposed Decimal.js treating positive zero as `isPositive()`. Commit
-`3131874` uses strict greater-than-zero checks and adds regression coverage; the corrected full CI
-run passed. Docker and `psql` remain absent on this workstation, so PostgreSQL integration coverage
-is run in CI.
+Docker and `psql` remain absent on this workstation, so the 21 PostgreSQL scenarios are run in CI.
+The Phase 5 service-backed run passed on the first feature commit.
 
 ### Git state
 
-Git is on `main` with Phase 4 feature commit `636111a` and positive-zero fix `3131874`, tracking
-`origin/main` at `git@github.com:tmekfouldji/profitopath.git`. The documentation phase-boundary
-commit containing this handoff follows those implementation commits.
+Git is on `main` with Phase 5 feature commit `bc2c23b`, tracking `origin/main` at
+`git@github.com:tmekfouldji/profitopath.git`. The documentation phase-boundary commit containing
+this handoff follows that implementation commit.
 
 ### Exact next task
 
-P5-001 — expand Phase 5 pending-order, stop-loss/take-profit, and cancellation work into concrete
-acceptance-tested tasks. Preserve server authority, quote-sequence determinism, idempotent trigger /
-cancel races, persistence, recovery, and complete order/execution/trade history.
+P6-001 — expand Phase 6 into concrete acceptance-tested browser-terminal tasks. Preserve server
+authority, backend-owned deterministic candle history, account ownership, complete persisted
+history, responsive accessibility, and reconnect/resync behavior.
 
 ### Important blockers
 
-None for Phase 5 mock development. Product/legal rules in `PROJECT_STATE.md` remain configurable.
+None for Phase 6 mock development. Product/legal rules in `PROJECT_STATE.md` remain configurable.
 
 ### Do not start yet
 
