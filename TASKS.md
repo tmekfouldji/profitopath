@@ -86,7 +86,7 @@ Rules:
   - GitHub Actions run `32548247855` passed migration deployment, seed, Compose validation, all 20
     tests, and production build with PostgreSQL/Valkey services.
 
-## Active — Phase 3
+## Completed — Phase 3
 
 - [x] P3-001 Expand mock-payment and entry-provisioning work into concrete acceptance-tested tasks.
   - Acceptance: Phase 3 has stable task IDs covering provider behavior, persistence, idempotent
@@ -116,6 +116,18 @@ Rules:
 - [x] P3-008 Add unit and PostgreSQL integration coverage for checkout and provisioning.
   - Acceptance: tests cover checkout retries, mismatched amounts, duplicate events, exact starting
     balances, initial ledger idempotency, transition rejection, ownership, and rollback-safe audits.
-- [~] P3-009 Pass the Phase 3 quality gate and update persistent project memory/handoff.
+- [x] P3-009 Pass the Phase 3 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, tests, production build,
     and applicable UI checks pass; exact local/CI limitations and the Phase 4 next task are recorded.
+  - Local formatter, Prisma validation/generation, typecheck, lint, 22 non-database tests, and
+    production build passed; 8 PostgreSQL tests were skipped because Docker/PostgreSQL are absent.
+  - GitHub Actions run `32549129070` passed migration deployment, seed, Compose validation, all 30
+    tests, and production build with PostgreSQL/Valkey services.
+
+## Active — Phase 4 (not started)
+
+- [ ] P4-001 Expand mock-market-data and simulator-core work into concrete acceptance-tested tasks.
+  - Acceptance: tasks preserve server authority, exact decimal/integer accounting, persistent
+    orders/executions/positions/ledger state, deterministic mock pricing and replay, offline/restart
+    recovery, and the market-data boundaries in `10_MARKET_DATA_CACHING_AND_CANDLES.md` without
+    implementing historical candles early or authorizing a real provider.

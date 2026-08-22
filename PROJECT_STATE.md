@@ -10,15 +10,15 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 3 — Mock payments + entry provisioning (not started)**
+- Current implementation phase: **Phase 4 — Mock market data + simulator core (not started)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0, Phase 1, and Phase 2 are complete. The next milestone is Phase 3: mock payments and
-idempotent competition entry/account provisioning. No real payment provider is authorized yet.
+Phase 0 through Phase 3 are complete. The next milestone is Phase 4: deterministic mock market
+data and the persisted simulator core. No real market-data or payment provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -61,24 +61,39 @@ All items above are complete, including the service-backed GitHub Actions run.
 - PostgreSQL integration coverage for the authentication relation graph and weekly seed
 - GitHub Actions passed migration deploy, seed, Compose validation, all 20 tests, and build
 
+## Phase 3 completion evidence
+
+- deterministic signed `MockPaymentProvider` behind the provider-neutral interface
+- authenticated tier selection, mock checkout, confirmation, dashboard completion, and admin view
+- persisted checkout URL/expiry and immutable provider-event receipt migration
+- exact-amount payment validation and provider-scoped event idempotency
+- PostgreSQL advisory-lock serialization for concurrent duplicate provider events
+- one-transaction payment confirmation, entry activation, account provisioning, initial ledger, and
+  correlated audit writes
+- unit and PostgreSQL coverage for eligibility, retries, ownership, amount mismatch, concurrent
+  duplicates, exact starting balance, ledger idempotency, and invalid terminal transitions
+- GitHub Actions passed migration deploy, seed, Compose validation, all 30 tests, and build
+
 ## Last completed task
 
-P2-012 — Phase 2 quality gate, persistent project memory, and handoff.
+P3-009 — Phase 3 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P3-001 — expand Phase 3 into concrete acceptance-tested mock-payment/provisioning tasks.
+P4-001 — expand Phase 4 mock-market-data and simulator-core work into concrete acceptance-tested
+tasks, applying `10_MARKET_DATA_CACHING_AND_CANDLES.md` wherever pricing boundaries overlap.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 17 tests passed locally; 3 PostgreSQL integration tests skipped locally
+- `pnpm test`: 22 tests passed locally; 8 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- responsive browser check: desktop and 390px mobile passed with no horizontal overflow
-- GitHub Actions CI run `32548247855`: passed migration deploy, seed, Compose validation, all 20
+- Phase 3 interactive browser flow: not run locally because this workstation has no
+  Docker/PostgreSQL runtime; responsive CSS and all routes passed the production build
+- GitHub Actions CI run `32549129070`: passed migration deploy, seed, Compose validation, all 30
   tests, and production build
 
 ## Blockers

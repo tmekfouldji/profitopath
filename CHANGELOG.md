@@ -56,6 +56,8 @@
 - Added unit and PostgreSQL integration coverage for eligibility, checkout retries, ownership,
   amount validation, concurrent duplicate delivery, exact account balance, ledger idempotency, and
   rollback on invalid terminal transitions.
+- Verified the payment-event migration, seed, all 30 tests, concurrent event serialization, and
+  production build against PostgreSQL/Valkey service containers in GitHub Actions.
 
 ### Market-data architecture
 
