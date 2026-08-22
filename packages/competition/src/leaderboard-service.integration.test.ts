@@ -223,11 +223,25 @@ integrationTest('authoritative leaderboard service', () => {
       }
     });
 
-    const finalized = await finalizeLeaderboard({
-      competitionId: fixture.competitionId,
-      finalizedAt: new Date('2026-02-06T21:01:00.000Z'),
-    });
-    expect(finalized.alreadyFinalized).toBe(false);
+    const concurrentFinalizations = await Promise.all([
+      finalizeLeaderboard({
+        competitionId: fixture.competitionId,
+        finalizedAt: new Date('2026-02-06T21:01:00.000Z'),
+      }),
+      finalizeLeaderboard({
+        competitionId: fixture.competitionId,
+        finalizedAt: new Date('2026-02-06T21:01:00.000Z'),
+      }),
+    ]);
+    expect(
+      concurrentFinalizations
+        .map(({ alreadyFinalized }) => alreadyFinalized)
+        .sort(),
+    ).toEqual([false, true]);
+    const finalized = concurrentFinalizations.find(
+      (result) => !result.alreadyFinalized,
+    );
+    if (finalized === undefined) throw new Error('Missing first finalization');
     expect(finalized.result.standings).toHaveLength(3);
     expect(finalized.result.standings.slice(0, 2)).toMatchObject([
       { isTied: true, rank: 1 },

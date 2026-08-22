@@ -144,5 +144,8 @@
   activation/cutoff, recompute active/frozen standings, isolate per-competition failures, retry after
   restart, and optionally invoke the idempotent finalizer while keeping auto-finalization off by
   default for administrative review.
+- Extended the Phase 7 matrix with exact pre-start/pre-cutoff boundaries, concurrent finalization,
+  archived public/private read-model persistence, admin failure notices, worker restart recovery,
+  and browser-rendered archive/tie/provenance coverage.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

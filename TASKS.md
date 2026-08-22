@@ -301,7 +301,7 @@ Rules:
 - [~] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
   - Acceptance: any worker can discover due competitions from PostgreSQL, overlapping runs serialize,
     failures retry safely, no server list is hard-coded, and cutoff/finalization work survives restart.
-- [ ] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.
+- [~] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.
   - Acceptance: tests cover weekly boundaries, eligibility exclusions, tier separation, every tie
     break, true ties, activation/freeze replay, cutoff order expiry/account completion, recompute,
     duplicate finalization, hash stability, admin RBAC/audits, archives, and worker recovery.

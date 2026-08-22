@@ -171,6 +171,23 @@ integrationTest('competition lifecycle', () => {
     });
     fixtures.push(fixture);
 
+    await expect(
+      processCompetitionLifecycle(new Date('2026-01-04T23:59:59.999Z')),
+    ).resolves.toEqual({
+      activatedCompetitions: 0,
+      capturedScoreInputs: 0,
+      completedAccounts: 0,
+      completedEntries: 0,
+      expiredOrders: 0,
+      frozenCompetitions: 0,
+    });
+    await expect(
+      database.competition.findUniqueOrThrow({
+        select: { status: true },
+        where: { id: fixture.competitionId },
+      }),
+    ).resolves.toEqual({ status: 'SCHEDULED' });
+
     const activated = await processCompetitionLifecycle(
       new Date('2026-01-05T00:00:00.000Z'),
     );
@@ -182,8 +199,18 @@ integrationTest('competition lifecycle', () => {
       }),
     ).resolves.toEqual({ status: 'ACTIVE' });
 
+    await expect(
+      processCompetitionLifecycle(new Date('2026-01-09T20:59:59.999Z')),
+    ).resolves.toEqual({
+      activatedCompetitions: 0,
+      capturedScoreInputs: 0,
+      completedAccounts: 0,
+      completedEntries: 0,
+      expiredOrders: 0,
+      frozenCompetitions: 0,
+    });
     const frozen = await processCompetitionLifecycle(
-      new Date('2026-01-09T21:00:01.000Z'),
+      new Date('2026-01-09T21:00:00.000Z'),
     );
     expect(frozen).toMatchObject({
       capturedScoreInputs: 1,

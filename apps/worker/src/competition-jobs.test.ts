@@ -111,7 +111,11 @@ describe('competition job runner', () => {
       ],
       finalized: 1,
     });
-    await expect(runner.runOnce()).resolves.toMatchObject({
+    const restartedRunner = new CompetitionJobRunner({
+      autoFinalize: true,
+      services: dependencies,
+    });
+    await expect(restartedRunner.runOnce()).resolves.toMatchObject({
       activeRecomputed: 1,
       failures: [],
     });

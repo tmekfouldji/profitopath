@@ -28,6 +28,7 @@ import {
   finalizeLeaderboardAction,
   runDueLifecycleAction,
 } from './actions';
+import { CompetitionAdminCommandError } from '@profitopath/competition';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -83,5 +84,18 @@ describe('admin server actions', () => {
     );
     expect(mocks.finalizeLeaderboard).not.toHaveBeenCalled();
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with a stable notice for rejected domain commands', async () => {
+    mocks.disqualifyCompetitionEntry.mockRejectedValue(
+      new CompetitionAdminCommandError('reason is required'),
+    );
+    const form = new FormData();
+    form.set('entryId', 'entry-1');
+    form.set('reason', '');
+
+    await expect(disqualifyEntryAction(form)).rejects.toThrow(
+      'redirect:/admin?notice=invalid-operation',
+    );
   });
 });
