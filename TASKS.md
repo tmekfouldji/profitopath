@@ -265,7 +265,7 @@ Rules:
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 7 risk task and limitations are recorded.
 
-## Active — Phase 7 (starting)
+## Completed — Phase 7
 
 - [x] P7-001 Expand the weekly competition/leaderboard milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover UTC lifecycle/cutoff, versioned eligibility/ranking/ties,
@@ -298,13 +298,21 @@ Rules:
 - [x] P7-008 Add trader leaderboard position and competition-status integration.
   - Acceptance: authenticated traders see their authoritative eligible/ineligible state, rank/tie,
     score, drawdown tie-break input, cutoff/finalized state, and archived result without client math.
-- [~] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
+- [x] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
   - Acceptance: any worker can discover due competitions from PostgreSQL, overlapping runs serialize,
     failures retry safely, no server list is hard-coded, and cutoff/finalization work survives restart.
-- [~] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.
+- [x] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.
   - Acceptance: tests cover weekly boundaries, eligibility exclusions, tier separation, every tie
     break, true ties, activation/freeze replay, cutoff order expiry/account completion, recompute,
     duplicate finalization, hash stability, admin RBAC/audits, archives, and worker recovery.
-- [ ] P7-011 Pass the Phase 7 quality gate and update persistent project memory/handoff.
+- [x] P7-011 Pass the Phase 7 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 8 task and limitations are recorded.
+
+## Active — Phase 8 (starting)
+
+- [ ] P8-001 Expand the company-funded prize/admin milestone into concrete acceptance-tested tasks.
+  - Acceptance: stable task IDs cover prize-ledger derivation from immutable standings, winner
+    review, fifth-place free-entry credits, manual KYC status, dual-control payout approval,
+    transaction-reference recording, reconciliation, audit evidence, tests, and the quality gate;
+    development work does not silently approve prize economics, custody, or production payouts.

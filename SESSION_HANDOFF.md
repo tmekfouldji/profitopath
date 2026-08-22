@@ -4,34 +4,41 @@ Codex must rewrite this file at the end of every substantial work session.
 
 ## Current handoff
 
-Phase 0 through Phase 6 are complete. Phase 7 task expansion is active.
+Phase 0 through Phase 7 are complete. Phase 8 prize/admin workflow task expansion is next.
 
 ### Start next session by
 
 1. Read `AGENTS.md` and every required project-memory / architecture file.
-2. Inspect Git status, recent commits, and GitHub Actions run `32552180252`.
-3. Continue P7-001 by expanding Phase 7 into acceptance-tested lifecycle/leaderboard tasks, then
-   start the first implementation task.
-4. Keep ranking/tie rules explicitly versioned, compute only from authoritative PostgreSQL state,
-   preserve company-funded prize economics, and do not add a real provider or production deploy.
+2. Inspect Git status, recent commits, and GitHub Actions run `32554024772`.
+3. Start P8-001 by expanding Phase 8 into concrete acceptance-tested prize/admin tasks before
+   implementing the first prize-ledger change.
+4. Derive winners only from immutable finalized standings; keep company-funded prize economics,
+   KYC, payout approval, and transaction recording manual/audited development workflows.
 
 ### Current active phase
 
-Phase 7 — competition + leaderboard (P7-001 in progress).
+Phase 8 — prize/admin workflow (P8-001 not started).
 
 ### Work completed
 
-- Completed Phase 6 tasks P6-001 through P6-011.
-- Added durable exact mock 1m candles, complete higher-timeframe UTC aggregation, range coalescing,
-  live server candle construction, historical/live handoff, and bounded older-history loading.
-- Added rebuildable Valkey quote publication with TTL/staleness checks, monotonic worker sequences,
-  weekend suspension, and server command adapters that fail closed without a valid quote.
-- Added ownership-scoped terminal/candle APIs, authenticated snapshot-first WebSockets, and typed
-  quote/candle delta validation; the gateway accepts no trading mutation messages.
-- Replaced the terminal placeholder with the responsive risk rail, Lightweight Charts workspace,
-  authoritative order ticket, positions/protection, pending orders, executions, closed trades,
-  metrics, reconnect/stale states, persistent markers, and fictitious-capital labeling.
-- Recorded D-017 for reversible deterministic development candle policy. No real provider was added.
+- Completed Phase 7 tasks P7-001 through P7-011.
+- Added versioned exact leaderboard eligibility/ranking, tier isolation, every development tie
+  break, true shared ranks, stable display ordering, and durable cutoff/final standing records.
+- Added serialized UTC activation/freeze, order expiry, authoritative last-snapshot cutoff capture,
+  exact drawdown/score-time inputs, account/entry completion, idempotent replay, and late-payment
+  exclusion after freeze.
+- Added PostgreSQL-only live/frozen recompute, canonical SHA-256 final results, immutable standing
+  rows, concurrent duplicate finalization, and frozen-to-finalized audits.
+- Added ADMIN-authorized lifecycle/recompute/finalize/archive controls and reason-required
+  pre-finalization disqualification with actor audits and preserved cutoff evidence.
+- Added public live/frozen/final/archive leaderboards and authenticated trader rank/eligibility views
+  with safe display names, UTC provenance, development-policy labeling, and final hashes.
+- Added PostgreSQL-discovered worker cycles with overlap protection, failure isolation, restart retry,
+  and opt-in auto-finalization. `AUTO_FINALIZE_FROZEN_COMPETITIONS=false` remains the safe default
+  until a review-window duration is approved.
+- Recorded D-018 through D-021 for ranking, cutoff valuation, administrative disqualification, and
+  worker finalization defaults. No prize amounts, real providers, custody, or production deployment
+  were added.
 
 ### Verification results
 
@@ -39,34 +46,38 @@ Phase 7 — competition + leaderboard (P7-001 in progress).
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 60 passed locally; 23 PostgreSQL integration tests skipped locally
-- `pnpm build`: passed with the documented development environment and `NODE_ENV=production`
-- GitHub Actions run `32552180252`: passed migration deployment, idempotent seed, Compose
-  validation, all 83 tests, and production build against PostgreSQL/Valkey services
+- `pnpm test`: 86 passed locally; 29 PostgreSQL integration tests skipped locally
+- `pnpm build`: passed with `.env.example` loaded and `NODE_ENV=production`
+- GitHub Actions run `32554024772`: passed migration deployment, idempotent seed, Compose
+  validation, formatter, typecheck, lint, all 115 tests, and production build against
+  PostgreSQL/Valkey services
 
 Docker and `psql` remain absent on this workstation, so PostgreSQL scenarios run in CI.
 
 ### Git state
 
-Git is on `main` with Phase 6 feature commit `a06501e`, tracking `origin/main` at
-`git@github.com:tmekfouldji/profitopath.git`. The phase-boundary documentation commit containing
-this handoff follows that implementation commit.
+Git is on `main`, tracking `origin/main` at `git@github.com:tmekfouldji/profitopath.git`. Phase 7's
+last tested code commit is `8d1395d`; the phase-boundary documentation commit containing this
+handoff follows it.
 
 ### Exact next task
 
-P7-001 — expand weekly competition lifecycle and leaderboard work into concrete acceptance-tested
-tasks. The first implementation must establish deterministic, versioned eligibility/ranking/tie
-semantics and cutoff inputs before public or admin leaderboard UI.
+P8-001 — expand the company-funded prize/admin milestone into concrete acceptance-tested tasks for
+immutable-standing winner derivation, winner review, fifth-place free-entry credits, manual KYC,
+dual-control payout approval, transaction-reference recording, reconciliation, audit evidence,
+tests, and the Phase 8 quality gate.
 
 ### Important blockers
 
-Final leaderboard formula, drawdown semantics, and prize/legal wording are not approved. Phase 7
-may use a clearly labeled version-one development ranking policy matching the product-spec proposal;
-it must not silently change prize amounts/allocation or present development policy as final.
+Final prize/legal wording and production economics are not approved. The existing development prize
+records may be used to build a reversible ledger/review workflow, but no implementation may initiate
+a production payout, imply KYC automation, add customer custody/balances, or silently alter prize
+amounts/allocation. The frozen automatic-finalization review duration is also unapproved, so its
+worker flag remains false.
 
 ### Do not start yet
 
 - real market-data provider or upstream historical-candle integration
 - NOWPayments production integration
 - DigitalOcean production deployment
-- funded accounts, live brokerage execution, MT4/MT5, or prop functionality
+- funded accounts, live brokerage execution, MT4/MT5, profit splits, or customer trading deposits

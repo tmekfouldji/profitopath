@@ -10,16 +10,17 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 7 — Competition + leaderboard (starting)**
+- Current implementation phase: **Phase 8 — Prize/admin workflow (starting)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 6 are complete. The active milestone is Phase 7: deterministic weekly
-competition lifecycle, eligibility, tier-separated leaderboard ranking, freeze/finalize,
-authoritative recompute, and archived results. No real market-data or payment provider is authorized.
+Phase 0 through Phase 7 are complete. The active milestone is Phase 8: derive a company-funded
+prize ledger from immutable weekly standings and add review/KYC/approval/reconciliation controls
+without approving production prize economics or adding customer deposits. No real market-data or
+payment provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -117,26 +118,45 @@ All items above are complete, including the service-backed GitHub Actions run.
 - GitHub Actions run `32552180252` passed migration deploy, seed, Compose validation, all 83 tests,
   and production build
 
+## Phase 7 completion evidence
+
+- versioned exact eligibility/ranking with tier isolation, every proposed tie break, true shared
+  ranks, stable display fallback, and retained PostgreSQL cutoff inputs
+- serialized exact-UTC activation/cutoff under competition/account locks, accepted-order expiry,
+  authoritative last-snapshot capture, account/entry completion, and restart-safe replay
+- PostgreSQL-only live/frozen recompute, canonical SHA-256 results, immutable standings, concurrent
+  duplicate finalization safety, and frozen-to-finalized audit transition
+- server-authorized lifecycle/recompute/finalize/archive controls plus reason-required active/frozen
+  disqualification that preserves cutoff evidence and changes only eligibility
+- public live/frozen/final/archive tier boards with safe display identity and UTC/policy/hash
+  provenance, plus authenticated trader eligibility/rank/tie/performance/drawdown projections
+- PostgreSQL-discovered worker cycles with cross-replica locks, local overlap prevention, retry after
+  restart, and opt-in auto-finalization while the unapproved review duration keeps it off by default
+- unit, action, browser-render, concurrency, PostgreSQL persistence, archive, lifecycle-boundary, and
+  worker-recovery coverage
+- GitHub Actions run `32554024772` passed migration deploy, seed, Compose validation, all 115 tests,
+  and production build
+
 ## Last completed task
 
-P6-011 — Phase 6 quality gate, persistent project memory, and handoff.
+P7-011 — Phase 7 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P7-001 — expand Phase 7 into concrete acceptance-tested weekly lifecycle and leaderboard tasks,
-keeping scoring/tie policies explicitly versioned and company prize economics unchanged.
+P8-001 — expand the company-funded prize/admin workflow into concrete acceptance-tested tasks,
+keeping prize economics unapproved and production payout/custody integrations out of scope.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 60 tests passed locally; 23 PostgreSQL integration tests skipped locally
+- `pnpm test`: 86 tests passed locally; 29 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- Phase 6 service-backed tests were not run locally because this workstation has no
+- service-backed tests were not run locally because this workstation has no
   Docker/PostgreSQL runtime
-- GitHub Actions CI run `32552180252`: passed migration deploy, seed, Compose validation, all 83
+- GitHub Actions CI run `32554024772`: passed migration deploy, seed, Compose validation, all 115
   tests, and production build
 
 ## Blockers
@@ -147,5 +167,6 @@ keeping scoring/tie policies explicitly versioned and company prize economics un
 - NOWPayments merchant acceptance not completed
 - SVG legal opinion not completed
 
-These blockers do **not** prevent Phase 7 mock development when ranking rules remain explicitly
-versioned development policy and prize economics are not altered.
+These blockers do **not** prevent Phase 8 ledger/review development when prize values remain
+existing development data, no production payout is initiated, and all approvals remain manual and
+audited.
