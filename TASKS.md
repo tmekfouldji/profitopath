@@ -58,7 +58,7 @@ Rules:
 - [x] P1-018 Migrations + seed commands.
 - [x] P1-019 Update docs/state/handoff.
 
-## Active — Phase 2
+## Completed — Phase 2
 
 - [x] P2-001 Expand Phase 2 auth/application-shell work into acceptance-tested tasks.
 - [x] P2-002 Add Auth.js-compatible Prisma models and migration.
@@ -80,6 +80,12 @@ Rules:
 - [x] P2-010 Add the protected admin RBAC shell.
   - Acceptance: non-admin users are denied server-side and admins see persisted operational counts/recent audit events.
 - [x] P2-011 Seed a deterministic development competition and add auth/RBAC integration tests.
-- [~] P2-012 Pass the Phase 2 quality gate and update project memory/handoff.
-  - Local formatter, schema validation/generation, typecheck, lint, 20-test suite, production build,
-    and desktop/mobile visual checks pass. PostgreSQL/Valkey-backed GitHub Actions is pending.
+- [x] P2-012 Pass the Phase 2 quality gate and update project memory/handoff.
+  - Local formatter, schema validation/generation, typecheck, lint, production build, and
+    desktop/mobile visual checks passed.
+  - GitHub Actions run `32548247855` passed migration deployment, seed, Compose validation, all 20
+    tests, and production build with PostgreSQL/Valkey services.
+
+## Active — Phase 3 (not started)
+
+- [ ] P3-001 Expand mock-payment and entry-provisioning work into concrete acceptance-tested tasks.

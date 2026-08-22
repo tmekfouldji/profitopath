@@ -40,6 +40,8 @@
   and PostgreSQL relation-graph coverage.
 - Introduced a responsive weekly trading-desk visual system and verified it at desktop and mobile
   widths with keyboard-focus and reduced-motion support.
+- Verified the Auth migration, deterministic seed, all 20 tests, and production build against
+  PostgreSQL/Valkey service containers in GitHub Actions.
 
 ### Market-data architecture
 

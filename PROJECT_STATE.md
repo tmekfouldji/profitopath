@@ -10,15 +10,15 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 2 — Auth + application shell (quality gate)**
+- Current implementation phase: **Phase 3 — Mock payments + entry provisioning (not started)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 and Phase 1 are complete. Phase 2 implementation is complete locally and is awaiting its
-service-backed GitHub Actions quality gate.
+Phase 0, Phase 1, and Phase 2 are complete. The next milestone is Phase 3: mock payments and
+idempotent competition entry/account provisioning. No real payment provider is authorized yet.
 
 ## Phase 0–1 completion evidence
 
@@ -48,7 +48,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 - formatter, typecheck, lint, tests, build, and GitHub Actions pass
 - project memory and handoff updated
 
-## Phase 2 implementation evidence
+## Phase 2 completion evidence
 
 - Auth.js-compatible Prisma account/session/token models and isolated password credentials
 - salted scrypt password hashing, normalized registration, and generic credential failures
@@ -59,14 +59,15 @@ All items above are complete, including the service-backed GitHub Actions run.
 - responsive weekly trading-desk UI verified at desktop and 390px mobile widths
 - unit coverage for passwords, registration, money formatting, and authorization
 - PostgreSQL integration coverage for the authentication relation graph and weekly seed
+- GitHub Actions passed migration deploy, seed, Compose validation, all 20 tests, and build
 
 ## Last completed task
 
-P2-011 — deterministic development competition and auth/RBAC persistence coverage.
+P2-012 — Phase 2 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P2-012 — complete the service-backed GitHub Actions gate and close Phase 2.
+P3-001 — expand Phase 3 into concrete acceptance-tested mock-payment/provisioning tasks.
 
 ## Quality status
 
@@ -77,7 +78,8 @@ P2-012 — complete the service-backed GitHub Actions gate and close Phase 2.
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - responsive browser check: desktop and 390px mobile passed with no horizontal overflow
-- GitHub Actions CI: pending for the Phase 2 commit; previous Phase 1 gate passed
+- GitHub Actions CI run `32548247855`: passed migration deploy, seed, Compose validation, all 20
+  tests, and production build
 
 ## Blockers
 
