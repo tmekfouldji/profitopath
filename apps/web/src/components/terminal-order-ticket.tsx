@@ -2,10 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 
-import {
-  initialTerminalActionState,
-  submitTerminalOrder,
-} from '@/app/terminal/[accountId]/actions';
+import { initialTerminalActionState } from '@/app/terminal/[accountId]/action-state';
+import { submitTerminalOrder } from '@/app/terminal/[accountId]/actions';
 
 interface TicketInstrument {
   minimumQuantity: string;

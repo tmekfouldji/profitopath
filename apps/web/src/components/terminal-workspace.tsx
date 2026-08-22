@@ -9,9 +9,9 @@ import {
   useState,
 } from 'react';
 
+import { initialTerminalActionState } from '@/app/terminal/[accountId]/action-state';
 import {
   cancelTerminalOrder,
-  initialTerminalActionState,
   updatePositionProtection,
 } from '@/app/terminal/[accountId]/actions';
 import type { OwnedTerminalState } from '@/server/terminal-read-model';

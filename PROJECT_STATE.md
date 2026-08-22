@@ -158,7 +158,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-001 — exact local seed/health documentation and complete mock-stack verification.
+M-002 — live terminal server-action hydration fix and browser regression verification.
 
 ## Next task
 

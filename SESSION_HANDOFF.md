@@ -28,6 +28,9 @@ no provider API or commercial rights have been approved.
   `MOCK_MARKET_DATA_ENABLED=true` locally.
 - Started web/realtime/worker together and verified every liveness/readiness route against PostgreSQL
   and Valkey. Public home and registration pages rendered successfully in the local browser.
+- Completed a local mock Rookie checkout, provisioned a fictitious $10,000 account, and opened the
+  terminal. This exposed and fixed an initial order-ticket hydration crash by moving shared action
+  state out of the server-only action module; the repaired terminal rendered all primary panels.
 - Kept all real-provider work deferred. The simulator still uses deterministic mock quotes and
   PostgreSQL-backed mock candle history.
 
@@ -42,6 +45,7 @@ no provider API or commercial rights have been approved.
 - `pnpm db:seed` with `DATABASE_URL` and seed values explicitly unset in the shell: passed by loading
   the root `.env`
 - web, realtime, and worker readiness: passed with PostgreSQL and Valkey healthy
+- focused terminal action/ticket tests: 4 passed; live provisioned terminal browser smoke: passed
 - GitHub Actions run `32554756501` remains the latest service-backed CI run and passed all 127 tests
   plus the production build
 

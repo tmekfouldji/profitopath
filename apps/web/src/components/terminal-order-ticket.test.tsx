@@ -5,7 +5,6 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/app/terminal/[accountId]/actions', () => ({
-  initialTerminalActionState: { message: '', status: 'IDLE' },
   submitTerminalOrder: vi.fn(),
 }));
 

@@ -19,6 +19,8 @@
 - Made the standalone seed load the repository-root development environment automatically, corrected
   the web/realtime/worker health-route documentation, and verified all 127 tests against local
   PostgreSQL 17 and Valkey services.
+- Moved terminal action-state initialization out of the server-only module so the live order ticket
+  hydrates safely before its first submission; verified the complete provisioned terminal in-browser.
 
 ### Database and domain
 

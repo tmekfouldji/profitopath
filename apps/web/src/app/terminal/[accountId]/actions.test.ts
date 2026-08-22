@@ -17,7 +17,8 @@ vi.mock('@/server/terminal', () => ({
   submitOwnedPendingOrder: mocks.submitOwnedPendingOrder,
 }));
 
-import { initialTerminalActionState, submitTerminalOrder } from './actions';
+import { initialTerminalActionState } from './action-state';
+import { submitTerminalOrder } from './actions';
 
 function orderForm(overrides: Record<string, string> = {}): FormData {
   const form = new FormData();

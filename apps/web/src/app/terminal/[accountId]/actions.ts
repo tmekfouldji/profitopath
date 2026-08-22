@@ -5,6 +5,7 @@ import { SimulatorCommandError } from '@profitopath/simulator';
 import Decimal from 'decimal.js';
 import { revalidatePath } from 'next/cache';
 
+import type { TerminalActionState } from './action-state';
 import { requireUser } from '@/server/auth/session';
 import {
   cancelOwnedOrder,
@@ -12,16 +13,6 @@ import {
   submitOwnedMarketOrder,
   submitOwnedPendingOrder,
 } from '@/server/terminal';
-
-export interface TerminalActionState {
-  message: string;
-  status: 'ERROR' | 'IDLE' | 'SUCCESS';
-}
-
-export const initialTerminalActionState: TerminalActionState = {
-  message: '',
-  status: 'IDLE',
-};
 
 function formString(formData: FormData, name: string): string {
   return String(formData.get(name) ?? '').trim();

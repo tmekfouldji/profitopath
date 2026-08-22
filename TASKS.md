@@ -366,6 +366,12 @@ Rules:
   - Homebrew PostgreSQL 17 and Valkey readiness passed; all eight migrations and the idempotent seed
     ran locally; formatter, Prisma validation/generation, typecheck, lint, all 127 tests, and the
     production build passed.
+- [x] M-002 Fix the live terminal's initial server-action hydration crash and add regression coverage.
+  - Acceptance: client components import their serializable initial action state from a client-safe
+    module rather than a `use server` action module; the ticket renders before any submission; focused
+    tests and a live browser terminal smoke test pass.
+  - Moved the shared state out of the server-action module, exercised the real initial state in the
+    ticket test, and verified the provisioned terminal renders without the development error overlay.
 
 ## Blocked — Phase 9
 
