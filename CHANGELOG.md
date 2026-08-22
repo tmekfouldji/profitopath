@@ -25,5 +25,7 @@
 - Added explicit validated state graphs and an atomic state-transition/audit service boundary.
 - Added an idempotent Rookie/Trader/Elite seed with configurable development starting balances.
 - Added exact integer/decimal money helpers plus unit and PostgreSQL persistence tests.
+- Verified the initial migration, idempotent seed, Compose configuration, and all 11 tests against
+  PostgreSQL/Valkey service containers in GitHub Actions.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

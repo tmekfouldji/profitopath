@@ -4,7 +4,7 @@ Codex must rewrite this file at the end of every substantial work session.
 
 ## Current handoff
 
-Phase 0 is complete and Phase 1 implementation is complete pending its service-backed CI run.
+Phase 0 and Phase 1 are complete. Phase 2 is next and has not started.
 
 ### Start next session by
 
@@ -17,7 +17,7 @@ Phase 0 is complete and Phase 1 implementation is complete pending its service-b
 
 ### Current active phase
 
-Phase 1 — database/domain foundation, final CI validation.
+Phase 2 — authentication and application shell (not started).
 
 ### Work completed
 
@@ -33,32 +33,34 @@ Phase 1 — database/domain foundation, final CI validation.
 
 ### Work in progress
 
-- P1-017: run PostgreSQL persistence tests in GitHub Actions.
-- P1-019: mark Phase 1 complete after CI and finalize this handoff for Phase 2.
+None. The exact next task is P2-001.
 
 ### Verification results
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 9 passed, 2 service-backed integration tests skipped locally
+- `pnpm test`: 9 passed locally; all 11 passed in GitHub Actions with PostgreSQL
 - `pnpm build`: passed
 - `pnpm db:validate`: passed
 - realtime `/health/live`: HTTP 200
 - realtime `/health/ready`: HTTP 503 as expected with PostgreSQL/Valkey stopped
+- GitHub Actions CI run `32546992929`: passed migration, seed, Compose validation, all tests,
+  and production build
 
-No tests are known to fail. Docker is not installed on this workstation, so GitHub Actions is
-responsible for executing migrations, the seed, Compose validation, and the two PostgreSQL tests.
+No tests are known to fail. Docker is not installed on this workstation; the service-backed
+quality gate passed in GitHub Actions.
 
 ### Git state
 
-Git was initialized on `main`, `origin` is `https://github.com/tmekfouldji/profitopath.git`, and
-the remote currently has no branch heads. The initial commit/push is the current task.
+Git is on `main` and tracks `origin/main` at `git@github.com:tmekfouldji/profitopath.git`. The
+unrelated untracked file `10_MARKET_DATA_CACHING_AND_CANDLES.md` appeared during the final gate
+and was intentionally left untouched and uncommitted.
 
 ### Exact next task
 
-Commit and push the Phase 0–1 implementation, inspect GitHub Actions, fix any service-backed
-failures, then mark P1-017/P1-019 complete and set Phase 2 as the next phase.
+Expand Phase 2 into concrete acceptance-tested tasks in `TASKS.md`, mark P2-001 in progress,
+then implement the Auth.js-compatible auth and application shell without entering Phase 3.
 
 ### Important blockers
 

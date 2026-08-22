@@ -10,17 +10,17 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 1 — Database/domain foundation (CI validation)**
+- Current implementation phase: **Phase 2 — Auth + application shell (not started)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Validate the initial migration, seed, and persistence integration tests in GitHub Actions, then
-close Phase 1 and hand off to Phase 2.
+Phase 0 and Phase 1 are complete. The next milestone is Phase 2: authentication and the
+application shell.
 
-## Definition of done for active milestone
+## Phase 0–1 completion evidence
 
 - pnpm monorepo initialized
 - apps/packages skeleton exists
@@ -35,25 +35,37 @@ close Phase 1 and hand off to Phase 2.
 - README contains exact local commands
 - TASKS / PROJECT_STATE / SESSION_HANDOFF updated
 
+All items above are complete, including the service-backed GitHub Actions run.
+
+## Definition of done for Phase 2
+
+- Auth.js-compatible registration, login, logout, and session foundation
+- trader dashboard shell
+- admin RBAC shell with server-side authorization
+- competition list/detail pages backed by persisted data
+- empty trading-terminal route protected by account ownership
+- authentication/authorization tests
+- formatter, typecheck, lint, tests, build, and GitHub Actions pass
+- project memory and handoff updated
+
 ## Last completed task
 
-P1-018 — initial PostgreSQL migration and idempotent tier seed commands.
+P1-019 — Phase 1 quality gate, documentation, and handoff.
 
 ## Next task
 
-Commit and push the Phase 0–1 foundation, confirm GitHub Actions passes with PostgreSQL and
-Valkey service containers, then complete P1-017/P1-019.
+P2-001 — expand Phase 2 into concrete acceptance-tested tasks before implementation.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 9 unit tests passed; 2 PostgreSQL integration tests skipped locally
+- `pnpm test`: 9 unit tests passed locally; all 11 tests passed in CI with PostgreSQL
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - realtime liveness smoke test: HTTP 200; readiness correctly returned HTTP 503 without dependencies
-- Docker Compose/migration/seed integration: pending GitHub Actions because Docker is not installed locally
+- GitHub Actions CI: passed migration deploy, seed, Compose validation, 11 tests, and build
 
 ## Blockers
 

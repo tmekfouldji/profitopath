@@ -35,7 +35,7 @@ Rules:
 - [x] P0-014 Document exact local setup, startup, database, seed, and quality commands.
 - [x] P0-015 Pass the Phase 0 quality gate and update persistent project memory.
 
-## Active — Phase 1
+## Completed — Phase 1
 
 - [x] P1-001 Define enums/state machines.
 - [x] P1-002 Model User and profile.
@@ -53,11 +53,11 @@ Rules:
 - [x] P1-014 Model AuditEvent.
 - [x] P1-015 Implement validated state-transition services.
 - [x] P1-016 Seed competition tiers with configurable starting balances.
-- [~] P1-017 Unit/integration tests.
-  - Unit tests pass locally; PostgreSQL persistence tests await the first GitHub Actions service-container run because Docker is unavailable locally.
+- [x] P1-017 Unit/integration tests.
+  - GitHub Actions passed all 11 tests, including PostgreSQL persistence and seed integration.
 - [x] P1-018 Migrations + seed commands.
-- [~] P1-019 Update docs/state/handoff.
+- [x] P1-019 Update docs/state/handoff.
 
-## Queued — Phase 2
+## Active — Phase 2 (not started)
 
 - [ ] P2-001 Expand Phase 2 auth/application-shell work into acceptance-tested tasks.
