@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const integerPort = z.coerce.number().int().min(1).max(65_535);
 const minorUnits = z.coerce.bigint().positive();
+const booleanString = z
+  .enum(['true', 'false'])
+  .default('false')
+  .transform((value) => value === 'true');
 
 export const runtimeEnvSchema = z.object({
   BUSINESS_TIMEZONE: z.string().min(1).default('UTC'),
@@ -10,6 +14,7 @@ export const runtimeEnvSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   MOCK_PAYMENT_SIGNING_SECRET: z.string().min(32),
+  MOCK_MARKET_DATA_ENABLED: booleanString,
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),

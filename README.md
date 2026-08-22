@@ -126,6 +126,10 @@ Phase 3 uses only the local `MockPaymentProvider`. Its callback signatures use t
 `MOCK_PAYMENT_SIGNING_SECRET` from `.env.example`; the in-app confirmation screen never charges a
 real payment method and provisions fictitious competition capital only.
 
+Phase 4 adds an opt-in deterministic worker feed. Set `MOCK_MARKET_DATA_ENABLED=true` only for the
+development mock cycle; browsers still never call a provider, historical bars remain deferred, and
+the seeded instrument/leverage values are versioned development defaults rather than approved rules.
+
 Run the complete local quality gate with:
 
 ```bash

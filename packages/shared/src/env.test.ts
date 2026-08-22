@@ -15,6 +15,7 @@ describe('parseRuntimeEnv', () => {
 
     expect(parsed.NODE_ENV).toBe('development');
     expect(parsed.BUSINESS_TIMEZONE).toBe('UTC');
+    expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
   });
 
   it('rejects a non-PostgreSQL database URL', () => {

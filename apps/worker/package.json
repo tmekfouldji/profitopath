@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@profitopath/database": "workspace:*",
+    "@profitopath/market-data": "workspace:*",
     "@profitopath/shared": "workspace:*",
+    "@profitopath/simulator": "workspace:*",
     "dotenv": "17.3.1"
   },
   "devDependencies": {

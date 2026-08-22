@@ -2,10 +2,12 @@ import { parseSeedEnv } from '@profitopath/shared';
 
 import { database } from '../src/client';
 import { createDevelopmentCompetitionSeed } from './competition-seed';
+import { createDevelopmentInstrumentSeeds } from './instrument-seeds';
 import { createTierSeeds } from './tier-seeds';
 
 async function seed(): Promise<void> {
   const tiers = createTierSeeds(parseSeedEnv());
+  const instruments = createDevelopmentInstrumentSeeds();
 
   await database.$transaction(
     tiers.map((tier) =>
@@ -22,6 +24,21 @@ async function seed(): Promise<void> {
           startingBalanceMinor: tier.startingBalanceMinor,
         },
         where: { code: tier.code },
+      }),
+    ),
+  );
+
+  await database.$transaction(
+    instruments.map((instrument) =>
+      database.instrumentConfiguration.upsert({
+        create: instrument,
+        update: instrument,
+        where: {
+          symbol_version: {
+            symbol: instrument.symbol,
+            version: instrument.version,
+          },
+        },
       }),
     ),
   );

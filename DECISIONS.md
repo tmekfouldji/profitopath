@@ -104,6 +104,18 @@ entry, creates its single active simulated trading account, writes the idempoten
 ledger entry, and records correlated audits in one database transaction. This applies to the mock
 provider now and establishes the boundary for later providers; it does not authorize NOWPayments.
 
+## D-015 — Versioned development simulator accounting policy
+
+Status: Accepted for development
+
+Phase 4 seeds version-one EURUSD and GBPUSD mock specifications with USD quote currency, 100,000
+contract size, 100:1 leverage, and 0.01 minimum/step quantity. These are reversible development
+defaults, not approved production instruments or leverage. Market buys fill at ask, sells at bid,
+P&L converts to account minor units using half-even rounding, and positive margin requirements round
+up. Until the final rule decision, mock drawdown is static from initial balance and breaches when
+current drawdown is greater than or equal to the tier threshold. Every persisted trading record
+captures its instrument version; changing this policy requires a new configuration/rules version.
+
 ## Pending decisions
 
 - starting balance per tier

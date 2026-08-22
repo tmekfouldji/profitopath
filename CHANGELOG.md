@@ -64,4 +64,20 @@
 - Adopted `10_MARKET_DATA_CACHING_AND_CANDLES.md` as the future backend-owned candle/cache design,
   while keeping all real provider work deferred to Phase 9 and commercial approval.
 
+### Mock market data and simulator core
+
+- Added validated normalized quotes, deterministic mock quote replay, server-owned subscriptions,
+  stale/order checks, and an explicit unsupported boundary for historical bars until candle work.
+- Added versioned persisted EURUSD/GBPUSD development specifications with exact contract, leverage,
+  precision, minimum, and quantity-step fields plus idempotent seeding and a forward-only migration.
+- Added Decimal-only market fills, notional, spread, weighted entry, long/short realized and
+  unrealized P&L, margin, equity, free margin, partial close, full close, and reversal calculations.
+- Added a PostgreSQL-authoritative execution engine with account-level transaction locks,
+  client-order and engine-event idempotency, margin rejection, atomic executions/net positions /
+  closed trades/ledger/audits, monotonic snapshots, and exact static development drawdown breaches.
+- Added recovery projections for active accounts/open positions and an opt-in worker-owned mock feed
+  (`MOCK_MARKET_DATA_ENABLED`) that recovers before deterministic quote/risk processing.
+- Added unit and PostgreSQL integration coverage for deterministic feeds, arithmetic, order retries /
+  rejection, netting, exact P&L and ledgers, duplicate quotes, offline drawdown, and restart recovery.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

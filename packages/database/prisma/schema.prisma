@@ -293,6 +293,7 @@ model Order {
   tradingAccountId  String       @db.Uuid
   clientOrderId     String       @db.VarChar(100)
   symbol            String       @db.VarChar(32)
+  instrumentVersion Int          @default(1)
   side              OrderSide
   type              OrderType
   status            OrderStatus  @default(PENDING)
@@ -310,6 +311,7 @@ model Order {
   completedAt       DateTime?    @db.Timestamptz(3)
   updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
   tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
   executions        Execution[]
 
   @@unique([tradingAccountId, clientOrderId])
@@ -323,6 +325,7 @@ model Execution {
   orderId          String         @db.Uuid
   tradingAccountId String         @db.Uuid
   symbol           String         @db.VarChar(32)
+  instrumentVersion Int           @default(1)
   side             OrderSide
   quantity         Decimal        @db.Decimal(30, 12)
   price            Decimal        @db.Decimal(30, 12)
@@ -332,8 +335,10 @@ model Execution {
   createdAt        DateTime       @default(now()) @db.Timestamptz(3)
   order            Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
   tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
   openedTrades     ClosedTrade[]  @relation("OpeningExecution")
   closedTrades     ClosedTrade[]  @relation("ClosingExecution")
+  openedPositions  Position[]     @relation("PositionOpeningExecution")
 
   @@index([tradingAccountId, executedAt])
   @@index([orderId, executedAt])
@@ -343,6 +348,8 @@ model Position {
   id                String         @id @default(uuid()) @db.Uuid
   tradingAccountId  String         @db.Uuid
   symbol            String         @db.VarChar(32)
+  instrumentVersion Int            @default(1)
+  openingExecutionId String?        @db.Uuid
   side              PositionSide
   status            PositionStatus @default(OPEN)
   quantity          Decimal        @db.Decimal(30, 12)
@@ -355,6 +362,8 @@ model Position {
   createdAt         DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
   tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
+  openingExecution  Execution?     @relation("PositionOpeningExecution", fields: [openingExecutionId], references: [id], onDelete: Restrict)
   closedTrades      ClosedTrade[]
 
   @@index([tradingAccountId, symbol, status])
@@ -367,6 +376,7 @@ model ClosedTrade {
   openingExecutionId String         @db.Uuid
   closingExecutionId String         @unique @db.Uuid
   symbol             String         @db.VarChar(32)
+  instrumentVersion  Int            @default(1)
   side               PositionSide
   quantity           Decimal        @db.Decimal(30, 12)
   entryPrice         Decimal        @db.Decimal(30, 12)
@@ -377,11 +387,35 @@ model ClosedTrade {
   closedAt           DateTime       @db.Timestamptz(3)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
   tradingAccount     TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
   position           Position       @relation(fields: [positionId], references: [id], onDelete: Restrict)
   openingExecution   Execution      @relation("OpeningExecution", fields: [openingExecutionId], references: [id], onDelete: Restrict)
   closingExecution   Execution      @relation("ClosingExecution", fields: [closingExecutionId], references: [id], onDelete: Restrict)
 
   @@index([tradingAccountId, closedAt])
+}
+
+model InstrumentConfiguration {
+  id              String   @id @default(uuid()) @db.Uuid
+  symbol          String   @db.VarChar(32)
+  version         Int
+  active          Boolean  @default(true)
+  baseCurrency    String   @db.Char(3)
+  quoteCurrency   String   @db.Char(3)
+  priceScale      Int
+  quantityStep    Decimal  @db.Decimal(30, 12)
+  minimumQuantity Decimal  @db.Decimal(30, 12)
+  contractSize    Decimal  @db.Decimal(30, 12)
+  leverage        Decimal  @db.Decimal(30, 12)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+  orders          Order[]
+  executions      Execution[]
+  positions       Position[]
+  closedTrades    ClosedTrade[]
+
+  @@unique([symbol, version])
+  @@index([active, symbol])
 }
 
 model AccountBalanceLedgerEntry {
@@ -411,6 +445,7 @@ model AccountSnapshot {
   unrealizedPnlMinor BigInt
   maxDrawdownMinor   BigInt
   dataVersion        Int
+  sourceEventId      String?        @unique @db.VarChar(128)
   asOf               DateTime       @db.Timestamptz(3)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
   tradingAccount     TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Cascade)

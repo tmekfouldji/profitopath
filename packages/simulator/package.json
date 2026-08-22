@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@profitopath/competition": "workspace:*",
+    "@profitopath/database": "workspace:*",
+    "@profitopath/market-data": "workspace:*",
     "decimal.js": "10.6.0"
   },
   "devDependencies": {

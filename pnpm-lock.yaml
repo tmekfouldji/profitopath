@@ -118,9 +118,15 @@ importers:
       '@profitopath/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@profitopath/market-data':
+        specifier: workspace:*
+        version: link:../../packages/market-data
       '@profitopath/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@profitopath/simulator':
+        specifier: workspace:*
+        version: link:../../packages/simulator
       dotenv:
         specifier: 17.3.1
         version: 17.3.1
@@ -217,6 +223,15 @@ importers:
 
   packages/simulator:
     dependencies:
+      '@profitopath/competition':
+        specifier: workspace:*
+        version: link:../competition
+      '@profitopath/database':
+        specifier: workspace:*
+        version: link:../database
+      '@profitopath/market-data':
+        specifier: workspace:*
+        version: link:../market-data
       decimal.js:
         specifier: 10.6.0
         version: 10.6.0

@@ -126,8 +126,46 @@ Rules:
 
 ## Active — Phase 4 (not started)
 
-- [ ] P4-001 Expand mock-market-data and simulator-core work into concrete acceptance-tested tasks.
+- [x] P4-001 Expand mock-market-data and simulator-core work into concrete acceptance-tested tasks.
   - Acceptance: tasks preserve server authority, exact decimal/integer accounting, persistent
     orders/executions/positions/ledger state, deterministic mock pricing and replay, offline/restart
     recovery, and the market-data boundaries in `10_MARKET_DATA_CACHING_AND_CANDLES.md` without
     implementing historical candles early or authorizing a real provider.
+- [x] P4-002 Implement validated normalized quotes and a deterministic `MockMarketDataProvider`.
+  - Acceptance: seeded quote sequences are reproducible, symbol subscriptions and latest-quote
+    lookup are server-owned, stale/out-of-order/invalid bid-ask data is rejected, and no browser or
+    real-provider integration is added.
+- [x] P4-003 Persist versioned development instrument specifications and add a forward-only migration.
+  - Acceptance: symbol, currencies, contract size, quantity step/minimum, price precision, leverage,
+    and version are exact and auditable; the active development set is idempotently seeded and is
+    explicitly not approved production economics.
+- [x] P4-004 Implement exact simulator accounting primitives.
+  - Acceptance: Decimal-only fill, notional, weighted-entry, realized/unrealized P&L, margin, equity,
+    and free-margin calculations have explicit rounding at the integer-minor-unit boundary and tests
+    for long/short, spread, partial close, full close, and reversal.
+- [x] P4-005 Implement idempotent server-side market-order submission and validation.
+  - Acceptance: active account/competition window, symbol config, quantity step/minimum, quote
+    freshness, and margin are authoritative server checks; a client order ID creates at most one
+    persisted order and rejected orders retain a reason and audit evidence.
+- [x] P4-006 Implement atomic fills and net-position lifecycle persistence.
+  - Acceptance: one engine event creates at most one execution, fills its order, opens/increases /
+    reduces/closes/reverses one net position, persists closed trades and realized balance ledger
+    entries when applicable, and records correlated audits in one transaction.
+- [x] P4-007 Implement mark-to-market snapshots and configurable static development drawdown enforcement.
+  - Acceptance: server quotes produce deterministic equity, margin, unrealized P&L, and drawdown;
+    exact-boundary breaches immediately persist one breach and transition the account/entry with
+    audit evidence even without a browser connection.
+- [x] P4-008 Implement simulator recovery and deterministic replay boundaries.
+  - Acceptance: active accounts/open positions are reconstructible from PostgreSQL, duplicate quote
+    and engine events are harmless, snapshot sequences remain monotonic, and derived hot state does
+    not require unique local disk.
+- [x] P4-009 Connect the worker-owned mock feed to simulator processing without adding live-provider work.
+  - Acceptance: the worker can start the deterministic feed, process subscribed symbols, update
+    server-side risk, report readiness/failure safely, and remain horizontally replaceable.
+- [~] P4-010 Add unit and PostgreSQL integration coverage for the Phase 4 correctness matrix.
+  - Acceptance: tests cover market order create/fill/reject, long/short and netting lifecycle, P&L,
+    spread, margin, exact drawdown boundary, duplicate events, offline processing, restart recovery,
+    transaction rollback, and deterministic replay.
+- [ ] P4-011 Pass the Phase 4 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, and
+    service-backed CI pass; the exact Phase 5 task and unresolved configurable economics are recorded.
