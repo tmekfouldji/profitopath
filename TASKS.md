@@ -267,7 +267,44 @@ Rules:
 
 ## Active — Phase 7 (starting)
 
-- [~] P7-001 Expand the weekly competition/leaderboard milestone into concrete acceptance-tested tasks.
+- [x] P7-001 Expand the weekly competition/leaderboard milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover UTC lifecycle/cutoff, versioned eligibility/ranking/ties,
     authoritative recompute, immutable finalization, public tier views, admin controls, archives,
     concurrency/idempotency, tests, and the quality gate without silently approving prize economics.
+- [x] P7-002 Implement the versioned deterministic leaderboard eligibility and ranking domain.
+  - Acceptance: exact integer performance, breach/disqualification/status eligibility, tier isolation,
+    proposed tie-break order, true tied ranks, stable fallback ordering, invalid-input rejection, and
+    development policy versioning are pure, deterministic, and unit tested.
+- [x] P7-003 Add durable leaderboard standings and cutoff-input persistence.
+  - Acceptance: PostgreSQL retains one versioned recomputable score input per entry plus indexed
+    tier standings/finalization relations; exact values and authoritative timestamps survive restart,
+    final results cannot be overwritten silently, and a forward-only migration is tested.
+- [~] P7-004 Implement serialized UTC competition activation and weekly freeze/cutoff.
+  - Acceptance: scheduled competitions activate at/after start; active competitions freeze once at
+    cutoff under a competition lock; accepted orders expire, accounts/entries complete or retain
+    terminal failure status, cutoff score inputs are captured, and correlated audits are atomic.
+- [ ] P7-005 Implement authoritative live recompute and immutable leaderboard finalization.
+  - Acceptance: recompute derives only from PostgreSQL account/snapshot/breach/entry state, is
+    idempotent and tier-separated, produces a canonical result hash, supports true ties, and finalizes
+    a frozen competition once without trusting cached/browser scores.
+- [ ] P7-006 Implement audited admin lifecycle, disqualification, recompute, and finalize controls.
+  - Acceptance: ADMIN authorization is server-side; reasons are required for disqualification;
+    invalid transitions/finalize timing fail closed; each mutation is audited and concurrency-safe;
+    prize amounts/allocation are not changed or auto-approved.
+- [ ] P7-007 Build public live/final tier leaderboards and archived competition views.
+  - Acceptance: visitors can view tier-separated eligible ranks and archives; final views use the
+    immutable snapshot/hash; identities are display-safe; UTC status/as-of and development-policy
+    labeling are explicit; useful empty/error states and true ties render correctly.
+- [ ] P7-008 Add trader leaderboard position and competition-status integration.
+  - Acceptance: authenticated traders see their authoritative eligible/ineligible state, rank/tie,
+    score, drawdown tie-break input, cutoff/finalized state, and archived result without client math.
+- [ ] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
+  - Acceptance: any worker can discover due competitions from PostgreSQL, overlapping runs serialize,
+    failures retry safely, no server list is hard-coded, and cutoff/finalization work survives restart.
+- [ ] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.
+  - Acceptance: tests cover weekly boundaries, eligibility exclusions, tier separation, every tie
+    break, true ties, activation/freeze replay, cutoff order expiry/account completion, recompute,
+    duplicate finalization, hash stability, admin RBAC/audits, archives, and worker recovery.
+- [ ] P7-011 Pass the Phase 7 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
+    browser checks, and service-backed CI pass; the exact Phase 8 task and limitations are recorded.

@@ -127,6 +127,15 @@ enum PayoutStatus {
   CANCELLED
 }
 
+enum LeaderboardEligibilityStatus {
+  ELIGIBLE
+  ENTRY_STATUS
+  ACCOUNT_STATUS
+  RULE_BREACH
+  DISQUALIFIED
+  MISSING_SNAPSHOT
+}
+
 model User {
   id            String       @id @default(uuid()) @db.Uuid
   email         String       @unique @db.VarChar(320)
@@ -218,6 +227,8 @@ model ChallengeTier {
   updatedAt                 DateTime @updatedAt @db.Timestamptz(3)
   entries                   CompetitionEntry[]
   prizes                    Prize[]
+  leaderboardScoreInputs    LeaderboardScoreInput[]
+  leaderboardStandings      LeaderboardStanding[]
 
   @@index([active])
 }
@@ -238,6 +249,8 @@ model Competition {
   entries           CompetitionEntry[]
   prizes            Prize[]
   finalization      LeaderboardFinalization?
+  leaderboardScoreInputs LeaderboardScoreInput[]
+  leaderboardStandings   LeaderboardStanding[]
 
   @@index([status, tradingStartsAt, tradingEndsAt])
 }
@@ -259,6 +272,8 @@ model CompetitionEntry {
   tradingAccount  TradingAccount?
   payments        Payment[]
   wonPrize        Prize?                 @relation("PrizeWinner")
+  leaderboardScoreInputs LeaderboardScoreInput[]
+  leaderboardStandings   LeaderboardStanding[]
 
   @@unique([userId, competitionId, tierId])
   @@index([competitionId, tierId, status])
@@ -284,6 +299,7 @@ model TradingAccount {
   balanceLedgerEntries AccountBalanceLedgerEntry[]
   snapshots            AccountSnapshot[]
   ruleBreaches         RuleBreach[]
+  leaderboardScoreInputs LeaderboardScoreInput[]
 
   @@index([status])
 }
@@ -481,6 +497,7 @@ model AccountSnapshot {
   asOf               DateTime       @db.Timestamptz(3)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
   tradingAccount     TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Cascade)
+  leaderboardScoreInputs LeaderboardScoreInput[]
 
   @@unique([tradingAccountId, sequence])
   @@index([tradingAccountId, asOf])
@@ -586,6 +603,66 @@ model LeaderboardFinalization {
   finalizedAt     DateTime    @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @db.Timestamptz(3)
   competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  standings       LeaderboardStanding[]
+}
+
+model LeaderboardScoreInput {
+  id                       String                       @id @default(uuid()) @db.Uuid
+  competitionId            String                       @db.Uuid
+  entryId                  String                       @db.Uuid
+  tierId                   String                       @db.Uuid
+  tradingAccountId         String                       @db.Uuid
+  sourceSnapshotId         String?                      @db.Uuid
+  policyVersion            Int
+  eligibilityStatus        LeaderboardEligibilityStatus
+  displayName              String                       @db.VarChar(100)
+  startingBalanceMinor     BigInt
+  equityMinor              BigInt
+  netPerformanceMinor      BigInt
+  maxObservedDrawdownMinor BigInt
+  finalScoreReachedAt      DateTime                     @db.Timestamptz(3)
+  activatedAt              DateTime                     @db.Timestamptz(3)
+  cutoffAt                 DateTime                     @db.Timestamptz(3)
+  capturedAt               DateTime                     @db.Timestamptz(3)
+  dataVersion              Int                          @default(1)
+  createdAt                DateTime                     @default(now()) @db.Timestamptz(3)
+  competition              Competition                  @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  entry                    CompetitionEntry             @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  tier                     ChallengeTier                @relation(fields: [tierId], references: [id], onDelete: Restrict)
+  tradingAccount           TradingAccount               @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  sourceSnapshot           AccountSnapshot?             @relation(fields: [sourceSnapshotId], references: [id], onDelete: Restrict)
+
+  @@unique([competitionId, entryId, policyVersion])
+  @@index([competitionId, tierId, eligibilityStatus])
+  @@index([tradingAccountId, cutoffAt])
+}
+
+model LeaderboardStanding {
+  id                       String                  @id @default(uuid()) @db.Uuid
+  finalizationId           String                  @db.Uuid
+  competitionId            String                  @db.Uuid
+  tierId                   String                  @db.Uuid
+  entryId                  String                  @db.Uuid
+  policyVersion            Int
+  rank                     Int
+  displayOrder             Int
+  isTied                   Boolean                 @default(false)
+  displayName              String                  @db.VarChar(100)
+  startingBalanceMinor     BigInt
+  equityMinor              BigInt
+  netPerformanceMinor      BigInt
+  maxObservedDrawdownMinor BigInt
+  finalScoreReachedAt      DateTime                @db.Timestamptz(3)
+  activatedAt              DateTime                @db.Timestamptz(3)
+  createdAt                DateTime                @default(now()) @db.Timestamptz(3)
+  finalization             LeaderboardFinalization @relation(fields: [finalizationId], references: [id], onDelete: Restrict)
+  competition              Competition             @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  tier                     ChallengeTier           @relation(fields: [tierId], references: [id], onDelete: Restrict)
+  entry                    CompetitionEntry        @relation(fields: [entryId], references: [id], onDelete: Restrict)
+
+  @@unique([finalizationId, entryId])
+  @@unique([finalizationId, tierId, displayOrder])
+  @@index([competitionId, tierId, rank, displayOrder])
 }
 
 model AuditEvent {

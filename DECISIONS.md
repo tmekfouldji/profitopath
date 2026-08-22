@@ -146,6 +146,19 @@ This establishes the backend-owned chart boundary required by
 `10_MARKET_DATA_CACHING_AND_CANDLES.md` without authorizing an upstream provider, commercial data
 use, or production backfill/rate-limit behavior.
 
+## D-018 — Versioned development leaderboard ranking policy
+
+Status: Accepted for development
+
+Phase 7 policy version one follows the product-spec proposal without claiming final commercial rule
+approval. Eligible entries have active/completed entry and account states, no rule breach, and no
+disqualification. Each tier ranks independently by exact net performance, then lower maximum
+observed drawdown, earlier time the final score was reached, and earlier entry activation. Entries
+still equal after all four approved development criteria share the same competition rank; entry ID
+is used only for deterministic display order and does not break the tie. PostgreSQL-authoritative
+cutoff inputs and the policy version must be retained with final results. Changing these semantics
+requires a new policy/rules version. This decision does not alter or approve prize allocations.
+
 ## Pending decisions
 
 - starting balance per tier

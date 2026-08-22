@@ -118,4 +118,12 @@
   coalescing, quote cache loss/staleness, live candle finalization, realtime protocols, terminal
   ownership, and ledger-marker reconstruction.
 
+### Weekly competition and leaderboard
+
+- Added versioned development leaderboard eligibility and exact integer ranking with tier isolation,
+  the proposed performance/drawdown/score-time/activation tie-break order, true shared ranks, stable
+  fallback display ordering, and explicit invalid-input rejection.
+- Added durable versioned cutoff score inputs and indexed immutable finalized standings with exact
+  performance/drawdown values, authoritative timestamps, tier relations, and uniqueness guards.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.
