@@ -1,0 +1,6 @@
+.next
+coverage
+dist
+node_modules
+packages/database/src/generated
+pnpm-lock.yaml

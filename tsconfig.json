@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./apps/web" },
+    { "path": "./apps/realtime" },
+    { "path": "./apps/worker" },
+    { "path": "./packages/database" },
+    { "path": "./packages/simulator" },
+    { "path": "./packages/market-data" },
+    { "path": "./packages/competition" },
+    { "path": "./packages/payments" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/ui" }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "profitopath",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Weekly simulated trading competition platform",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "dev": "pnpm --parallel --filter @profitopath/web --filter @profitopath/realtime --filter @profitopath/worker dev",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "pnpm --filter @profitopath/database db:generate",
+    "db:validate": "pnpm --filter @profitopath/database db:validate",
+    "db:migrate": "pnpm --filter @profitopath/database db:migrate",
+    "db:migrate:deploy": "pnpm --filter @profitopath/database db:migrate:deploy",
+    "db:seed": "pnpm --filter @profitopath/database db:seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "15.5.23",
+    "@types/node": "25.9.5",
+    "eslint": "10.0.1",
+    "globals": "17.11.0",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  }
+}

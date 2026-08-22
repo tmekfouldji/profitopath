@@ -1,0 +1,20 @@
+weekly-trading-competition/
+├── README.md
+├── AGENTS.md
+├── CODEX_START_PROMPT.md
+├── PROJECT_STATE.md
+├── TASKS.md
+├── DECISIONS.md
+├── SESSION_HANDOFF.md
+├── CHANGELOG.md
+├── 01_EXTERNAL_LAUNCH_PLAN.md
+├── 02_PRODUCT_SPEC.md
+├── 03_TECHNICAL_ARCHITECTURE.md
+├── 04_BUILD_PHASES.md
+├── 05_VENDOR_QUESTIONNAIRE.md
+├── 06_DECISIONS_REQUIRED.md
+├── 08_FIRST_PARTY_SIMULATOR_DECISION.md
+├── 09_DIGITALOCEAN_DEPLOYMENT.md
+└── PROJECT_TREE.txt
+
+Codex creates the application/infra source tree during the scheduled phases.

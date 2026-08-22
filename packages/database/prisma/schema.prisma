@@ -1,0 +1,471 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TRADER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum CompetitionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  FROZEN
+  FINALIZED
+  ARCHIVED
+  CANCELLED
+}
+
+enum CompetitionEntryStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  COMPLETED
+  BREACHED
+  DISQUALIFIED
+  CANCELLED
+}
+
+enum TradingAccountStatus {
+  PENDING
+  ACTIVE
+  BREACHED
+  DISQUALIFIED
+  COMPLETED
+  CLOSED
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+  STOP
+  STOP_LOSS
+  TAKE_PROFIT
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PARTIALLY_FILLED
+  FILLED
+  CANCELLED
+  REJECTED
+  EXPIRED
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+}
+
+enum BalanceLedgerType {
+  INITIAL_BALANCE
+  REALIZED_PNL
+  COMMISSION
+  SWAP
+  ADJUSTMENT
+}
+
+enum RuleBreachType {
+  MAX_DRAWDOWN
+  DAILY_LOSS
+  WEEKLY_CUTOFF
+  ADMIN_DISQUALIFICATION
+  OTHER
+}
+
+enum PaymentProvider {
+  MOCK
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  CONFIRMED
+  FAILED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum PrizeStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PAYOUT_PENDING
+  PAID
+  VOID
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique @db.VarChar(320)
+  displayName  String       @db.VarChar(100)
+  role         UserRole     @default(TRADER)
+  status       UserStatus   @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(3)
+  profile      UserProfile?
+  entries      CompetitionEntry[]
+  payments     Payment[]
+  auditEvents  AuditEvent[]
+}
+
+model UserProfile {
+  userId       String   @id @db.Uuid
+  countryCode  String?  @db.Char(2)
+  timezone     String   @default("UTC") @db.VarChar(64)
+  termsVersion String?  @db.VarChar(50)
+  acceptedAt   DateTime? @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChallengeTier {
+  id                        String   @id @default(uuid()) @db.Uuid
+  code                      String   @unique @db.VarChar(32)
+  name                      String   @db.VarChar(80)
+  entryFeeMinor             Int
+  currency                  String   @default("USD") @db.Char(3)
+  maxDrawdownMinor          BigInt
+  performanceBenchmarkMinor BigInt
+  startingBalanceMinor      BigInt
+  rulesVersion              Int      @default(1)
+  active                    Boolean  @default(true)
+  createdAt                 DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime @updatedAt @db.Timestamptz(3)
+  entries                   CompetitionEntry[]
+  prizes                    Prize[]
+
+  @@index([active])
+}
+
+model Competition {
+  id                String            @id @default(uuid()) @db.Uuid
+  code              String            @unique @db.VarChar(64)
+  name              String            @db.VarChar(120)
+  status            CompetitionStatus @default(DRAFT)
+  timezone          String            @default("UTC") @db.VarChar(64)
+  signupClosesAt    DateTime           @db.Timestamptz(3)
+  tradingStartsAt   DateTime           @db.Timestamptz(3)
+  tradingEndsAt     DateTime           @db.Timestamptz(3)
+  rulesVersion      Int
+  finalizedAt       DateTime?          @db.Timestamptz(3)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
+  entries           CompetitionEntry[]
+  prizes            Prize[]
+  finalization      LeaderboardFinalization?
+
+  @@index([status, tradingStartsAt, tradingEndsAt])
+}
+
+model CompetitionEntry {
+  id              String                 @id @default(uuid()) @db.Uuid
+  userId          String                 @db.Uuid
+  competitionId   String                 @db.Uuid
+  tierId          String                 @db.Uuid
+  status          CompetitionEntryStatus @default(PENDING_PAYMENT)
+  activatedAt     DateTime?              @db.Timestamptz(3)
+  completedAt     DateTime?              @db.Timestamptz(3)
+  disqualifiedAt  DateTime?              @db.Timestamptz(3)
+  createdAt       DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime               @updatedAt @db.Timestamptz(3)
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  competition     Competition            @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  tier            ChallengeTier          @relation(fields: [tierId], references: [id], onDelete: Restrict)
+  tradingAccount  TradingAccount?
+  payments        Payment[]
+  wonPrize        Prize?                 @relation("PrizeWinner")
+
+  @@unique([userId, competitionId, tierId])
+  @@index([competitionId, tierId, status])
+}
+
+model TradingAccount {
+  id                   String               @id @default(uuid()) @db.Uuid
+  competitionEntryId   String               @unique @db.Uuid
+  status               TradingAccountStatus @default(PENDING)
+  currency             String               @default("USD") @db.Char(3)
+  startingBalanceMinor BigInt
+  balanceMinor         BigInt
+  realizedPnlMinor     BigInt                @default(0)
+  configVersion        Int
+  breachedAt           DateTime?             @db.Timestamptz(3)
+  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime              @updatedAt @db.Timestamptz(3)
+  competitionEntry     CompetitionEntry      @relation(fields: [competitionEntryId], references: [id], onDelete: Restrict)
+  orders               Order[]
+  executions           Execution[]
+  positions            Position[]
+  closedTrades         ClosedTrade[]
+  balanceLedgerEntries AccountBalanceLedgerEntry[]
+  snapshots            AccountSnapshot[]
+  ruleBreaches         RuleBreach[]
+
+  @@index([status])
+}
+
+model Order {
+  id                String       @id @default(uuid()) @db.Uuid
+  tradingAccountId  String       @db.Uuid
+  clientOrderId     String       @db.VarChar(100)
+  symbol            String       @db.VarChar(32)
+  side              OrderSide
+  type              OrderType
+  status            OrderStatus  @default(PENDING)
+  quantity          Decimal      @db.Decimal(30, 12)
+  filledQuantity    Decimal      @default(0) @db.Decimal(30, 12)
+  requestedPrice    Decimal?     @db.Decimal(30, 12)
+  limitPrice        Decimal?     @db.Decimal(30, 12)
+  stopPrice         Decimal?     @db.Decimal(30, 12)
+  stopLossPrice     Decimal?     @db.Decimal(30, 12)
+  takeProfitPrice   Decimal?     @db.Decimal(30, 12)
+  averageFillPrice  Decimal?     @db.Decimal(30, 12)
+  rejectionReason   String?      @db.VarChar(500)
+  submittedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  acceptedAt        DateTime?    @db.Timestamptz(3)
+  completedAt       DateTime?    @db.Timestamptz(3)
+  updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
+  tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  executions        Execution[]
+
+  @@unique([tradingAccountId, clientOrderId])
+  @@index([tradingAccountId, status])
+  @@index([symbol, status])
+}
+
+model Execution {
+  id               String         @id @default(uuid()) @db.Uuid
+  engineEventId    String         @unique @db.VarChar(128)
+  orderId          String         @db.Uuid
+  tradingAccountId String         @db.Uuid
+  symbol           String         @db.VarChar(32)
+  side             OrderSide
+  quantity         Decimal        @db.Decimal(30, 12)
+  price            Decimal        @db.Decimal(30, 12)
+  notional         Decimal        @db.Decimal(38, 12)
+  commission       Decimal        @default(0) @db.Decimal(30, 12)
+  executedAt       DateTime       @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  openedTrades     ClosedTrade[]  @relation("OpeningExecution")
+  closedTrades     ClosedTrade[]  @relation("ClosingExecution")
+
+  @@index([tradingAccountId, executedAt])
+  @@index([orderId, executedAt])
+}
+
+model Position {
+  id                String         @id @default(uuid()) @db.Uuid
+  tradingAccountId  String         @db.Uuid
+  symbol            String         @db.VarChar(32)
+  side              PositionSide
+  status            PositionStatus @default(OPEN)
+  quantity          Decimal        @db.Decimal(30, 12)
+  averageEntryPrice Decimal        @db.Decimal(30, 12)
+  realizedPnl       Decimal        @default(0) @db.Decimal(30, 12)
+  stopLossPrice     Decimal?       @db.Decimal(30, 12)
+  takeProfitPrice   Decimal?       @db.Decimal(30, 12)
+  openedAt          DateTime       @db.Timestamptz(3)
+  closedAt          DateTime?      @db.Timestamptz(3)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+  tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  closedTrades      ClosedTrade[]
+
+  @@index([tradingAccountId, symbol, status])
+}
+
+model ClosedTrade {
+  id                 String         @id @default(uuid()) @db.Uuid
+  tradingAccountId   String         @db.Uuid
+  positionId         String         @db.Uuid
+  openingExecutionId String         @db.Uuid
+  closingExecutionId String         @unique @db.Uuid
+  symbol             String         @db.VarChar(32)
+  side               PositionSide
+  quantity           Decimal        @db.Decimal(30, 12)
+  entryPrice         Decimal        @db.Decimal(30, 12)
+  exitPrice          Decimal        @db.Decimal(30, 12)
+  realizedPnl        Decimal        @db.Decimal(30, 12)
+  commission         Decimal        @default(0) @db.Decimal(30, 12)
+  openedAt           DateTime       @db.Timestamptz(3)
+  closedAt           DateTime       @db.Timestamptz(3)
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  tradingAccount     TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+  position           Position       @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  openingExecution   Execution      @relation("OpeningExecution", fields: [openingExecutionId], references: [id], onDelete: Restrict)
+  closingExecution   Execution      @relation("ClosingExecution", fields: [closingExecutionId], references: [id], onDelete: Restrict)
+
+  @@index([tradingAccountId, closedAt])
+}
+
+model AccountBalanceLedgerEntry {
+  id                String            @id @default(uuid()) @db.Uuid
+  tradingAccountId  String            @db.Uuid
+  type              BalanceLedgerType
+  amountMinor       BigInt
+  balanceAfterMinor BigInt
+  idempotencyKey    String            @unique @db.VarChar(128)
+  referenceType     String?           @db.VarChar(64)
+  referenceId       String?           @db.VarChar(128)
+  occurredAt        DateTime          @db.Timestamptz(3)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  tradingAccount    TradingAccount    @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+
+  @@index([tradingAccountId, occurredAt])
+}
+
+model AccountSnapshot {
+  id                 String         @id @default(uuid()) @db.Uuid
+  tradingAccountId   String         @db.Uuid
+  sequence           BigInt
+  balanceMinor       BigInt
+  equityMinor        BigInt
+  marginUsedMinor    BigInt
+  marginFreeMinor    BigInt
+  unrealizedPnlMinor BigInt
+  maxDrawdownMinor   BigInt
+  dataVersion        Int
+  asOf               DateTime       @db.Timestamptz(3)
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  tradingAccount     TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tradingAccountId, sequence])
+  @@index([tradingAccountId, asOf])
+}
+
+model RuleBreach {
+  id                String         @id @default(uuid()) @db.Uuid
+  tradingAccountId  String         @db.Uuid
+  type              RuleBreachType
+  observedMinor     BigInt?
+  thresholdMinor    BigInt?
+  rulesVersion      Int
+  sourceEventId     String         @unique @db.VarChar(128)
+  details           Json?
+  occurredAt        DateTime       @db.Timestamptz(3)
+  resolvedAt        DateTime?      @db.Timestamptz(3)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
+
+  @@index([tradingAccountId, occurredAt])
+}
+
+model Payment {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid
+  competitionEntryId String?        @db.Uuid
+  provider          PaymentProvider @default(MOCK)
+  providerPaymentId String?         @unique @db.VarChar(128)
+  idempotencyKey    String          @unique @db.VarChar(128)
+  status            PaymentStatus   @default(CREATED)
+  amountMinor       Int
+  currency          String          @default("USD") @db.Char(3)
+  metadata          Json?
+  confirmedAt       DateTime?       @db.Timestamptz(3)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+  user              User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  competitionEntry  CompetitionEntry? @relation(fields: [competitionEntryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+}
+
+model Prize {
+  id                String         @id @default(uuid()) @db.Uuid
+  competitionId     String         @db.Uuid
+  tierId            String         @db.Uuid
+  rank              Int
+  amountMinor       Int
+  currency          String         @default("USD") @db.Char(3)
+  freeEntryCredits  Int            @default(0)
+  status            PrizeStatus    @default(PENDING_REVIEW)
+  winnerEntryId     String?        @unique @db.Uuid
+  reviewReason      String?        @db.VarChar(1000)
+  approvedAt        DateTime?      @db.Timestamptz(3)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+  competition       Competition    @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+  tier              ChallengeTier  @relation(fields: [tierId], references: [id], onDelete: Restrict)
+  winnerEntry       CompetitionEntry? @relation("PrizeWinner", fields: [winnerEntryId], references: [id], onDelete: Restrict)
+  payout            Payout?
+
+  @@unique([competitionId, tierId, rank])
+}
+
+model Payout {
+  id                   String       @id @default(uuid()) @db.Uuid
+  prizeId              String       @unique @db.Uuid
+  status               PayoutStatus @default(PENDING)
+  amountMinor          Int
+  currency             String       @default("USD") @db.Char(3)
+  transactionReference String?      @unique @db.VarChar(255)
+  approvedAt           DateTime?    @db.Timestamptz(3)
+  paidAt               DateTime?    @db.Timestamptz(3)
+  createdAt            DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime     @updatedAt @db.Timestamptz(3)
+  prize                Prize        @relation(fields: [prizeId], references: [id], onDelete: Restrict)
+}
+
+model LeaderboardFinalization {
+  id              String      @id @default(uuid()) @db.Uuid
+  competitionId   String      @unique @db.Uuid
+  rulesVersion    Int
+  resultHash      String      @db.VarChar(128)
+  result          Json
+  finalizedAt     DateTime    @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Restrict)
+}
+
+model AuditEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorUserId    String?  @db.Uuid
+  entityType     String   @db.VarChar(80)
+  entityId       String   @db.VarChar(128)
+  action         String   @db.VarChar(100)
+  reason         String?  @db.VarChar(1000)
+  before         Json?
+  after          Json?
+  correlationId  String?  @db.VarChar(128)
+  idempotencyKey String?  @unique @db.VarChar(128)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  actor          User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([correlationId])
+}

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BUSINESS_TIMEZONE: UTC
+      DATABASE_URL: postgresql://profitopath:profitopath_ci@localhost:5432/profitopath?schema=public
+      DEV_ELITE_STARTING_BALANCE_MINOR: 4000000
+      DEV_ROOKIE_STARTING_BALANCE_MINOR: 1000000
+      DEV_TRADER_STARTING_BALANCE_MINOR: 2000000
+      LOG_LEVEL: silent
+      NODE_ENV: test
+      RUN_DATABASE_TESTS: 'true'
+      VALKEY_URL: redis://localhost:6379
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: profitopath
+          POSTGRES_PASSWORD: profitopath_ci
+          POSTGRES_USER: profitopath
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U profitopath -d profitopath"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm db:migrate:deploy
+      - run: pnpm db:seed
+      - run: docker compose config --quiet
+      - run: pnpm format
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build

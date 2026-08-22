@@ -1,0 +1,28 @@
+{
+  "name": "@profitopath/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:validate": "prisma validate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "@profitopath/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.13",
+    "dotenv": "17.3.1",
+    "prisma": "6.19.3",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  }
+}
