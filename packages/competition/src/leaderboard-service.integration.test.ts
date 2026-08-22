@@ -171,12 +171,17 @@ integrationTest('authoritative leaderboard service', () => {
     });
     expect(live.asOf).toBe(asOf.toISOString());
     expect(
-      live.standings.map(({ displayName, rank }) => [displayName, rank]),
+      live.standings
+        .map(({ displayName, rank }) => [displayName, rank] as const)
+        .sort(([left], [right]) => left.localeCompare(right)),
     ).toEqual([
       ['Rookie Alpha', 1],
       ['Rookie Beta', 1],
       ['Trader Gamma', 1],
     ]);
+    await expect(
+      finalizeLeaderboard({ competitionId: fixture.competitionId }),
+    ).rejects.toThrow('Only a frozen competition can be finalized');
 
     await database.$transaction(async (transaction) => {
       await transaction.competition.update({

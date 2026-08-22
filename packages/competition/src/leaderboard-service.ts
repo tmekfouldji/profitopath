@@ -287,6 +287,42 @@ export async function recomputeFrozenLeaderboard(
   });
 }
 
+export async function recomputeLeaderboardForAdmin(input: {
+  actorUserId: string;
+  asOf?: Date;
+  competitionId: string;
+  requestId: string;
+}): Promise<CanonicalLeaderboardResult> {
+  const competition = await database.competition.findUniqueOrThrow({
+    select: { status: true },
+    where: { id: input.competitionId },
+  });
+  const result =
+    competition.status === 'ACTIVE'
+      ? await recomputeLiveLeaderboard({
+          ...(input.asOf === undefined ? {} : { asOf: input.asOf }),
+          competitionId: input.competitionId,
+        })
+      : await recomputeFrozenLeaderboard(input.competitionId);
+  await database.auditEvent.create({
+    data: {
+      action: 'LEADERBOARD_RECOMPUTED',
+      actorUserId: input.actorUserId,
+      after: {
+        asOf: result.asOf,
+        policyVersion: result.policyVersion,
+        resultHash: hashLeaderboardResult(result),
+        standings: result.standings.length,
+      },
+      correlationId: `admin-leaderboard-recompute:${input.requestId}`,
+      entityId: input.competitionId,
+      entityType: 'Competition',
+      reason: 'Administrator requested authoritative leaderboard recompute',
+    },
+  });
+  return result;
+}
+
 export async function finalizeLeaderboard(input: {
   actorUserId?: string;
   competitionId: string;

@@ -68,7 +68,7 @@ export const competitionEntryTransitions: TransitionGraph<CompetitionEntryState>
     ACTIVE: ['COMPLETED', 'BREACHED', 'DISQUALIFIED', 'CANCELLED'],
     BREACHED: [],
     CANCELLED: [],
-    COMPLETED: [],
+    COMPLETED: ['DISQUALIFIED'],
     DISQUALIFIED: [],
     PENDING_PAYMENT: ['ACTIVE', 'CANCELLED'],
   };
@@ -77,7 +77,7 @@ export const tradingAccountTransitions: TransitionGraph<TradingAccountState> = {
   ACTIVE: ['BREACHED', 'DISQUALIFIED', 'COMPLETED', 'CLOSED'],
   BREACHED: ['CLOSED'],
   CLOSED: [],
-  COMPLETED: ['CLOSED'],
+  COMPLETED: ['DISQUALIFIED', 'CLOSED'],
   DISQUALIFIED: ['CLOSED'],
   PENDING: ['ACTIVE', 'CLOSED'],
 };

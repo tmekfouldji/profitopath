@@ -172,6 +172,18 @@ than fabricated. Cutoff score inputs, maximum observed drawdown, final-score tim
 and audit correlation are persisted. Final production rules may instead require a documented
 provider close/forced-liquidation policy; adopting one requires a new rules version.
 
+## D-020 — Administrative disqualification remains open until finalization
+
+Status: Accepted for development
+
+An authenticated active ADMIN may disqualify an active entry during trading or a completed entry
+during the frozen review window, but never after the leaderboard is finalized. The command
+serializes with competition lifecycle and simulator-account work, requires a retained reason,
+cancels accepted orders, transitions the entry/account together, and records actor-attributed
+audits. Frozen cutoff values remain unchanged for evidence; only their eligibility status changes
+to `DISQUALIFIED`, so recompute removes the entry without rewriting its score. This review control
+does not approve prizes or change prize amounts.
+
 ## Pending decisions
 
 - starting balance per tier

@@ -13,6 +13,7 @@
     "@fontsource/barlow-condensed": "5.3.0",
     "@fontsource/ibm-plex-mono": "5.3.0",
     "@next-auth/prisma-adapter": "1.0.7",
+    "@profitopath/competition": "workspace:*",
     "@profitopath/database": "workspace:*",
     "@profitopath/market-data": "workspace:*",
     "@profitopath/payments": "workspace:*",

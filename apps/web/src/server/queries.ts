@@ -64,6 +64,7 @@ export async function getAdminOverview() {
     pendingPayments,
     recentPayments,
     recentAudit,
+    managedCompetitions,
   ] = await Promise.all([
     database.user.count(),
     database.competition.count(),
@@ -85,11 +86,30 @@ export async function getAdminOverview() {
       orderBy: { createdAt: 'desc' },
       take: 8,
     }),
+    database.competition.findMany({
+      include: {
+        entries: {
+          include: {
+            tier: { select: { code: true } },
+            tradingAccount: { select: { status: true } },
+            user: {
+              select: { displayName: true, email: true, name: true },
+            },
+          },
+          orderBy: [{ tier: { entryFeeMinor: 'asc' } }, { createdAt: 'asc' }],
+        },
+        finalization: { select: { resultHash: true } },
+      },
+      orderBy: { tradingStartsAt: 'desc' },
+      take: 12,
+      where: { status: { not: 'ARCHIVED' } },
+    }),
   ]);
 
   return {
     activeAccounts,
     competitions,
+    managedCompetitions,
     pendingPayments,
     recentAudit,
     recentPayments,

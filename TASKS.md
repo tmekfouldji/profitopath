@@ -287,7 +287,7 @@ Rules:
   - Acceptance: recompute derives only from PostgreSQL account/snapshot/breach/entry state, is
     idempotent and tier-separated, produces a canonical result hash, supports true ties, and finalizes
     a frozen competition once without trusting cached/browser scores.
-- [ ] P7-006 Implement audited admin lifecycle, disqualification, recompute, and finalize controls.
+- [~] P7-006 Implement audited admin lifecycle, disqualification, recompute, and finalize controls.
   - Acceptance: ADMIN authorization is server-side; reasons are required for disqualification;
     invalid transitions/finalize timing fail closed; each mutation is audited and concurrency-safe;
     prize amounts/allocation are not changed or auto-approved.

@@ -30,6 +30,16 @@ export interface CompetitionLifecycleResult {
   frozenCompetitions: number;
 }
 
+export interface CompetitionLifecycleContext {
+  actorUserId?: string;
+}
+
+function auditActor(actorUserId: string | undefined): {
+  actorUserId?: string;
+} {
+  return actorUserId === undefined ? {} : { actorUserId };
+}
+
 function emptyResult(): CompetitionLifecycleResult {
   return {
     activatedCompetitions: 0,
@@ -138,6 +148,7 @@ async function cutoffSnapshots(
 async function activateCompetition(
   competitionId: string,
   now: Date,
+  actorUserId?: string,
 ): Promise<boolean> {
   return database.$transaction(async (transaction) => {
     await lockCompetition(transaction, competitionId);
@@ -163,6 +174,7 @@ async function activateCompetition(
     await transaction.auditEvent.create({
       data: {
         action: 'STATE_TRANSITIONED',
+        ...auditActor(actorUserId),
         after: { status: 'ACTIVE' },
         before: { status: competition.status },
         correlationId: `competition-activation:${competition.id}`,
@@ -179,6 +191,7 @@ async function activateCompetition(
 async function freezeCompetition(
   competitionId: string,
   now: Date,
+  actorUserId?: string,
 ): Promise<CompetitionLifecycleResult> {
   return database.$transaction(async (transaction) => {
     await lockCompetition(transaction, competitionId);
@@ -245,6 +258,7 @@ async function freezeCompetition(
         await transaction.auditEvent.create({
           data: {
             action: 'ORDER_EXPIRED_AT_COMPETITION_CUTOFF',
+            ...auditActor(actorUserId),
             after: { status: 'EXPIRED' },
             before: { status: order.status },
             correlationId,
@@ -298,6 +312,7 @@ async function freezeCompetition(
       await transaction.auditEvent.create({
         data: {
           action: 'LEADERBOARD_SCORE_INPUT_CAPTURED',
+          ...auditActor(actorUserId),
           after: {
             eligibilityStatus: eligibility,
             equityMinor: snapshot.equityMinor.toString(),
@@ -325,6 +340,7 @@ async function freezeCompetition(
         await transaction.auditEvent.create({
           data: {
             action: 'STATE_TRANSITIONED',
+            ...auditActor(actorUserId),
             after: { status: 'COMPLETED' },
             before: { status: account.status },
             correlationId,
@@ -353,6 +369,7 @@ async function freezeCompetition(
         await transaction.auditEvent.create({
           data: {
             action: 'STATE_TRANSITIONED',
+            ...auditActor(actorUserId),
             after: { status: 'COMPLETED' },
             before: { status: entry.status },
             correlationId,
@@ -379,6 +396,7 @@ async function freezeCompetition(
     await transaction.auditEvent.create({
       data: {
         action: 'STATE_TRANSITIONED',
+        ...auditActor(actorUserId),
         after: { status: 'FROZEN' },
         before: { status: competition.status },
         correlationId,
@@ -401,6 +419,7 @@ async function freezeCompetition(
 
 export async function processCompetitionLifecycle(
   now: Date = new Date(),
+  context: CompetitionLifecycleContext = {},
 ): Promise<CompetitionLifecycleResult> {
   if (Number.isNaN(now.getTime())) {
     throw new Error('Competition lifecycle time must be valid');
@@ -412,7 +431,7 @@ export async function processCompetitionLifecycle(
     where: { status: 'SCHEDULED', tradingStartsAt: { lte: now } },
   });
   for (const competition of scheduled) {
-    if (await activateCompetition(competition.id, now)) {
+    if (await activateCompetition(competition.id, now, context.actorUserId)) {
       result.activatedCompetitions += 1;
     }
   }
@@ -422,7 +441,11 @@ export async function processCompetitionLifecycle(
     where: { status: 'ACTIVE', tradingEndsAt: { lte: now } },
   });
   for (const competition of active) {
-    const frozen = await freezeCompetition(competition.id, now);
+    const frozen = await freezeCompetition(
+      competition.id,
+      now,
+      context.actorUserId,
+    );
     result.capturedScoreInputs += frozen.capturedScoreInputs;
     result.completedAccounts += frozen.completedAccounts;
     result.completedEntries += frozen.completedEntries;

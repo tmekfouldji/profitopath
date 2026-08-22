@@ -41,6 +41,14 @@ describe('domain state machines', () => {
     ).not.toThrow();
     expect(() =>
       assertStateTransition(
+        'CompetitionEntry',
+        competitionEntryTransitions,
+        'COMPLETED',
+        'DISQUALIFIED',
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertStateTransition(
         'Payment',
         paymentTransitions,
         'PENDING',
