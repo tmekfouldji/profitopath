@@ -283,9 +283,12 @@ export async function processVerifiedPaymentEvent(
 
   return database.$transaction(async (transaction) => {
     await transaction.$queryRaw`
-      SELECT pg_advisory_xact_lock(
-        hashtextextended(${`MOCK:${input.event.providerEventId}`}, 0)
-      )
+      SELECT 1 AS "locked"
+      FROM (
+        SELECT pg_advisory_xact_lock(
+          hashtextextended(${`MOCK:${input.event.providerEventId}`}, 0)
+        )
+      ) AS payment_event_lock
     `;
     const existingEvent = await transaction.paymentProviderEvent.findUnique({
       include: {
