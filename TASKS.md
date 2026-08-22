@@ -291,14 +291,14 @@ Rules:
   - Acceptance: ADMIN authorization is server-side; reasons are required for disqualification;
     invalid transitions/finalize timing fail closed; each mutation is audited and concurrency-safe;
     prize amounts/allocation are not changed or auto-approved.
-- [~] P7-007 Build public live/final tier leaderboards and archived competition views.
+- [x] P7-007 Build public live/final tier leaderboards and archived competition views.
   - Acceptance: visitors can view tier-separated eligible ranks and archives; final views use the
     immutable snapshot/hash; identities are display-safe; UTC status/as-of and development-policy
     labeling are explicit; useful empty/error states and true ties render correctly.
-- [~] P7-008 Add trader leaderboard position and competition-status integration.
+- [x] P7-008 Add trader leaderboard position and competition-status integration.
   - Acceptance: authenticated traders see their authoritative eligible/ineligible state, rank/tie,
     score, drawdown tie-break input, cutoff/finalized state, and archived result without client math.
-- [ ] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
+- [~] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
   - Acceptance: any worker can discover due competitions from PostgreSQL, overlapping runs serialize,
     failures retry safely, no server list is hard-coded, and cutoff/finalization work survives restart.
 - [ ] P7-010 Add the Phase 7 correctness, concurrency, API/action, and browser test matrix.

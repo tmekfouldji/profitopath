@@ -140,5 +140,9 @@
 - Added authenticated trader leaderboard summaries with authoritative eligibility/ineligibility,
   rank/tie, exact performance, maximum-observed-drawdown input, valuation time, competition state,
   and direct live/archive standings access without client-side score calculations.
+- Added horizontally safe worker competition cycles that discover work from PostgreSQL, process due
+  activation/cutoff, recompute active/frozen standings, isolate per-competition failures, retry after
+  restart, and optionally invoke the idempotent finalizer while keeping auto-finalization off by
+  default for administrative review.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

@@ -1,5 +1,11 @@
 import { createServer } from 'node:http';
 
+import {
+  finalizeLeaderboard,
+  processCompetitionLifecycle,
+  recomputeFrozenLeaderboard,
+  recomputeLiveLeaderboard,
+} from '@profitopath/competition';
 import { checkDatabase, database } from '@profitopath/database';
 import {
   LiveCandleProcessor,
@@ -22,6 +28,8 @@ import {
 } from '@profitopath/simulator';
 import { config } from 'dotenv';
 
+import { CompetitionJobRunner } from './competition-jobs';
+
 config({ path: '../../.env', quiet: true });
 
 const env = serviceEnvSchema.parse({
@@ -34,7 +42,70 @@ const valkey = createValkeyClient(env.VALKEY_URL, (error) => {
 });
 
 let mockCycleTimer: ReturnType<typeof setTimeout> | null = null;
+let competitionJobTimer: ReturnType<typeof setTimeout> | null = null;
 let shuttingDown = false;
+
+if (env.COMPETITION_JOBS_ENABLED) {
+  const competitionJobs = new CompetitionJobRunner({
+    autoFinalize: env.AUTO_FINALIZE_FROZEN_COMPETITIONS,
+    services: {
+      discover: async () => {
+        const competitions = await database.competition.findMany({
+          orderBy: [{ tradingEndsAt: 'asc' }, { id: 'asc' }],
+          select: { id: true, status: true },
+          where: { status: { in: ['ACTIVE', 'FROZEN'] } },
+        });
+        return competitions.map((competition) => ({
+          id: competition.id,
+          status:
+            competition.status === 'ACTIVE'
+              ? ('ACTIVE' as const)
+              : ('FROZEN' as const),
+        }));
+      },
+      finalize: (competitionId) => finalizeLeaderboard({ competitionId }),
+      processLifecycle: (now) => processCompetitionLifecycle(now),
+      recomputeFrozen: recomputeFrozenLeaderboard,
+      recomputeLive: recomputeLiveLeaderboard,
+    },
+  });
+  const runCompetitionJobs = async () => {
+    try {
+      const result = await competitionJobs.runOnce();
+      const log = result.failures.length === 0 ? logger.info : logger.error;
+      log.call(
+        logger,
+        {
+          activeRecomputed: result.activeRecomputed,
+          failures: result.failures,
+          finalized: result.finalized,
+          frozenRecomputed: result.frozenRecomputed,
+          lifecycle: result.lifecycle,
+          skippedOverlap: result.skippedOverlap,
+        },
+        'Competition job cycle completed',
+      );
+    } catch (error: unknown) {
+      logger.error({ error }, 'Competition job cycle failed and will retry');
+    } finally {
+      if (!shuttingDown) {
+        competitionJobTimer = setTimeout(
+          () => void runCompetitionJobs(),
+          env.COMPETITION_JOB_INTERVAL_MS,
+        );
+      }
+    }
+  };
+  logger.info(
+    {
+      autoFinalize: env.AUTO_FINALIZE_FROZEN_COMPETITIONS,
+      intervalMs: env.COMPETITION_JOB_INTERVAL_MS,
+    },
+    'PostgreSQL competition jobs enabled',
+  );
+  void runCompetitionJobs();
+}
+
 if (env.MOCK_MARKET_DATA_ENABLED) {
   const candleProcessor = new LiveCandleProcessor(valkey);
   const quotePublisher = new ValkeyQuoteStore(valkey);
@@ -117,6 +188,9 @@ async function shutdown(signal: string): Promise<void> {
   server.close();
   if (mockCycleTimer !== null) {
     clearTimeout(mockCycleTimer);
+  }
+  if (competitionJobTimer !== null) {
+    clearTimeout(competitionJobTimer);
   }
   valkey.disconnect();
   await database.$disconnect();

@@ -142,6 +142,13 @@ chart-range loading. Set `MOCK_MARKET_DATA_ENABLED=true` while running the devel
 publish mock live quotes; the ticket pauses when the server quote is missing or stale. No browser
 calls a market-data provider, and no real provider is configured.
 
+Phase 7 enables PostgreSQL-discovered competition jobs in every worker by default. Configure the
+poll cadence with `COMPETITION_JOB_INTERVAL_MS`; overlapping lifecycle/cutoff/finalization work is
+serialized by transaction advisory locks and retried on the next cycle after failure. Automatic
+frozen-result finalization is implemented but `AUTO_FINALIZE_FROZEN_COMPETITIONS=false` remains the
+safe default until the administrative review-window duration is approved. Live and frozen
+leaderboard recomputes still run with that default.
+
 Run the complete local quality gate with:
 
 ```bash

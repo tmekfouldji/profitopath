@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@profitopath/competition": "workspace:*",
     "@profitopath/database": "workspace:*",
     "@profitopath/market-data": "workspace:*",
     "@profitopath/shared": "workspace:*",

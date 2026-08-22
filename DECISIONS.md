@@ -184,6 +184,19 @@ audits. Frozen cutoff values remain unchanged for evidence; only their eligibili
 to `DISQUALIFIED`, so recompute removes the entry without rewriting its score. This review control
 does not approve prizes or change prize amounts.
 
+## D-021 — Worker finalization is available but opt-in during development
+
+Status: Accepted for development
+
+Every worker discovers scheduled, active, and frozen competition work from PostgreSQL on a
+configurable interval; no replica list or local job ledger is authoritative. Existing competition
+and simulator advisory locks serialize overlapping replicas, while self-scheduling after completion
+prevents local overlap and makes failures retry on the next cycle. Live/frozen recompute runs by
+default. Automatic frozen-result finalization is implemented behind
+`AUTO_FINALIZE_FROZEN_COMPETITIONS` but defaults to false because no review-window duration has been
+approved; administrators can finalize idempotently in the meantime. Enabling the flag does not
+change ranking or prize economics.
+
 ## Pending decisions
 
 - starting balance per tier

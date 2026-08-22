@@ -15,6 +15,9 @@ describe('parseRuntimeEnv', () => {
 
     expect(parsed.NODE_ENV).toBe('development');
     expect(parsed.BUSINESS_TIMEZONE).toBe('UTC');
+    expect(parsed.COMPETITION_JOBS_ENABLED).toBe(true);
+    expect(parsed.COMPETITION_JOB_INTERVAL_MS).toBe(15_000);
+    expect(parsed.AUTO_FINALIZE_FROZEN_COMPETITIONS).toBe(false);
     expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
   });
 

@@ -8,7 +8,15 @@ const booleanString = z
   .transform((value) => value === 'true');
 
 export const runtimeEnvSchema = z.object({
+  AUTO_FINALIZE_FROZEN_COMPETITIONS: booleanString,
   BUSINESS_TIMEZONE: z.string().min(1).default('UTC'),
+  COMPETITION_JOB_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(300_000)
+    .default(15_000),
+  COMPETITION_JOBS_ENABLED: booleanString.default(true),
   DATABASE_URL: z.string().url().startsWith('postgresql://'),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
