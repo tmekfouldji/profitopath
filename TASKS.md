@@ -86,6 +86,36 @@ Rules:
   - GitHub Actions run `32548247855` passed migration deployment, seed, Compose validation, all 20
     tests, and production build with PostgreSQL/Valkey services.
 
-## Active — Phase 3 (not started)
+## Active — Phase 3
 
-- [ ] P3-001 Expand mock-payment and entry-provisioning work into concrete acceptance-tested tasks.
+- [x] P3-001 Expand mock-payment and entry-provisioning work into concrete acceptance-tested tasks.
+  - Acceptance: Phase 3 has stable task IDs covering provider behavior, persistence, idempotent
+    provisioning, authenticated checkout UI, operator visibility, integration coverage, and the
+    quality gate without authorizing a real provider.
+- [x] P3-002 Implement the deterministic `MockPaymentProvider` behind the provider-neutral contract.
+  - Acceptance: checkout creation is idempotent, mock callbacks are verifiable, provider payment
+    lookup is supported, and unit tests cover confirmed/failed/expired states and invalid callbacks.
+- [x] P3-003 Add durable payment-event receipt persistence and a forward-only migration.
+  - Acceptance: provider event IDs are unique per provider, receipts retain the normalized event
+    status and payment relation, Prisma validation/generation passes, and no production provider is
+    added.
+- [x] P3-004 Implement idempotent mock-checkout creation for an eligible user/competition/tier.
+  - Acceptance: the server validates user, competition, signup window, active tier, amount, and
+    currency; retries reuse the same payment/entry; and checkout state is persisted and audited.
+- [x] P3-005 Implement atomic confirmed-payment entry/account provisioning.
+  - Acceptance: one verified event transactionally confirms the payment, activates its entry,
+    creates one active simulated account and initial-balance ledger record, and writes correlated
+    audits; duplicate delivery changes nothing and terminal payment transitions cannot regress.
+- [x] P3-006 Add authenticated mock-checkout and post-payment trader flows.
+  - Acceptance: a signed-in trader can select a tier, review the fictitious-capital terms, complete
+    mock payment, and reach the dashboard account; ownership and server-side mutation boundaries are
+    enforced, and unauthenticated users are sent through login.
+- [x] P3-007 Add admin payment/provisioning visibility.
+  - Acceptance: the existing protected admin shell shows recent persisted payments and their entry /
+    account provisioning state without exposing provider secrets.
+- [x] P3-008 Add unit and PostgreSQL integration coverage for checkout and provisioning.
+  - Acceptance: tests cover checkout retries, mismatched amounts, duplicate events, exact starting
+    balances, initial ledger idempotency, transition rejection, ownership, and rollback-safe audits.
+- [~] P3-009 Pass the Phase 3 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, tests, production build,
+    and applicable UI checks pass; exact local/CI limitations and the Phase 4 next task are recorded.

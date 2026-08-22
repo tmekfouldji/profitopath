@@ -9,6 +9,7 @@ export const runtimeEnvSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
+  MOCK_PAYMENT_SIGNING_SECRET: z.string().min(32),
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),

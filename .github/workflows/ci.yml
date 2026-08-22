@@ -20,6 +20,7 @@ jobs:
       DEV_TRADER_STARTING_BALANCE_MINOR: 2000000
       LOG_LEVEL: silent
       NODE_ENV: test
+      MOCK_PAYMENT_SIGNING_SECRET: ci-only-mock-payment-secret-with-at-least-thirty-two-characters
       NEXTAUTH_SECRET: ci-only-auth-secret-with-at-least-thirty-two-characters
       NEXTAUTH_URL: http://localhost:3000
       RUN_DATABASE_TESTS: 'true'

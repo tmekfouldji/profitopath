@@ -633,6 +633,80 @@ a {
   margin-top: 1.7rem;
 }
 
+.checkout-page {
+  min-height: 42rem;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 1px;
+  margin-top: 2rem;
+  background: var(--line);
+}
+
+.checkout-summary,
+.checkout-confirmation {
+  padding: clamp(1.6rem, 4vw, 3.5rem);
+  background: var(--panel);
+}
+
+.checkout-summary h2,
+.checkout-confirmation h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 600;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.checkout-summary > p,
+.checkout-confirmation > p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.checkout-summary dl {
+  margin: 2rem 0 0;
+}
+
+.checkout-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.checkout-summary dt {
+  color: var(--muted);
+}
+
+.checkout-summary dd {
+  margin: 0;
+  color: var(--aqua);
+  font-family: var(--data);
+}
+
+.checkout-confirmation .button {
+  width: 100%;
+  margin-top: 1.4rem;
+}
+
+.notice-banner {
+  margin: 0 0 2rem;
+  padding: 1rem 1.2rem;
+  border-left: 3px solid var(--aqua);
+  background: var(--aqua-deep);
+  color: var(--fog);
+}
+
+.notice-error {
+  border-left-color: var(--coral);
+  background: rgb(255 128 101 / 10%);
+}
+
 .auth-page {
   display: grid;
   flex: 1;
@@ -882,6 +956,30 @@ a {
   border-top: 1px solid var(--line);
 }
 
+.payment-list {
+  border-top: 1px solid var(--line);
+}
+
+.payment-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.5fr 0.7fr 0.9fr 1fr;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-family: var(--data);
+  font-size: 0.68rem;
+}
+
+.payment-row strong {
+  color: var(--fog);
+  font-weight: 400;
+}
+
+.payment-row code {
+  color: var(--aqua);
+}
+
 .audit-row {
   display: grid;
   grid-template-columns: 15rem 1fr 10rem 8rem;
@@ -908,6 +1006,7 @@ a {
 
 @media (max-width: 960px) {
   .hero-grid,
+  .checkout-grid,
   .split-heading,
   .week-panel {
     grid-template-columns: 1fr;
@@ -935,6 +1034,10 @@ a {
   }
 
   .audit-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .payment-row {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1022,6 +1125,10 @@ a {
   }
 
   .audit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-row {
     grid-template-columns: 1fr;
   }
 }

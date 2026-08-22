@@ -122,6 +122,10 @@ competition. Starting balances come from the `DEV_*_STARTING_BALANCE_MINOR` envi
 and are explicitly development defaults, not approved production rules. Authentication requires
 the local-only `NEXTAUTH_URL` and `NEXTAUTH_SECRET` values copied from `.env.example`.
 
+Phase 3 uses only the local `MockPaymentProvider`. Its callback signatures use the separate
+`MOCK_PAYMENT_SIGNING_SECRET` from `.env.example`; the in-app confirmation screen never charges a
+real payment method and provisions fictitious competition capital only.
+
 Run the complete local quality gate with:
 
 ```bash

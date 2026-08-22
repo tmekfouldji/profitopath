@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { database } from '@profitopath/database';
+import { getOwnedMockPayment as findOwnedMockPayment } from '@profitopath/payments';
 
 export function listCompetitions() {
   return database.competition.findMany({
@@ -51,20 +52,47 @@ export function getOwnedAccount(accountId: string, userId: string) {
   });
 }
 
-export async function getAdminOverview() {
-  const [users, competitions, activeAccounts, pendingPayments, recentAudit] =
-    await Promise.all([
-      database.user.count(),
-      database.competition.count(),
-      database.tradingAccount.count({ where: { status: 'ACTIVE' } }),
-      database.payment.count({
-        where: { status: { in: ['CREATED', 'PENDING'] } },
-      }),
-      database.auditEvent.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 8,
-      }),
-    ]);
+export function getOwnedMockPayment(providerPaymentId: string, userId: string) {
+  return findOwnedMockPayment(providerPaymentId, userId);
+}
 
-  return { activeAccounts, competitions, pendingPayments, recentAudit, users };
+export async function getAdminOverview() {
+  const [
+    users,
+    competitions,
+    activeAccounts,
+    pendingPayments,
+    recentPayments,
+    recentAudit,
+  ] = await Promise.all([
+    database.user.count(),
+    database.competition.count(),
+    database.tradingAccount.count({ where: { status: 'ACTIVE' } }),
+    database.payment.count({
+      where: { status: { in: ['CREATED', 'PENDING'] } },
+    }),
+    database.payment.findMany({
+      include: {
+        competitionEntry: {
+          include: { tier: true, tradingAccount: true },
+        },
+        user: { select: { email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+    }),
+    database.auditEvent.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+    }),
+  ]);
+
+  return {
+    activeAccounts,
+    competitions,
+    pendingPayments,
+    recentAudit,
+    recentPayments,
+    users,
+  };
 }

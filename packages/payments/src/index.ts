@@ -15,6 +15,8 @@ export interface CheckoutSession {
 }
 
 export interface PaymentEvent {
+  amountMinor: number;
+  currency: 'USD';
   providerEventId: string;
   providerPaymentId: string;
   status: PaymentProviderStatus;
@@ -30,3 +32,6 @@ export interface PaymentProvider {
   getPayment(providerPaymentId: string): Promise<PaymentEvent>;
   verifyCallback(input: VerifyCallbackInput): Promise<PaymentEvent>;
 }
+
+export * from './mock-provider';
+export * from './payment-service';

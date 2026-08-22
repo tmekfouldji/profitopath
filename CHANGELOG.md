@@ -43,6 +43,20 @@
 - Verified the Auth migration, deterministic seed, all 20 tests, and production build against
   PostgreSQL/Valkey service containers in GitHub Actions.
 
+### Mock payments and entry provisioning
+
+- Added a deterministic, signed `MockPaymentProvider` with idempotent checkout creation, callback
+  verification, payment lookup, and isolated signing configuration.
+- Added durable provider-event receipts, checkout expiry/URL persistence, provider-scoped event
+  uniqueness, normalized payload hashes, and a forward-only Prisma migration.
+- Added exact-amount, transactionally audited payment processing that activates one competition
+  entry, provisions one simulated trading account, and writes one initial-balance ledger record.
+- Added authenticated mock checkout, dashboard completion feedback, and protected admin payment /
+  provisioning visibility without integrating a real payment provider.
+- Added unit and PostgreSQL integration coverage for eligibility, checkout retries, ownership,
+  amount validation, concurrent duplicate delivery, exact account balance, ledger idempotency, and
+  rollback on invalid terminal transitions.
+
 ### Market-data architecture
 
 - Adopted `10_MARKET_DATA_CACHING_AND_CANDLES.md` as the future backend-owned candle/cache design,

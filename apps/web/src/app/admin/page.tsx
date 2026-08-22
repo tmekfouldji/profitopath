@@ -14,8 +14,8 @@ export default async function AdminPage() {
           <h1>Control room</h1>
         </div>
         <p>
-          Read-only Phase 2 visibility into persisted platform state and recent
-          audit events.
+          Read-only visibility into persisted platform state, payment attempts,
+          provisioning, and recent audit events.
         </p>
       </header>
       <section className="metric-grid">
@@ -35,6 +35,36 @@ export default async function AdminPage() {
           <span>Pending payments</span>
           <strong>{overview.pendingPayments}</strong>
         </article>
+      </section>
+      <section className="audit-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Mock provider operations</p>
+            <h2>Recent payments</h2>
+          </div>
+        </div>
+        {overview.recentPayments.length === 0 ? (
+          <p className="empty-copy">No payment attempts have been recorded.</p>
+        ) : (
+          <div className="payment-list">
+            {overview.recentPayments.map((payment) => (
+              <div className="payment-row" key={payment.id}>
+                <span>{payment.user.email}</span>
+                <strong>{payment.competitionEntry?.tier.code ?? '—'}</strong>
+                <span>{statusLabel(payment.status)}</span>
+                <span>
+                  {payment.competitionEntry?.tradingAccount === null ||
+                  payment.competitionEntry === null
+                    ? 'Not provisioned'
+                    : 'Account active'}
+                </span>
+                <code>
+                  {payment.providerPaymentId?.slice(0, 18) ?? 'reserved'}
+                </code>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
       <section className="audit-panel">
         <div className="section-heading">

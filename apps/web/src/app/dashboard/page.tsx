@@ -5,9 +5,16 @@ import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { requireUser } from '@/server/auth/session';
 import { getTraderDashboard } from '@/server/queries';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const user = await requireUser('/dashboard');
-  const entries = await getTraderDashboard(user.id);
+  const [entries, params] = await Promise.all([
+    getTraderDashboard(user.id),
+    searchParams,
+  ]);
 
   return (
     <main className="content-page">
@@ -22,13 +29,19 @@ export default async function DashboardPage() {
         </p>
       </header>
 
+      {params.notice === 'mock-payment-confirmed' ? (
+        <p className="notice-banner" role="status">
+          Mock payment confirmed. Your simulated account was provisioned from
+          the authoritative ledger.
+        </p>
+      ) : null}
+
       {entries.length === 0 ? (
         <section className="empty-state dashboard-empty">
           <span className="data-label">No active ledger</span>
           <h2>Your first competition account starts with a valid entry.</h2>
           <p>
-            Browse the weekly schedule now. Mock checkout and provisioning
-            arrive in Phase 3.
+            Select a tier and complete the local mock checkout to provision one.
           </p>
           <Link className="button button-primary" href="/competitions">
             View competition board

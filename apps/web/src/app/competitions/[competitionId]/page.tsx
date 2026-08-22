@@ -5,12 +5,16 @@ import { WeekTape } from '@/components/week-tape';
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { getCompetition } from '@/server/queries';
 
+import { startMockCheckout } from './actions';
+
 export default async function CompetitionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ competitionId: string }>;
+  searchParams: Promise<{ notice?: string }>;
 }) {
-  const { competitionId } = await params;
+  const [{ competitionId }, query] = await Promise.all([params, searchParams]);
   const { competition, tiers } = await getCompetition(competitionId);
   if (competition === null) {
     notFound();
@@ -38,6 +42,13 @@ export default async function CompetitionPage({
           <strong>{competition._count.entries}</strong>
         </div>
       </header>
+
+      {query.notice === 'checkout-unavailable' ? (
+        <p className="notice-banner notice-error" role="alert">
+          This checkout is no longer available. Refresh the competition state or
+          choose another open tier.
+        </p>
+      ) : null}
 
       <section className="week-panel">
         <div>
@@ -84,9 +95,24 @@ export default async function CompetitionPage({
                   <dd>{formatUsdMinor(tier.startingBalanceMinor)}</dd>
                 </div>
               </dl>
-              <button className="button button-disabled" disabled type="button">
-                Checkout arrives in Phase 3
-              </button>
+              <form action={startMockCheckout}>
+                <input
+                  name="competitionId"
+                  type="hidden"
+                  value={competition.id}
+                />
+                <input name="tierId" type="hidden" value={tier.id} />
+                <button
+                  className="button button-primary"
+                  disabled={
+                    competition.status !== 'SCHEDULED' ||
+                    new Date() >= competition.signupClosesAt
+                  }
+                  type="submit"
+                >
+                  Start mock checkout
+                </button>
+              </form>
             </article>
           ))}
         </div>

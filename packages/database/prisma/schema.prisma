@@ -447,13 +447,31 @@ model Payment {
   amountMinor       Int
   currency          String          @default("USD") @db.Char(3)
   metadata          Json?
+  checkoutUrl       String?         @db.Text
+  expiresAt         DateTime?       @db.Timestamptz(3)
   confirmedAt       DateTime?       @db.Timestamptz(3)
   createdAt         DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
   user              User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   competitionEntry  CompetitionEntry? @relation(fields: [competitionEntryId], references: [id], onDelete: Restrict)
+  providerEvents    PaymentProviderEvent[]
 
   @@index([userId, status])
+}
+
+model PaymentProviderEvent {
+  id                String          @id @default(uuid()) @db.Uuid
+  paymentId         String          @db.Uuid
+  provider          PaymentProvider
+  providerEventId   String          @db.VarChar(128)
+  providerPaymentId String          @db.VarChar(128)
+  status            PaymentStatus
+  payloadHash       String          @db.Char(64)
+  receivedAt        DateTime        @default(now()) @db.Timestamptz(3)
+  payment           Payment         @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerEventId])
+  @@index([paymentId, receivedAt])
 }
 
 model Prize {

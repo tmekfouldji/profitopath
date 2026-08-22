@@ -93,6 +93,17 @@ identical missing-range requests must be deduplicated. Prefer deterministic aggr
 finalized one-minute candles where provider terms and data quality permit. This decision does not
 authorize a real provider integration before Phase 9 and commercial approval.
 
+## D-014 — Durable, serialized payment-event provisioning
+
+Status: Accepted
+
+Verified payment events are retained as immutable provider-event receipts with a provider-scoped
+unique event ID and normalized payload hash. Processing serializes identical events with a
+PostgreSQL transaction advisory lock. A valid exact-amount confirmation activates the competition
+entry, creates its single active simulated trading account, writes the idempotent initial-balance
+ledger entry, and records correlated audits in one database transaction. This applies to the mock
+provider now and establishes the boundary for later providers; it does not authorize NOWPayments.
+
 ## Pending decisions
 
 - starting balance per tier
