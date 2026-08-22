@@ -137,5 +137,8 @@
 - Added public tier-separated live, cutoff-review, final, and archived leaderboard routes with
   display-safe identities, explicit UTC/policy/rules provenance, true-tie labels, resilient empty
   states, and immutable final-result hash disclosure.
+- Added authenticated trader leaderboard summaries with authoritative eligibility/ineligibility,
+  rank/tie, exact performance, maximum-observed-drawdown input, valuation time, competition state,
+  and direct live/archive standings access without client-side score calculations.
 
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

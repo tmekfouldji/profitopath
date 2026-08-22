@@ -4,6 +4,19 @@ import Link from 'next/link';
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { requireUser } from '@/server/auth/session';
 import { getTraderDashboard } from '@/server/queries';
+import { getTraderLeaderboardSummaries } from '@/server/trader-leaderboards';
+
+function leaderboardAsOf(value: Date | null): string {
+  if (value === null) return 'Awaiting valuation';
+  return `${new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(value)} UTC`;
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -11,8 +24,9 @@ export default async function DashboardPage({
   searchParams: Promise<{ notice?: string }>;
 }) {
   const user = await requireUser('/dashboard');
-  const [entries, params] = await Promise.all([
+  const [entries, leaderboardSummaries, params] = await Promise.all([
     getTraderDashboard(user.id),
+    getTraderLeaderboardSummaries(user.id),
     searchParams,
   ]);
 
@@ -49,45 +63,102 @@ export default async function DashboardPage({
         </section>
       ) : (
         <section className="account-grid">
-          {entries.map((entry) => (
-            <article className="account-card" key={entry.id}>
-              <div className="card-topline">
-                <span className="data-label">{entry.tier.code}</span>
-                <span
-                  className={`status-pill status-${entry.status.toLowerCase()}`}
-                >
-                  {statusLabel(entry.status)}
-                </span>
-              </div>
-              <h2>{entry.competition.name}</h2>
-              <p>
-                {formatCompetitionWindow(
-                  entry.competition.tradingStartsAt,
-                  entry.competition.tradingEndsAt,
-                )}
-              </p>
-              {entry.tradingAccount === null ? (
-                <div className="account-pending">
-                  Account provisioning pending
-                </div>
-              ) : (
-                <>
-                  <div className="balance-block">
-                    <span>Balance</span>
-                    <strong>
-                      {formatUsdMinor(entry.tradingAccount.balanceMinor)}
-                    </strong>
-                  </div>
-                  <Link
-                    className="button button-secondary"
-                    href={`/terminal/${entry.tradingAccount.id}`}
+          {entries.map((entry) => {
+            const leaderboard = leaderboardSummaries.get(entry.id);
+            return (
+              <article className="account-card" key={entry.id}>
+                <div className="card-topline">
+                  <span className="data-label">{entry.tier.code}</span>
+                  <span
+                    className={`status-pill status-${entry.status.toLowerCase()}`}
                   >
-                    Open terminal shell
-                  </Link>
-                </>
-              )}
-            </article>
-          ))}
+                    {statusLabel(entry.status)}
+                  </span>
+                </div>
+                <h2>{entry.competition.name}</h2>
+                <p>
+                  {formatCompetitionWindow(
+                    entry.competition.tradingStartsAt,
+                    entry.competition.tradingEndsAt,
+                  )}
+                </p>
+                {entry.tradingAccount === null ? (
+                  <div className="account-pending">
+                    Account provisioning pending
+                  </div>
+                ) : (
+                  <>
+                    <div className="balance-block">
+                      <span>Balance</span>
+                      <strong>
+                        {formatUsdMinor(entry.tradingAccount.balanceMinor)}
+                      </strong>
+                    </div>
+                    <Link
+                      className="button button-secondary"
+                      href={`/terminal/${entry.tradingAccount.id}`}
+                    >
+                      Open terminal shell
+                    </Link>
+                  </>
+                )}
+                {leaderboard === undefined ? null : (
+                  <div className="trader-leaderboard-summary">
+                    <div className="trader-rank-line">
+                      <span>
+                        {leaderboard.eligible
+                          ? leaderboard.rank === null
+                            ? 'Eligible · rank pending'
+                            : leaderboard.isTied
+                              ? `Tied rank ${leaderboard.rank}`
+                              : `Rank ${leaderboard.rank}`
+                          : statusLabel(leaderboard.eligibility)}
+                      </span>
+                      <strong>
+                        {leaderboard.rank === null
+                          ? '—'
+                          : `${leaderboard.isTied ? 'T' : '#'}${leaderboard.rank}`}
+                      </strong>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Performance</dt>
+                        <dd>
+                          {leaderboard.netPerformanceMinor === null
+                            ? '—'
+                            : formatUsdMinor(leaderboard.netPerformanceMinor)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Max drawdown</dt>
+                        <dd>
+                          {leaderboard.maxObservedDrawdownMinor === null
+                            ? '—'
+                            : formatUsdMinor(
+                                leaderboard.maxObservedDrawdownMinor,
+                              )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>As of</dt>
+                        <dd>{leaderboardAsOf(leaderboard.asOf)}</dd>
+                      </div>
+                    </dl>
+                    {['ACTIVE', 'FROZEN', 'FINALIZED', 'ARCHIVED'].includes(
+                      leaderboard.competitionStatus,
+                    ) ? (
+                      <Link
+                        className="trader-leaderboard-link"
+                        href={`/leaderboards/${leaderboard.competitionId}`}
+                      >
+                        View tier standings ↗
+                      </Link>
+                    ) : null}
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </section>
       )}
     </main>

@@ -1869,6 +1869,70 @@ a {
   color: var(--muted);
 }
 
+.trader-leaderboard-summary {
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+
+.trader-rank-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.trader-rank-line span {
+  color: var(--aqua);
+  font-family: var(--data);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.trader-rank-line strong {
+  color: var(--aqua);
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.trader-leaderboard-summary dl {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1rem 0;
+}
+
+.trader-leaderboard-summary dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.trader-leaderboard-summary dt {
+  color: var(--muted);
+  font-family: var(--data);
+  font-size: 0.56rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.trader-leaderboard-summary dd {
+  margin: 0;
+  color: var(--fog);
+  font-family: var(--data);
+  font-size: 0.64rem;
+  text-align: right;
+}
+
+.trader-leaderboard-link {
+  color: var(--aqua);
+  font-family: var(--data);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+
 .admin-heading-copy {
   display: flex;
   align-items: flex-start;

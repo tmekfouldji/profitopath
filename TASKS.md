@@ -295,7 +295,7 @@ Rules:
   - Acceptance: visitors can view tier-separated eligible ranks and archives; final views use the
     immutable snapshot/hash; identities are display-safe; UTC status/as-of and development-policy
     labeling are explicit; useful empty/error states and true ties render correctly.
-- [ ] P7-008 Add trader leaderboard position and competition-status integration.
+- [~] P7-008 Add trader leaderboard position and competition-status integration.
   - Acceptance: authenticated traders see their authoritative eligible/ineligible state, rank/tie,
     score, drawdown tie-break input, cutoff/finalized state, and archived result without client math.
 - [ ] P7-009 Run lifecycle/recompute jobs in the worker with restart-safe idempotency.
