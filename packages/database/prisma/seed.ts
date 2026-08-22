@@ -1,10 +1,17 @@
 import { parseSeedEnv } from '@profitopath/shared';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'node:url';
 
 import { database } from '../src/client';
 import { createDevelopmentCandleSeeds } from './candle-seeds';
 import { createDevelopmentCompetitionSeed } from './competition-seed';
 import { createDevelopmentInstrumentSeeds } from './instrument-seeds';
 import { createTierSeeds } from './tier-seeds';
+
+config({
+  path: fileURLToPath(new URL('../../../.env', import.meta.url)),
+  quiet: true,
+});
 
 async function seed(): Promise<void> {
   const tiers = createTierSeeds(parseSeedEnv());

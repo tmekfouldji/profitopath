@@ -17,9 +17,10 @@ This file is the authoritative high-level state for Codex.
 
 ## Active milestone
 
-Phase 0 through Phase 8 are complete. Phase 9 cannot start until the user selects a market-data
-provider, supplies its official API documentation, and confirms commercial rights for customer-facing
-chart display and simulated execution. Mock market data remains active; no real provider is authorized.
+Phase 0 through Phase 8 are complete. TraderMade is the preferred provider candidate and a commercial
+inquiry is pending, but Phase 9 cannot start until the vendor supplies official API documentation and
+confirms commercial rights for customer-facing chart display, caching/fanout, and simulated execution.
+Mock market data remains active; no real provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -157,7 +158,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-P8-010 — Phase 8 quality gate, persistent project memory, and handoff.
+M-001 — exact local seed/health documentation and complete mock-stack verification.
 
 ## Next task
 
@@ -170,11 +171,10 @@ execution rights. This task is blocked pending user/vendor input; do not invent 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 91 tests passed locally; 36 PostgreSQL integration tests skipped locally
+- `RUN_DATABASE_TESTS=true pnpm test`: all 127 tests passed locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
-- service-backed tests were not run locally because this workstation has no
-  Docker/PostgreSQL runtime
+- all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 
@@ -182,7 +182,7 @@ execution rights. This task is blocked pending user/vendor input; do not invent 
 
 - starting simulated balance per tier is not finally approved
 - exact drawdown semantics not finally approved
-- market-data vendor not selected
+- TraderMade commercial response pending; the candidate is not approved or integrated
 - official provider API documentation and commercial-use/redistribution approval not supplied
 - NOWPayments merchant acceptance not completed
 - SVG legal opinion not completed

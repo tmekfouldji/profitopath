@@ -356,6 +356,17 @@ Rules:
     browser checks, and service-backed CI pass; the exact Phase 9 gate and prohibited early provider
     work are recorded.
 
+## Maintenance — Local runtime verification
+
+- [x] M-001 Make the documented local seed and health-check workflow exact, then verify the complete
+      mock-backed stack locally.
+  - Acceptance: `pnpm db:seed` loads the repository-root development environment without manual shell
+    exports; README health URLs match the implemented web/realtime/worker routes; PostgreSQL/Valkey
+    readiness, all 127 tests, formatter, typecheck, lint, and build pass without starting Phase 9.
+  - Homebrew PostgreSQL 17 and Valkey readiness passed; all eight migrations and the idempotent seed
+    ran locally; formatter, Prisma validation/generation, typecheck, lint, all 127 tests, and the
+    production build passed.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

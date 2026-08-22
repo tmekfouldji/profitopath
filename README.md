@@ -104,8 +104,9 @@ Local services:
 - PostgreSQL: `localhost:5432`
 - Valkey: `localhost:6379`
 
-Each application exposes `/health/live` for process liveness and `/health/ready` for
-PostgreSQL/Valkey readiness. Stop local dependencies with `docker compose down`.
+The web application exposes `/api/health/live` for process liveness and `/api/health/ready` for
+PostgreSQL/Valkey readiness. The realtime and worker services expose `/health/live` and
+`/health/ready`. Stop local dependencies with `docker compose down`.
 
 Database commands:
 

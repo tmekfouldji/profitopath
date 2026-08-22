@@ -16,6 +16,9 @@
 - Added local PostgreSQL/Valkey Compose services, deployable Dockerfiles, typed configuration,
   structured logging, liveness/readiness probes, and GitHub Actions CI.
 - Added exact local development, migration, seed, test, build, and container commands.
+- Made the standalone seed load the repository-root development environment automatically, corrected
+  the web/realtime/worker health-route documentation, and verified all 127 tests against local
+  PostgreSQL 17 and Valkey services.
 
 ### Database and domain
 
