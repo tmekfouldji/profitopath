@@ -72,6 +72,7 @@ Codex must treat the project-tracking files in the repository as persistent memo
 - `DECISIONS.md`
 - `SESSION_HANDOFF.md`
 - `CHANGELOG.md`
+- `10_MARKET_DATA_CACHING_AND_CANDLES.md` for market-data/charting work
 
 Read them at the start of every session and update them before ending any substantial session.
 
@@ -116,9 +117,10 @@ pnpm db:migrate:deploy
 pnpm db:seed
 ```
 
-The seed is idempotent. Starting balances come from the `DEV_*_STARTING_BALANCE_MINOR`
-environment variables and are explicitly development defaults, not approved production
-rules.
+The seed is idempotent. It creates the three development tiers and schedules the next UTC Monday
+competition. Starting balances come from the `DEV_*_STARTING_BALANCE_MINOR` environment variables
+and are explicitly development defaults, not approved production rules. Authentication requires
+the local-only `NEXTAUTH_URL` and `NEXTAUTH_SECRET` values copied from `.env.example`.
 
 Run the complete local quality gate with:
 

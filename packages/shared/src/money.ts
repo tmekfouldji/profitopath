@@ -22,3 +22,14 @@ export function multiplyDecimal(
 ): Decimal {
   return decimal(left).mul(right);
 }
+
+export function formatUsdMinor(value: bigint | number): string {
+  const units = typeof value === 'bigint' ? value : BigInt(value);
+  const negative = units < 0n;
+  const absolute = negative ? -units : units;
+  const whole = (absolute / 100n)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const cents = (absolute % 100n).toString().padStart(2, '0');
+  return `${negative ? '-' : ''}$${whole}.${cents}`;
+}

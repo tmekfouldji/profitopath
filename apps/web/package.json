@@ -9,11 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource-variable/instrument-sans": "5.3.0",
+    "@next-auth/prisma-adapter": "1.0.7",
     "@profitopath/database": "workspace:*",
     "@profitopath/shared": "workspace:*",
     "@profitopath/ui": "workspace:*",
     "dotenv": "17.3.1",
     "next": "15.5.23",
+    "next-auth": "4.24.15",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

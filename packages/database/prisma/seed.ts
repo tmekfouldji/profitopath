@@ -1,6 +1,7 @@
 import { parseSeedEnv } from '@profitopath/shared';
 
 import { database } from '../src/client';
+import { createDevelopmentCompetitionSeed } from './competition-seed';
 import { createTierSeeds } from './tier-seeds';
 
 async function seed(): Promise<void> {
@@ -24,6 +25,21 @@ async function seed(): Promise<void> {
       }),
     ),
   );
+
+  const competition = createDevelopmentCompetitionSeed(new Date());
+  await database.competition.upsert({
+    create: competition,
+    update: {
+      name: competition.name,
+      rulesVersion: competition.rulesVersion,
+      signupClosesAt: competition.signupClosesAt,
+      status: competition.status,
+      timezone: competition.timezone,
+      tradingEndsAt: competition.tradingEndsAt,
+      tradingStartsAt: competition.tradingStartsAt,
+    },
+    where: { code: competition.code },
+  });
 }
 
 seed()

@@ -20,6 +20,8 @@ jobs:
       DEV_TRADER_STARTING_BALANCE_MINOR: 2000000
       LOG_LEVEL: silent
       NODE_ENV: test
+      NEXTAUTH_SECRET: ci-only-auth-secret-with-at-least-thirty-two-characters
+      NEXTAUTH_URL: http://localhost:3000
       RUN_DATABASE_TESTS: 'true'
       VALKEY_URL: redis://localhost:6379
     services:

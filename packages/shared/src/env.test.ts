@@ -6,6 +6,8 @@ describe('parseRuntimeEnv', () => {
   it('parses valid service configuration', () => {
     const parsed = parseRuntimeEnv({
       DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+      NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+      NEXTAUTH_URL: 'http://localhost:3000',
       VALKEY_URL: 'redis://localhost:6379',
     });
 
@@ -17,6 +19,8 @@ describe('parseRuntimeEnv', () => {
     expect(() =>
       parseRuntimeEnv({
         DATABASE_URL: 'mysql://localhost/app',
+        NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+        NEXTAUTH_URL: 'http://localhost:3000',
         VALKEY_URL: 'redis://localhost:6379',
       }),
     ).toThrow();

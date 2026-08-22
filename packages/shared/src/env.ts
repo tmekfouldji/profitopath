@@ -12,6 +12,8 @@ export const runtimeEnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
+  NEXTAUTH_SECRET: z.string().min(32),
+  NEXTAUTH_URL: z.string().url(),
   VALKEY_URL: z.string().url().startsWith('redis://'),
 });
 

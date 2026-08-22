@@ -28,4 +28,22 @@
 - Verified the initial migration, idempotent seed, Compose configuration, and all 11 tests against
   PostgreSQL/Valkey service containers in GitHub Actions.
 
+### Authentication and application shell
+
+- Added Auth.js-compatible account, session, verification-token, and password-credential models
+  with a forward-only Prisma migration.
+- Added salted scrypt credential hashing, normalized registration, typed sessions, immediate
+  database-backed role/status revocation, server-side authorization, and authentication audits.
+- Added registration, login, logout, protected trader dashboard, admin control-room shell,
+  persisted competition pages, and an account-owned empty terminal boundary.
+- Added a deterministic upcoming weekly competition seed plus auth, authorization, money-format,
+  and PostgreSQL relation-graph coverage.
+- Introduced a responsive weekly trading-desk visual system and verified it at desktop and mobile
+  widths with keyboard-focus and reduced-motion support.
+
+### Market-data architecture
+
+- Adopted `10_MARKET_DATA_CACHING_AND_CANDLES.md` as the future backend-owned candle/cache design,
+  while keeping all real provider work deferred to Phase 9 and commercial approval.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

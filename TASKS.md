@@ -58,6 +58,28 @@ Rules:
 - [x] P1-018 Migrations + seed commands.
 - [x] P1-019 Update docs/state/handoff.
 
-## Active — Phase 2 (not started)
+## Active — Phase 2
 
-- [ ] P2-001 Expand Phase 2 auth/application-shell work into acceptance-tested tasks.
+- [x] P2-001 Expand Phase 2 auth/application-shell work into acceptance-tested tasks.
+- [x] P2-002 Add Auth.js-compatible Prisma models and migration.
+  - Acceptance: account/session/token/credential data is relational, indexed, and stores no plaintext passwords.
+- [x] P2-003 Implement password hashing and registration validation.
+  - Acceptance: password hashes are salted, verification is timing-safe, email normalization is deterministic, and invalid input is tested.
+- [x] P2-004 Configure credential authentication and typed sessions.
+  - Acceptance: sessions expose only user ID, role, and status needed for authorization; suspended/closed users cannot authenticate.
+- [x] P2-005 Implement registration, login, and logout flows.
+  - Acceptance: duplicate registration is safe, mutations are server-owned/audited, and authentication failures do not reveal account existence.
+- [x] P2-006 Build the responsive application shell and navigation.
+  - Acceptance: public/authenticated states, keyboard focus, mobile layout, and reduced-motion behavior are supported.
+- [x] P2-007 Build the protected trader dashboard.
+  - Acceptance: the page reads the signed-in user's persisted entries/accounts and gives a useful empty state.
+- [x] P2-008 Build persisted competition list/detail pages.
+  - Acceptance: weekly windows and tier configuration come from PostgreSQL, with clear not-found/empty behavior.
+- [x] P2-009 Add an account-owned empty terminal route.
+  - Acceptance: account ownership is enforced server-side and the browser receives no authoritative mutation capability.
+- [x] P2-010 Add the protected admin RBAC shell.
+  - Acceptance: non-admin users are denied server-side and admins see persisted operational counts/recent audit events.
+- [x] P2-011 Seed a deterministic development competition and add auth/RBAC integration tests.
+- [~] P2-012 Pass the Phase 2 quality gate and update project memory/handoff.
+  - Local formatter, schema validation/generation, typecheck, lint, 20-test suite, production build,
+    and desktop/mobile visual checks pass. PostgreSQL/Valkey-backed GitHub Actions is pending.

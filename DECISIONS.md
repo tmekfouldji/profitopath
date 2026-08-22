@@ -82,6 +82,17 @@ Material domain state transitions must be validated against explicit transition 
 their audit record in the same storage transaction. Provider event IDs, client order IDs, ledger
 keys, and audit keys use unique constraints where applicable to support idempotency.
 
+## D-013 — Backend-owned market candles
+
+Status: Accepted
+
+`10_MARKET_DATA_CACHING_AND_CANDLES.md` is authoritative for future market-data, simulator,
+charting, realtime, and scale work. Browsers never call the upstream provider. PostgreSQL stores
+durable candles, Valkey holds rebuildable hot windows and distributed coalescing locks, and
+identical missing-range requests must be deduplicated. Prefer deterministic aggregation from
+finalized one-minute candles where provider terms and data quality permit. This decision does not
+authorize a real provider integration before Phase 9 and commercial approval.
+
 ## Pending decisions
 
 - starting balance per tier

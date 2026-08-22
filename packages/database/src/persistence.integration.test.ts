@@ -101,6 +101,61 @@ integrationTest('PostgreSQL persistence', () => {
     ).rejects.toThrow(RollbackIntegrationTest);
   });
 
+  it('persists the complete authentication relation graph atomically', async () => {
+    const suffix = crypto.randomUUID();
+
+    await expect(
+      database.$transaction(async (transaction) => {
+        const user = await transaction.user.create({
+          data: {
+            credential: {
+              create: {
+                passwordHash: 'scrypt-v1$16384$8$1$fixture-salt$fixture-hash',
+              },
+            },
+            displayName: 'Authentication Test',
+            email: `auth-${suffix}@example.test`,
+            profile: { create: { timezone: 'UTC' } },
+          },
+        });
+
+        await transaction.account.create({
+          data: {
+            provider: 'test-provider',
+            providerAccountId: suffix,
+            type: 'credentials',
+            userId: user.id,
+          },
+        });
+        await transaction.session.create({
+          data: {
+            expires: new Date('2026-08-29T00:00:00.000Z'),
+            sessionToken: `session-${suffix}`,
+            userId: user.id,
+          },
+        });
+
+        const persisted = await transaction.user.findUniqueOrThrow({
+          include: {
+            authAccounts: true,
+            authSessions: true,
+            credential: true,
+            profile: true,
+          },
+          where: { id: user.id },
+        });
+
+        expect(persisted.credential?.passwordHash).toMatch(/^scrypt-v1\$/);
+        expect(persisted.authAccounts).toHaveLength(1);
+        expect(persisted.authSessions).toHaveLength(1);
+        expect(persisted.profile?.timezone).toBe('UTC');
+        throw new RollbackIntegrationTest(
+          'rollback successful authentication assertions',
+        );
+      }),
+    ).rejects.toThrow(RollbackIntegrationTest);
+  });
+
   it('loads the three idempotently seeded competition tiers', async () => {
     const tiers = await database.challengeTier.findMany({
       orderBy: { entryFeeMinor: 'asc' },
@@ -112,5 +167,15 @@ integrationTest('PostgreSQL persistence', () => {
       ['TRADER', 1_000],
       ['ELITE', 1_500],
     ]);
+
+    const competition = await database.competition.findFirst({
+      orderBy: { tradingStartsAt: 'desc' },
+      where: { code: { startsWith: 'DEV-WEEK-' } },
+    });
+
+    expect(competition?.status).toBe('SCHEDULED');
+    expect(competition?.tradingEndsAt.getTime()).toBeGreaterThan(
+      competition?.tradingStartsAt.getTime() ?? Number.POSITIVE_INFINITY,
+    );
   });
 });
