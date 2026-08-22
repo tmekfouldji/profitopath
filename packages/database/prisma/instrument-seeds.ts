@@ -3,6 +3,7 @@ export interface InstrumentSeed {
   baseCurrency: string;
   contractSize: string;
   leverage: string;
+  marketHoursMode: 'UTC_24X5';
   minimumQuantity: string;
   priceScale: number;
   quantityStep: string;
@@ -18,6 +19,7 @@ export function createDevelopmentInstrumentSeeds(): readonly InstrumentSeed[] {
       baseCurrency: 'EUR',
       contractSize: '100000',
       leverage: '100',
+      marketHoursMode: 'UTC_24X5',
       minimumQuantity: '0.01',
       priceScale: 5,
       quantityStep: '0.01',
@@ -30,6 +32,7 @@ export function createDevelopmentInstrumentSeeds(): readonly InstrumentSeed[] {
       baseCurrency: 'GBP',
       contractSize: '100000',
       leverage: '100',
+      marketHoursMode: 'UTC_24X5',
       minimumQuantity: '0.01',
       priceScale: 5,
       quantityStep: '0.01',

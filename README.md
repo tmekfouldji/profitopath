@@ -130,6 +130,11 @@ Phase 4 adds an opt-in deterministic worker feed. Set `MOCK_MARKET_DATA_ENABLED=
 development mock cycle; browsers still never call a provider, historical bars remain deferred, and
 the seeded instrument/leverage values are versioned development defaults rather than approved rules.
 
+Phase 5 extends that server-owned mock path with persistent limit/stop orders, full-position SL/TP
+OCO protection, cancellation, UTC 24x5 development hours, weekly-cutoff expiry, and restart recovery.
+Executable bid/ask triggers and gap fills are deterministic; these mock hours and prices are not
+approved production market rules.
+
 Run the complete local quality gate with:
 
 ```bash

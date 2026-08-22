@@ -4,14 +4,14 @@ import type {
   Quote,
 } from '@profitopath/market-data';
 
-import type { MarkToMarketResult, SimulatorRecoveryState } from './engine';
+import type { ProcessQuoteResult, SimulatorRecoveryState } from './engine';
 
 export interface DeterministicQuotePublisher extends MarketDataProvider {
   publishNext(): Promise<Quote | null>;
 }
 
 export interface QuoteRiskProcessor {
-  markToMarket(quote: Quote): Promise<MarkToMarketResult>;
+  processQuote(quote: Quote): Promise<ProcessQuoteResult>;
 }
 
 export interface MockRuntimeResult {
@@ -70,7 +70,7 @@ export class MockSimulatorRuntime {
     const recovery = await this.#recover();
     await this.#provider.subscribe(symbols);
     this.#provider.onQuote(async (quote) => {
-      await this.#processor.markToMarket(quote);
+      await this.#processor.processQuote(quote);
     });
     let processedQuotes = 0;
     while ((await this.#provider.publishNext()) !== null) {

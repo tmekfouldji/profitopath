@@ -116,6 +116,21 @@ up. Until the final rule decision, mock drawdown is static from initial balance 
 current drawdown is greater than or equal to the tier threshold. Every persisted trading record
 captures its instrument version; changing this policy requires a new configuration/rules version.
 
+## D-016 — Deterministic development pending-order trigger policy
+
+Status: Accepted for development
+
+Phase 5 evaluates triggers only on validated server-owned normalized quotes, serialized by trading
+account and processed in stable acceptance/ID order. Buy limits use ask at or below the limit; sell
+limits use bid at or above it; buy stops use ask at or above the stop; sell stops use bid at or
+below it. Long protection evaluates executable bid and short protection executable ask. A triggered
+limit fills at the current executable quote (never worse than its limit under the trigger rule),
+while stop/SL orders fill at the current executable quote and therefore preserve deterministic gap
+slippage. Development market hours are versioned as UTC 24x5; this is a reversible mock schedule,
+not an approved production session calendar. SL/TP orders protect the full current net position and
+form an OCO pair. Account advisory locks and quote-sequence event keys make trigger, cancellation,
+and replay outcomes atomic and idempotent.
+
 ## Pending decisions
 
 - starting balance per tier

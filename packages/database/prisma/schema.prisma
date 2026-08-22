@@ -306,17 +306,26 @@ model Order {
   takeProfitPrice   Decimal?     @db.Decimal(30, 12)
   averageFillPrice  Decimal?     @db.Decimal(30, 12)
   rejectionReason   String?      @db.VarChar(500)
+  terminalReason    String?      @db.VarChar(500)
+  protectedPositionId String?    @db.Uuid
+  ocoGroupId        String?      @db.VarChar(128)
+  triggerQuoteSequence BigInt?
+  triggeredAt       DateTime?    @db.Timestamptz(3)
   submittedAt       DateTime     @default(now()) @db.Timestamptz(3)
   acceptedAt        DateTime?    @db.Timestamptz(3)
   completedAt       DateTime?    @db.Timestamptz(3)
   updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
   tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
   instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
+  protectedPosition Position?    @relation("PositionProtection", fields: [protectedPositionId], references: [id], onDelete: Restrict)
   executions        Execution[]
 
   @@unique([tradingAccountId, clientOrderId])
   @@index([tradingAccountId, status])
   @@index([symbol, status])
+  @@index([symbol, status, type, acceptedAt])
+  @@index([protectedPositionId, status])
+  @@index([ocoGroupId, status])
 }
 
 model Execution {
@@ -364,6 +373,7 @@ model Position {
   tradingAccount    TradingAccount @relation(fields: [tradingAccountId], references: [id], onDelete: Restrict)
   instrumentConfiguration InstrumentConfiguration @relation(fields: [symbol, instrumentVersion], references: [symbol, version], onDelete: Restrict)
   openingExecution  Execution?     @relation("PositionOpeningExecution", fields: [openingExecutionId], references: [id], onDelete: Restrict)
+  protectionOrders  Order[]         @relation("PositionProtection")
   closedTrades      ClosedTrade[]
 
   @@index([tradingAccountId, symbol, status])
@@ -407,6 +417,7 @@ model InstrumentConfiguration {
   minimumQuantity Decimal  @db.Decimal(30, 12)
   contractSize    Decimal  @db.Decimal(30, 12)
   leverage        Decimal  @db.Decimal(30, 12)
+  marketHoursMode String   @default("UTC_24X5") @db.VarChar(32)
   createdAt       DateTime @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime @updatedAt @db.Timestamptz(3)
   orders          Order[]

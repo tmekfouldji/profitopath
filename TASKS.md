@@ -176,8 +176,40 @@ Rules:
 
 ## Active — Phase 5 (starting)
 
-- [~] P5-001 Expand pending-order, SL/TP, and cancellation work into concrete acceptance-tested tasks.
+- [x] P5-001 Expand pending-order, SL/TP, and cancellation work into concrete acceptance-tested tasks.
   - Acceptance: Phase 5 has stable task IDs for persisted limit/stop orders, deterministic
     server-side trigger evaluation, stop-loss/take-profit protection, cancellation races,
     idempotency/recovery, audit/history completeness, tests, and the quality gate without adding a
     real market-data provider or browser-authoritative execution.
+- [x] P5-002 Add durable pending/protective-order metadata and a versioned development market schedule.
+  - Acceptance: a forward-only migration relates protective orders to their position and OCO group,
+    records trigger quote identity and terminal reasons, indexes active trigger scans, and stores the
+    development market-hours mode on the instrument version without inventing production economics.
+- [x] P5-003 Implement exact order-price and trigger-policy primitives.
+  - Acceptance: limit/stop and long/short SL/TP placement/trigger rules use executable bid/ask sides,
+    strict positive price precision, current-quote validation, deterministic gap fills, UTC 24x5
+    development market hours, and focused unit tests.
+- [x] P5-004 Implement idempotent persisted limit/stop submission and cancellation.
+  - Acceptance: server validation persists one accepted or rejected order per client ID; cancellation
+    is account-locked, audited, terminal-state safe, retry-idempotent, and cannot undo a fill that won
+    a trigger race.
+- [x] P5-005 Implement deterministic quote-triggered pending-order execution.
+  - Acceptance: each normalized quote processes eligible orders in stable account/order order,
+    revalidates account/window/margin inside the account lock, creates at most one execution, reuses
+    Phase 4 net-position/ledger/risk semantics, records quote sequence/time, and is replay-idempotent.
+- [x] P5-006 Implement full-position stop-loss/take-profit protection with OCO cancellation.
+  - Acceptance: protection is server-owned and persisted as linked STOP_LOSS/TAKE_PROFIT orders;
+    trigger direction is correct for long/short positions, only one sibling can fill, manual net
+    changes reconcile protected quantity, and close/reversal cancels stale protection atomically.
+- [x] P5-007 Extend recovery and worker-owned offline processing for active orders and weekly cutoff.
+  - Acceptance: recovery includes accepted pending/protective orders, mock quote processing triggers
+    orders before post-fill risk snapshots without a browser, closed-market quotes do not trigger,
+    and accepted orders expire with audit evidence at competition cutoff.
+- [~] P5-008 Add unit and PostgreSQL integration coverage for the Phase 5 correctness matrix.
+  - Acceptance: tests cover buy/sell limit and stop, long/short SL/TP, gap prices, OCO, cancellation /
+    trigger races, duplicate quotes, insufficient margin at trigger, closed market, cutoff expiry,
+    offline behavior, and restart recovery.
+- [ ] P5-009 Pass the Phase 5 quality gate and update persistent project memory/handoff.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, and
+    service-backed CI pass; the exact Phase 6 browser-terminal task and remaining configurable
+    economics are recorded.

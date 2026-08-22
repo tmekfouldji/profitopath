@@ -8,7 +8,9 @@ export type NetPositionSide = 'LONG' | 'SHORT';
 export interface AccountingInstrument {
   contractSize: Decimal;
   leverage: Decimal;
+  marketHoursMode: 'UTC_24X5';
   minimumQuantity: Decimal;
+  priceScale: number;
   quantityStep: Decimal;
   symbol: string;
   version: number;

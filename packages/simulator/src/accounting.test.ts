@@ -15,7 +15,9 @@ import {
 const instrument: AccountingInstrument = {
   contractSize: new Decimal('100000'),
   leverage: new Decimal('100'),
+  marketHoursMode: 'UTC_24X5',
   minimumQuantity: new Decimal('0.01'),
+  priceScale: 5,
   quantityStep: new Decimal('0.01'),
   symbol: 'EURUSD',
   version: 1,

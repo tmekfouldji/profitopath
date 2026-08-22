@@ -12,9 +12,12 @@ describe('MockSimulatorRuntime', () => {
       new Date('2026-08-24T09:00:00.987Z'),
     );
     const provider = new MockMarketDataProvider(seeds);
-    const markToMarket = vi.fn().mockResolvedValue({
+    const processQuote = vi.fn().mockResolvedValue({
       breachedAccounts: 0,
+      cancelledProtectionOrders: 0,
       duplicateAccounts: 0,
+      expiredOrders: 0,
+      filledOrders: 0,
       snapshottedAccounts: 0,
     });
     const recover = vi.fn().mockResolvedValue({
@@ -22,7 +25,7 @@ describe('MockSimulatorRuntime', () => {
       recoveredAt: new Date('2026-08-24T09:00:00.000Z'),
     });
     const runtime = new MockSimulatorRuntime({
-      processor: { markToMarket },
+      processor: { processQuote },
       provider,
       recover,
     });
@@ -31,7 +34,7 @@ describe('MockSimulatorRuntime', () => {
 
     expect(recover).toHaveBeenCalledOnce();
     expect(result.processedQuotes).toBe(4);
-    expect(markToMarket).toHaveBeenCalledTimes(4);
+    expect(processQuote).toHaveBeenCalledTimes(4);
     expect(seeds[0]?.timestamp.toISOString()).toBe('2026-08-24T09:00:00.000Z');
   });
 });

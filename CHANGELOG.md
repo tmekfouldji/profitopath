@@ -84,4 +84,18 @@
 - Fixed positive-zero handling so zero order quantities are rejected and opening fills cannot emit
   zero-value realized-P&L ledger entries.
 
+### Pending orders and position protection
+
+- Added durable pending/protective-order relations, OCO groups, terminal reasons, trigger quote
+  sequences/timestamps, active-scan indexes, and versioned UTC 24x5 development market hours.
+- Added exact executable-side buy/sell limit and stop policies with precision validation,
+  deterministic current-quote/gap fills, account-serialized triggering, and replay-safe executions.
+- Added idempotent order cancellation and full-net-position stop-loss/take-profit OCO protection,
+  including quantity reconciliation after manual reductions and atomic cleanup after close/reversal.
+- Extended recovery with accepted pending/protective orders and changed worker quote handling to
+  process order triggers before post-fill mark-to-market risk snapshots while the browser is absent.
+- Added unit and PostgreSQL integration coverage for trigger directions, market hours, replay,
+  margin-at-trigger expiry, cancellation, long/short OCO protection, gap fills, cutoff expiry,
+  restart recovery, and trigger/cancel serialization.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

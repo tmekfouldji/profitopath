@@ -26,7 +26,10 @@ interface Fixture {
 const fixtures: Fixture[] = [];
 const tradingStart = new Date('2026-08-24T08:00:00.000Z');
 
-async function createFixture(maxDrawdownMinor = 100_000n): Promise<Fixture> {
+async function createFixture(
+  maxDrawdownMinor = 100_000n,
+  tradingEndsAt = new Date('2026-08-28T17:00:00.000Z'),
+): Promise<Fixture> {
   const suffix = crypto.randomUUID();
   const fixture = await database.$transaction(async (transaction) => {
     const user = await transaction.user.create({
@@ -49,7 +52,7 @@ async function createFixture(maxDrawdownMinor = 100_000n): Promise<Fixture> {
         rulesVersion: 1,
         signupClosesAt: new Date('2026-08-24T07:00:00.000Z'),
         status: 'ACTIVE',
-        tradingEndsAt: new Date('2026-08-28T17:00:00.000Z'),
+        tradingEndsAt,
         tradingStartsAt: tradingStart,
       },
     });
@@ -116,6 +119,10 @@ afterEach(async () => {
         where: { tradingAccountId: fixture.accountId },
       });
       await transaction.closedTrade.deleteMany({
+        where: { tradingAccountId: fixture.accountId },
+      });
+      await transaction.order.updateMany({
+        data: { protectedPositionId: null },
         where: { tradingAccountId: fixture.accountId },
       });
       await transaction.position.deleteMany({
@@ -371,6 +378,431 @@ integrationTest('persistent simulated execution engine', () => {
     });
     expect(account.snapshots).toHaveLength(3);
     expect(account.snapshots[2]?.equityMinor).toBe(900_000n);
+  });
+
+  it('fills accepted limit and stop orders once at executable quote prices', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.09940',
+        bid: '1.09920',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+      {
+        ask: '1.09900',
+        bid: '1.09880',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:02.000Z'),
+      },
+    ]);
+    const limit = await engine.submitPendingOrder({
+      clientOrderId: 'buy-limit',
+      price: new Decimal('1.09950'),
+      quantity: new Decimal('0.1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    expect(limit.status).toBe('ACCEPTED');
+    const limitQuote = await provider.publishNext();
+    const firstProcess = await engine.processQuote(limitQuote!);
+    const duplicateProcess = await engine.processQuote(limitQuote!);
+    expect(firstProcess.filledOrders).toBe(1);
+    expect(duplicateProcess.filledOrders).toBe(0);
+
+    const stop = await engine.submitPendingOrder({
+      clientOrderId: 'sell-stop',
+      price: new Decimal('1.09900'),
+      quantity: new Decimal('0.1'),
+      side: 'SELL',
+      submittedAt: new Date('2026-08-24T09:00:01.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'STOP',
+    });
+    expect(stop.status).toBe('ACCEPTED');
+    const stopQuote = await provider.publishNext();
+    await engine.processQuote(stopQuote!);
+
+    const orders = await database.order.findMany({
+      include: { executions: true },
+      orderBy: { submittedAt: 'asc' },
+      where: { tradingAccountId: fixture.accountId },
+    });
+    expect(orders).toHaveLength(2);
+    expect(orders.map((order) => order.status)).toEqual(['FILLED', 'FILLED']);
+    expect(orders.map((order) => order.triggerQuoteSequence)).toEqual([2n, 3n]);
+    expect(
+      orders.map((order) => order.executions[0]?.price.toString()),
+    ).toEqual(['1.0994', '1.0988']);
+  });
+
+  it('cancels accepted orders idempotently and never fills them afterward', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.09900',
+        bid: '1.09880',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+    ]);
+    const pending = await engine.submitPendingOrder({
+      clientOrderId: 'cancel-limit',
+      price: new Decimal('1.09910'),
+      quantity: new Decimal('0.1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    const command = {
+      cancelledAt: new Date('2026-08-24T09:00:00.750Z'),
+      orderId: pending.orderId,
+      tradingAccountId: fixture.accountId,
+    };
+    await expect(engine.cancelOrder(command)).resolves.toMatchObject({
+      status: 'CANCELLED',
+    });
+    await expect(engine.cancelOrder(command)).resolves.toMatchObject({
+      status: 'CANCELLED',
+    });
+    await engine.processQuote((await provider.publishNext())!);
+    await expect(
+      database.execution.count({
+        where: { tradingAccountId: fixture.accountId },
+      }),
+    ).resolves.toBe(0);
+  });
+
+  it('expires a triggered order when free margin is insufficient', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.09900',
+        bid: '1.09880',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+    ]);
+    const pending = await engine.submitPendingOrder({
+      clientOrderId: 'margin-limit',
+      price: new Decimal('1.09910'),
+      quantity: new Decimal('100'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    expect(pending.status).toBe('ACCEPTED');
+    const result = await engine.processQuote((await provider.publishNext())!);
+    expect(result.expiredOrders).toBe(1);
+    await expect(
+      database.order.findUniqueOrThrow({ where: { id: pending.orderId } }),
+    ).resolves.toMatchObject({
+      status: 'EXPIRED',
+      terminalReason: 'Insufficient free margin at trigger',
+    });
+  });
+
+  it('fills stop loss at a gap quote and cancels its take-profit sibling', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.09820',
+        bid: '1.09800',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+    ]);
+    await engine.submitMarketOrder({
+      clientOrderId: 'protected-open',
+      quantity: new Decimal('1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+    });
+    const position = await database.position.findFirstOrThrow({
+      where: { status: 'OPEN', tradingAccountId: fixture.accountId },
+    });
+    const protectionCommand = {
+      clientRequestId: 'protect-long-1',
+      positionId: position.id,
+      stopLossPrice: new Decimal('1.09900'),
+      submittedAt: new Date('2026-08-24T09:00:00.600Z'),
+      takeProfitPrice: new Decimal('1.10200'),
+      tradingAccountId: fixture.accountId,
+    };
+    const protection = await engine.setPositionProtection(protectionCommand);
+    await expect(
+      engine.setPositionProtection(protectionCommand),
+    ).resolves.toEqual(protection);
+    const result = await engine.processQuote((await provider.publishNext())!);
+    expect(result.filledOrders).toBe(1);
+
+    const orders = await database.order.findMany({
+      include: { executions: true },
+      where: { protectedPositionId: position.id },
+    });
+    const stopLoss = orders.find((order) => order.type === 'STOP_LOSS')!;
+    const takeProfit = orders.find((order) => order.type === 'TAKE_PROFIT')!;
+    expect(stopLoss.status).toBe('FILLED');
+    expect(stopLoss.executions[0]?.price.toString()).toBe('1.098');
+    expect(takeProfit.status).toBe('CANCELLED');
+    await expect(
+      database.position.findUniqueOrThrow({ where: { id: position.id } }),
+    ).resolves.toMatchObject({ status: 'CLOSED' });
+  });
+
+  it('fills short take profit on ask and cancels its stop-loss sibling', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.09880',
+        bid: '1.09860',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+    ]);
+    await engine.submitMarketOrder({
+      clientOrderId: 'protected-short-open',
+      quantity: new Decimal('1'),
+      side: 'SELL',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+    });
+    const position = await database.position.findFirstOrThrow({
+      where: { status: 'OPEN', tradingAccountId: fixture.accountId },
+    });
+    await engine.setPositionProtection({
+      clientRequestId: 'protect-short-1',
+      positionId: position.id,
+      stopLossPrice: new Decimal('1.10200'),
+      submittedAt: new Date('2026-08-24T09:00:00.600Z'),
+      takeProfitPrice: new Decimal('1.09900'),
+      tradingAccountId: fixture.accountId,
+    });
+    await engine.processQuote((await provider.publishNext())!);
+
+    const orders = await database.order.findMany({
+      include: { executions: true },
+      where: { protectedPositionId: position.id },
+    });
+    const stopLoss = orders.find((order) => order.type === 'STOP_LOSS')!;
+    const takeProfit = orders.find((order) => order.type === 'TAKE_PROFIT')!;
+    expect(takeProfit.status).toBe('FILLED');
+    expect(takeProfit.executions[0]?.price.toString()).toBe('1.0988');
+    expect(stopLoss.status).toBe('CANCELLED');
+  });
+
+  it('reconciles full-position protection after a manual reduction and close', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+      {
+        ask: '1.10120',
+        bid: '1.10100',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:01.000Z'),
+      },
+      {
+        ask: '1.10220',
+        bid: '1.10200',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:02.000Z'),
+      },
+    ]);
+    await engine.submitMarketOrder({
+      clientOrderId: 'reconcile-open',
+      quantity: new Decimal('1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+    });
+    const position = await database.position.findFirstOrThrow({
+      where: { status: 'OPEN', tradingAccountId: fixture.accountId },
+    });
+    await engine.setPositionProtection({
+      clientRequestId: 'reconcile-protection',
+      positionId: position.id,
+      stopLossPrice: new Decimal('1.09900'),
+      submittedAt: new Date('2026-08-24T09:00:00.600Z'),
+      takeProfitPrice: new Decimal('1.10300'),
+      tradingAccountId: fixture.accountId,
+    });
+    await provider.publishNext();
+    await engine.submitMarketOrder({
+      clientOrderId: 'reconcile-reduce',
+      quantity: new Decimal('0.4'),
+      side: 'SELL',
+      submittedAt: new Date('2026-08-24T09:00:01.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+    });
+    const reducedProtection = await database.order.findMany({
+      where: { protectedPositionId: position.id, status: 'ACCEPTED' },
+    });
+    expect(reducedProtection.map((order) => order.quantity.toString())).toEqual(
+      ['0.6', '0.6'],
+    );
+    await provider.publishNext();
+    await engine.submitMarketOrder({
+      clientOrderId: 'reconcile-close',
+      quantity: new Decimal('0.6'),
+      side: 'SELL',
+      submittedAt: new Date('2026-08-24T09:00:02.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+    });
+    const terminalProtection = await database.order.findMany({
+      where: { protectedPositionId: position.id },
+    });
+    expect(terminalProtection.map((order) => order.status)).toEqual([
+      'CANCELLED',
+      'CANCELLED',
+    ]);
+  });
+
+  it('recovers accepted orders, ignores weekend triggers, and expires at cutoff', async () => {
+    const fixture = await createFixture(
+      100_000n,
+      new Date('2026-08-31T17:00:00.000Z'),
+    );
+    const { engine } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-28T16:00:00.000Z'),
+      },
+    ]);
+    const pending = await engine.submitPendingOrder({
+      clientOrderId: 'weekend-limit',
+      price: new Decimal('1.09900'),
+      quantity: new Decimal('0.1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-28T16:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    const recovery = await recoverSimulatorState(
+      new Date('2026-08-28T16:00:01.000Z'),
+    );
+    expect(
+      recovery.accounts.find((account) => account.id === fixture.accountId)
+        ?.activeOrders,
+    ).toHaveLength(1);
+    await engine.processQuote({
+      ask: new Decimal('1.09890'),
+      bid: new Decimal('1.09870'),
+      sequence: 2n,
+      symbol: 'EURUSD',
+      timestamp: new Date('2026-08-29T09:00:00.000Z'),
+    });
+    await expect(
+      database.order.findUniqueOrThrow({ where: { id: pending.orderId } }),
+    ).resolves.toMatchObject({ status: 'ACCEPTED' });
+    await engine.processQuote({
+      ask: new Decimal('1.09890'),
+      bid: new Decimal('1.09870'),
+      sequence: 3n,
+      symbol: 'EURUSD',
+      timestamp: new Date('2026-08-31T17:00:00.000Z'),
+    });
+    await expect(
+      database.order.findUniqueOrThrow({ where: { id: pending.orderId } }),
+    ).resolves.toMatchObject({
+      status: 'EXPIRED',
+      terminalReason: 'Competition trading window ended',
+    });
+  });
+
+  it('serializes a trigger/cancel race to one terminal outcome', async () => {
+    const fixture = await createFixture();
+    const { engine } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+    ]);
+    const pending = await engine.submitPendingOrder({
+      clientOrderId: 'race-limit',
+      price: new Decimal('1.09900'),
+      quantity: new Decimal('0.1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    const triggerQuote = {
+      ask: new Decimal('1.09890'),
+      bid: new Decimal('1.09870'),
+      sequence: 2n,
+      symbol: 'EURUSD',
+      timestamp: new Date('2026-08-24T09:00:01.000Z'),
+    };
+    await Promise.all([
+      engine.processQuote(triggerQuote),
+      engine.cancelOrder({
+        cancelledAt: triggerQuote.timestamp,
+        orderId: pending.orderId,
+        tradingAccountId: fixture.accountId,
+      }),
+    ]);
+    const order = await database.order.findUniqueOrThrow({
+      where: { id: pending.orderId },
+    });
+    expect(['CANCELLED', 'FILLED']).toContain(order.status);
+    await expect(
+      database.execution.count({ where: { orderId: order.id } }),
+    ).resolves.toBe(order.status === 'FILLED' ? 1 : 0);
   });
 
   it('recovers open server-owned positions without browser or local disk state', async () => {
