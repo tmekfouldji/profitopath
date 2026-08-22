@@ -303,6 +303,11 @@ integrationTest('persistent simulated execution engine', () => {
     expect(
       account.balanceLedgerEntries.map((entry) => entry.amountMinor),
     ).toEqual([1_000_000n, 3_200n, 10_800n]);
+    expect(account.balanceLedgerEntries.map((entry) => entry.type)).toEqual([
+      'INITIAL_BALANCE',
+      'REALIZED_PNL',
+      'REALIZED_PNL',
+    ]);
     expect(account.positions).toHaveLength(2);
     expect(account.positions[0]?.status).toBe('CLOSED');
     expect(account.positions[1]?.status).toBe('OPEN');

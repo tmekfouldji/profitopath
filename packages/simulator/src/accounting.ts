@@ -73,7 +73,7 @@ export function assertValidOrderQuantity(
   quantity: Decimal,
   instrument: AccountingInstrument,
 ): void {
-  if (!quantity.isFinite() || !quantity.isPositive()) {
+  if (!quantity.isFinite() || !quantity.greaterThan(0)) {
     throw new InvalidOrderQuantityError('Quantity must be positive');
   }
   if (quantity.lessThan(instrument.minimumQuantity)) {

@@ -556,7 +556,7 @@ export class PersistentSimulatedExecutionEngine {
           mutation.closedQuantity,
           instrument,
         );
-        if (mutation.closedQuantity.isPositive()) {
+        if (mutation.closedQuantity.greaterThan(0)) {
           if (currentPosition.openingExecutionId === null) {
             throw new SimulatorCommandError(
               'Position has no opening execution reference',
@@ -635,7 +635,7 @@ export class PersistentSimulatedExecutionEngine {
         }
       }
 
-      if (mutation.closedQuantity.isPositive()) {
+      if (mutation.closedQuantity.greaterThan(0)) {
         await transaction.tradingAccount.update({
           data: {
             balanceMinor: projectedBalance,

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyMarketFill,
+  assertValidOrderQuantity,
   calculateAccountMetrics,
   calculateMarginMinor,
   calculatePnlMinor,
@@ -29,6 +30,12 @@ const quote: Quote = {
 };
 
 describe('simulator accounting', () => {
+  it('rejects zero quantity rather than treating positive zero as tradable', () => {
+    expect(() =>
+      assertValidOrderQuantity(new Decimal('0'), instrument),
+    ).toThrow('Quantity must be positive');
+  });
+
   it('fills buys at ask and sells at bid with spread reflected in P&L', () => {
     expect(marketFillPrice('BUY', quote).toString()).toBe('1.1002');
     expect(marketFillPrice('SELL', quote).toString()).toBe('1.1');
