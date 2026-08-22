@@ -309,7 +309,7 @@ Rules:
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 8 task and limitations are recorded.
 
-## Active — Phase 8
+## Completed — Phase 8
 
 - [x] P8-001 Expand the company-funded prize/admin milestone into concrete acceptance-tested tasks.
   - Acceptance: stable task IDs cover prize-ledger derivation from immutable standings, winner
@@ -347,11 +347,22 @@ Rules:
   - Acceptance: ADMIN-only controls present authoritative provenance, review/KYC/approval/payout/
     reconciliation state and valid next actions; traders see only their own prize and credit status,
     all money is company-funded, and development/manual limitations are explicit.
-- [~] P8-009 Add the Phase 8 correctness, authorization, concurrency, persistence, and browser matrix.
+- [x] P8-009 Add the Phase 8 correctness, authorization, concurrency, persistence, and browser matrix.
   - Acceptance: tests cover source-hash/rank derivation, ties, missing/unconfigured awards,
     idempotency/concurrency, invalid transitions, dual control, KYC gating, exact money matching,
     transaction-reference uniqueness, reconciliation, credit issuance, RBAC, audits, and rendering.
-- [ ] P8-010 Pass the Phase 8 quality gate and update persistent project memory/handoff.
+- [x] P8-010 Pass the Phase 8 quality gate and update persistent project memory/handoff.
   - Acceptance: formatter, Prisma validation/generation, typecheck, lint, all tests, build, applicable
     browser checks, and service-backed CI pass; the exact Phase 9 gate and prohibited early provider
     work are recorded.
+
+## Blocked — Phase 9
+
+- [!] P9-001 Obtain the selected real market-data provider, official API documentation, and
+  commercial-use approval before implementation.
+  - Blocker: the user/vendor must provide the provider selection, official streaming and historical-
+    candle API documentation, and documentary rights for customer-facing display, caching, and
+    simulated execution. Provider APIs and commercial permissions must not be invented or inferred.
+  - Acceptance: the approved provider, documentation version/links or supplied files, credential
+    and rate-limit model, redistribution/cache limits, symbol/session semantics, historical bounds,
+    and simulated-execution/display rights are recorded before P9 implementation tasks are expanded.

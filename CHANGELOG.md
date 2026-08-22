@@ -148,4 +148,23 @@
   archived public/private read-model persistence, admin failure notices, worker restart recovery,
   and browser-rendered archive/tie/provenance coverage.
 
+### Company-funded prize administration
+
+- Added immutable finalization/standing/hash provenance, winner-review and manual-KYC states,
+  separate prize/payout approvers, manual payment/reconciliation evidence, and individually tracked
+  free-entry credits in a forward-only Prisma migration.
+- Added an idempotent, competition-serialized prize ledger that binds only preconfigured development
+  award rows to exact final standings, refuses to invent amounts/currencies, and leaves true tied
+  ranks unresolved for policy review.
+- Added audited winner confirmation/rejection, KYC transitions, exact prize approval, second-admin
+  payout approval, manual processing/failure/retry/cancellation/paid recording, immutable unique
+  transaction references, and second-review reconciliation without a production payment provider.
+- Added atomic issuance of configured fifth-place access credits after paid reconciliation; credits
+  are single-use entitlements rather than money or customer stored value, and redemption is deferred.
+- Added an ADMIN-only prize operations console with valid-next-action controls and a trader-owned
+  prize/credit status view that withholds internal transaction/audit data and labels every manual
+  company-funded limitation.
+- Added unit, PostgreSQL concurrency/persistence/ownership, authorization, negative-path, and browser
+  rendering coverage for the full Phase 8 workflow.
+
 Codex should add concise entries here for meaningful completed features, migrations, infrastructure changes, and operator-visible behavior changes.

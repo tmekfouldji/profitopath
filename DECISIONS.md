@@ -197,6 +197,22 @@ default. Automatic frozen-result finalization is implemented behind
 approved; administrators can finalize idempotently in the meantime. Enabling the flag does not
 change ranking or prize economics.
 
+## D-022 — Prize operations bind configured awards and require manual dual control
+
+Status: Accepted for development
+
+Phase 8 never calculates or seeds prize economics. Administrators may derive only preconfigured
+development `Prize` rows from immutable finalized standings, retaining the finalization, standing,
+and result-hash provenance. A configured rank shared by true ties remains explicitly unresolved;
+the system does not choose a winner, split an amount, or invent a tie allocation. Winner review and
+KYC are manual recorded states. Prize approval creates an exact amount/currency payout, a different
+administrator must approve that payout, and a different administrator from the payment recorder
+must reconcile it. The platform performs no payout provider call. Only a paid and reconciled
+fifth-place prize can issue its configured count of individually tracked single-use access credits;
+credits are not money, customer custody, or a stored-value balance, and checkout redemption remains
+out of scope until separately designed and tested. Final prize formula, legal wording, KYC timing,
+and production payout procedures remain pending decisions.
+
 ## Pending decisions
 
 - starting balance per tier

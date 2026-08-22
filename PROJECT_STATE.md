@@ -10,17 +10,16 @@ This file is the authoritative high-level state for Codex.
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments, later phase
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 8 — Prize/admin workflow (starting)**
+- Current implementation phase: **Phase 9 — Real market-data provider (blocked on provider approval)**
 - Production deployment: not started
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 7 are complete. The active milestone is Phase 8: derive a company-funded
-prize ledger from immutable weekly standings and add review/KYC/approval/reconciliation controls
-without approving production prize economics or adding customer deposits. No real market-data or
-payment provider is authorized.
+Phase 0 through Phase 8 are complete. Phase 9 cannot start until the user selects a market-data
+provider, supplies its official API documentation, and confirms commercial rights for customer-facing
+chart display and simulated execution. Mock market data remains active; no real provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -137,26 +136,46 @@ All items above are complete, including the service-backed GitHub Actions run.
 - GitHub Actions run `32554024772` passed migration deploy, seed, Compose validation, all 115 tests,
   and production build
 
+## Phase 8 completion evidence
+
+- forward-only prize-operations migration with immutable standing/finalization/hash provenance,
+  explicit winner and KYC reviews, separate approval actors, reconciliation evidence, and durable
+  single-use free-entry entitlements without a monetary/customer balance
+- competition-serialized idempotent derivation from preconfigured development prize rows only;
+  missing awards fail closed and true tied prize ranks remain unresolved without changing economics
+- audited winner confirmation/rejection, manual KYC state graph, exact prize-to-payout creation,
+  second-administrator payout approval, and amount/currency mismatch rejection
+- manual payout processing, failure/retry/cancellation, unique transaction-reference recording,
+  immutable paid state, second-actor reconciliation, and atomic fifth-place credit issuance with no
+  provider call
+- ADMIN-only prize operations console plus ownership-scoped trader prize/credit state that omits
+  internal transaction/audit evidence and labels all company-funded/manual development limitations
+- unit, authorization/action, browser-render, concurrency, PostgreSQL persistence/ownership,
+  missing/tied/mismatch/duplicate-reference, reconciliation, audit, and credit coverage
+- GitHub Actions run `32554756501` applied all eight migrations and passed Compose validation,
+  formatter, typecheck, lint, all 127 tests, and production build
+
 ## Last completed task
 
-P7-011 — Phase 7 quality gate, persistent project memory, and handoff.
+P8-010 — Phase 8 quality gate, persistent project memory, and handoff.
 
 ## Next task
 
-P8-001 — expand the company-funded prize/admin workflow into concrete acceptance-tested tasks,
-keeping prize economics unapproved and production payout/custody integrations out of scope.
+P9-001 — obtain the selected market-data provider, its official streaming/historical API
+documentation, and documentary confirmation of commercial customer-facing display and simulated-
+execution rights. This task is blocked pending user/vendor input; do not invent or integrate an API.
 
 ## Quality status
 
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `pnpm test`: 86 tests passed locally; 29 PostgreSQL integration tests skipped locally
+- `pnpm test`: 91 tests passed locally; 36 PostgreSQL integration tests skipped locally
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - service-backed tests were not run locally because this workstation has no
   Docker/PostgreSQL runtime
-- GitHub Actions CI run `32554024772`: passed migration deploy, seed, Compose validation, all 115
+- GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 
 ## Blockers
@@ -164,9 +183,11 @@ keeping prize economics unapproved and production payout/custody integrations ou
 - starting simulated balance per tier is not finally approved
 - exact drawdown semantics not finally approved
 - market-data vendor not selected
+- official provider API documentation and commercial-use/redistribution approval not supplied
 - NOWPayments merchant acceptance not completed
 - SVG legal opinion not completed
 
-These blockers do **not** prevent Phase 8 ledger/review development when prize values remain
-existing development data, no production payout is initiated, and all approvals remain manual and
-audited.
+The market-data selection/documentation/rights blocker prevents Phase 9 implementation under the
+repository provider rules. Do not infer an API, scrape a provider, or present unapproved data as
+commercially usable. Phase 10 NOWPayments and Phase 11 DigitalOcean production work also remain
+explicitly deferred.
