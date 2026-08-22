@@ -191,7 +191,67 @@ async function createFinalizedFixture(input?: { tied?: boolean }) {
   });
 }
 
+type FinalizedFixture = Awaited<ReturnType<typeof createFinalizedFixture>>;
+
+async function approveFixturePrize(fixture: FinalizedFixture) {
+  await derivePrizeLedger({
+    actorUserId: fixture.admins[0]?.id ?? '',
+    competitionId: fixture.competition.id,
+    reason: 'Derive configured award for payout test setup',
+  });
+  await reviewPrizeWinner({
+    actorUserId: fixture.admins[0]?.id ?? '',
+    decision: 'CONFIRM',
+    prizeId: fixture.prize.id,
+    reason: 'Confirm immutable winner for payout test setup',
+  });
+  await updatePrizeKycStatus({
+    actorUserId: fixture.admins[0]?.id ?? '',
+    kycStatus: 'PENDING',
+    prizeId: fixture.prize.id,
+    reason: 'Open manual KYC for payout test setup',
+  });
+  await updatePrizeKycStatus({
+    actorUserId: fixture.admins[0]?.id ?? '',
+    kycStatus: 'APPROVED',
+    prizeId: fixture.prize.id,
+    reason: 'Approve manual KYC for payout test setup',
+  });
+  return approvePrize({
+    actorUserId: fixture.admins[0]?.id ?? '',
+    prizeId: fixture.prize.id,
+    reason: 'Approve exact company-funded prize for payout test setup',
+  });
+}
+
+async function startFixturePayout(fixture: FinalizedFixture): Promise<string> {
+  const approval = await approveFixturePrize(fixture);
+  await approvePayout({
+    actorUserId: fixture.admins[1]?.id ?? '',
+    payoutId: approval.payoutId,
+    reason: 'Second administrator approved payout test setup',
+  });
+  await startManualPayout({
+    actorUserId: fixture.admins[1]?.id ?? '',
+    payoutId: approval.payoutId,
+    reason: 'Start manual payout test setup',
+  });
+  return approval.payoutId;
+}
+
 integrationTest('prize operations', () => {
+  it('refuses to invent an award when no prize rows are configured', async () => {
+    const fixture = await createFinalizedFixture();
+    await database.prize.delete({ where: { id: fixture.prize.id } });
+    await expect(
+      derivePrizeLedger({
+        actorUserId: fixture.admins[0]?.id ?? '',
+        competitionId: fixture.competition.id,
+        reason: 'Attempt derivation without approved development economics',
+      }),
+    ).rejects.toThrow('prize economics cannot be invented');
+  });
+
   it('derives, reviews, approves, records, reconciles, and credits with dual control', async () => {
     const fixture = await createFinalizedFixture();
     const [firstDerivation, replayedDerivation] = await Promise.all([
@@ -419,6 +479,59 @@ integrationTest('prize operations', () => {
     expect(prize.status).toBe('VOID');
     expect(payout.status).toBe('CANCELLED');
     expect(audit.actorUserId).toBe(fixture.admins[1]?.id);
+  });
+
+  it('fails closed when a pending payout amount no longer matches its prize', async () => {
+    const fixture = await createFinalizedFixture();
+    const approval = await approveFixturePrize(fixture);
+    await database.payout.update({
+      data: { amountMinor: fixture.prize.amountMinor + 1 },
+      where: { id: approval.payoutId },
+    });
+    await expect(
+      approvePayout({
+        actorUserId: fixture.admins[1]?.id ?? '',
+        payoutId: approval.payoutId,
+        reason: 'Second administrator checks exact amount and currency',
+      }),
+    ).rejects.toThrow('does not exactly match');
+    const [prize, payout] = await Promise.all([
+      database.prize.findUniqueOrThrow({ where: { id: fixture.prize.id } }),
+      database.payout.findUniqueOrThrow({
+        where: { id: approval.payoutId },
+      }),
+    ]);
+    expect(prize.status).toBe('APPROVED');
+    expect(payout.status).toBe('PENDING');
+  });
+
+  it('preserves global transaction-reference uniqueness across manual payouts', async () => {
+    const firstFixture = await createFinalizedFixture();
+    const secondFixture = await createFinalizedFixture();
+    const firstPayoutId = await startFixturePayout(firstFixture);
+    const secondPayoutId = await startFixturePayout(secondFixture);
+    const transactionReference = `manual-unique-${crypto.randomUUID()}`;
+    await markManualPayoutPaid({
+      actorUserId: firstFixture.admins[1]?.id ?? '',
+      payoutId: firstPayoutId,
+      reason: 'Record first manual transfer reference',
+      transactionReference,
+    });
+    await expect(
+      markManualPayoutPaid({
+        actorUserId: secondFixture.admins[1]?.id ?? '',
+        payoutId: secondPayoutId,
+        reason: 'Attempt duplicate manual transfer reference',
+        transactionReference,
+      }),
+    ).rejects.toThrow();
+    const secondPayout = await database.payout.findUniqueOrThrow({
+      where: { id: secondPayoutId },
+    });
+    expect(secondPayout).toMatchObject({
+      status: 'PROCESSING',
+      transactionReference: null,
+    });
   });
 
   it('retains tied ranks as unresolved without choosing or changing economics', async () => {
