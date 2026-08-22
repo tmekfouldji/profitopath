@@ -15,6 +15,7 @@ integrationTest('PostgreSQL persistence', () => {
 
   it('persists an account ledger and audit graph atomically', async () => {
     const suffix = crypto.randomUUID();
+    const shortSuffix = suffix.slice(0, 8);
 
     await expect(
       database.$transaction(async (transaction) => {
@@ -26,7 +27,7 @@ integrationTest('PostgreSQL persistence', () => {
         });
         const tier = await transaction.challengeTier.create({
           data: {
-            code: `TEST-${suffix}`,
+            code: `TEST-${shortSuffix}`,
             entryFeeMinor: 500,
             maxDrawdownMinor: 100_000n,
             name: 'Test Tier',
@@ -36,7 +37,7 @@ integrationTest('PostgreSQL persistence', () => {
         });
         const competition = await transaction.competition.create({
           data: {
-            code: `TEST-${suffix}`,
+            code: `TEST-${shortSuffix}`,
             name: 'Persistence Test Week',
             rulesVersion: 1,
             signupClosesAt: new Date('2026-08-23T00:00:00.000Z'),
