@@ -38,6 +38,36 @@ export function getTraderDashboard(userId: string) {
   });
 }
 
+export function getTraderPrizeOverview(userId: string) {
+  return database.prize.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      amountMinor: true,
+      competition: { select: { code: true, name: true } },
+      currency: true,
+      freeEntryCredits: true,
+      id: true,
+      issuedFreeEntryCredits: {
+        orderBy: { ordinal: 'asc' },
+        select: { createdAt: true, id: true, ordinal: true, status: true },
+      },
+      kycStatus: true,
+      payout: {
+        select: {
+          paidAt: true,
+          reconciledAt: true,
+          status: true,
+        },
+      },
+      rank: true,
+      status: true,
+      tier: { select: { code: true, name: true } },
+      winnerReviewStatus: true,
+    },
+    where: { winnerEntry: { userId } },
+  });
+}
+
 export function getOwnedAccount(accountId: string, userId: string) {
   return database.tradingAccount.findFirst({
     include: {
@@ -65,6 +95,7 @@ export async function getAdminOverview() {
     recentPayments,
     recentAudit,
     managedCompetitions,
+    prizeOperations,
   ] = await Promise.all([
     database.user.count(),
     database.competition.count(),
@@ -104,6 +135,30 @@ export async function getAdminOverview() {
       take: 12,
       where: { status: { not: 'ARCHIVED' } },
     }),
+    database.prize.findMany({
+      include: {
+        competition: { select: { code: true, name: true, status: true } },
+        issuedFreeEntryCredits: {
+          orderBy: { ordinal: 'asc' },
+          select: { id: true, ordinal: true, status: true },
+        },
+        payout: true,
+        tier: { select: { code: true, name: true } },
+        winnerEntry: {
+          include: {
+            user: {
+              select: { displayName: true, email: true, name: true },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { competition: { tradingStartsAt: 'desc' } },
+        { tier: { entryFeeMinor: 'asc' } },
+        { rank: 'asc' },
+      ],
+      take: 40,
+    }),
   ]);
 
   return {
@@ -111,6 +166,7 @@ export async function getAdminOverview() {
     competitions,
     managedCompetitions,
     pendingPayments,
+    prizeOperations,
     recentAudit,
     recentPayments,
     users,

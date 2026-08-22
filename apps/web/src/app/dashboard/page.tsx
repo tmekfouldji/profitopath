@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { requireUser } from '@/server/auth/session';
-import { getTraderDashboard } from '@/server/queries';
+import { getTraderDashboard, getTraderPrizeOverview } from '@/server/queries';
 import { getTraderLeaderboardSummaries } from '@/server/trader-leaderboards';
 
 function leaderboardAsOf(value: Date | null): string {
@@ -24,9 +24,10 @@ export default async function DashboardPage({
   searchParams: Promise<{ notice?: string }>;
 }) {
   const user = await requireUser('/dashboard');
-  const [entries, leaderboardSummaries, params] = await Promise.all([
+  const [entries, leaderboardSummaries, prizes, params] = await Promise.all([
     getTraderDashboard(user.id),
     getTraderLeaderboardSummaries(user.id),
+    getTraderPrizeOverview(user.id),
     searchParams,
   ]);
 
@@ -159,6 +160,75 @@ export default async function DashboardPage({
               </article>
             );
           })}
+        </section>
+      )}
+      {prizes.length === 0 ? null : (
+        <section className="trader-prize-board">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Company-funded awards</p>
+              <h2>Prize review ledger</h2>
+            </div>
+            <p>
+              Winner verification, KYC, and payouts are reviewed manually. No
+              customer trading deposit or stored-value balance is involved.
+            </p>
+          </div>
+          <div className="trader-prize-list">
+            {prizes.map((prize) => (
+              <article className="trader-prize" key={prize.id}>
+                <header>
+                  <div>
+                    <span className="data-label">
+                      {prize.competition.code} · {prize.tier.code} · rank{' '}
+                      {prize.rank}
+                    </span>
+                    <h3>{formatUsdMinor(prize.amountMinor)}</h3>
+                  </div>
+                  <span
+                    className={`status-pill status-${prize.status.toLowerCase()}`}
+                  >
+                    {statusLabel(prize.status)}
+                  </span>
+                </header>
+                <dl>
+                  <div>
+                    <dt>Winner review</dt>
+                    <dd>{statusLabel(prize.winnerReviewStatus)}</dd>
+                  </div>
+                  <div>
+                    <dt>Manual KYC</dt>
+                    <dd>{statusLabel(prize.kycStatus)}</dd>
+                  </div>
+                  <div>
+                    <dt>Payout</dt>
+                    <dd>
+                      {prize.payout === null
+                        ? 'Not created'
+                        : statusLabel(prize.payout.status)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Free entries</dt>
+                    <dd>
+                      {
+                        prize.issuedFreeEntryCredits.filter(
+                          (credit) => credit.status === 'AVAILABLE',
+                        ).length
+                      }{' '}
+                      available
+                    </dd>
+                  </div>
+                </dl>
+                {prize.payout?.reconciledAt === null ||
+                prize.payout === null ? null : (
+                  <p className="trader-prize-proof">
+                    Payout reconciled · configured access credits issued
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
         </section>
       )}
     </main>

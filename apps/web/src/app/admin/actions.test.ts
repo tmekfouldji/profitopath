@@ -1,29 +1,51 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  approvePayout: vi.fn(),
+  approvePrize: vi.fn(),
   archiveCompetition: vi.fn(),
+  cancelManualPayout: vi.fn(),
+  derivePrizeLedger: vi.fn(),
   disqualifyCompetitionEntry: vi.fn(),
   finalizeLeaderboard: vi.fn(),
+  markManualPayoutPaid: vi.fn(),
   processCompetitionLifecycle: vi.fn(),
+  reconcileManualPayout: vi.fn(),
+  recordManualPayoutFailure: vi.fn(),
   recomputeLeaderboardForAdmin: vi.fn(),
   redirect: vi.fn(),
   requireAdmin: vi.fn(),
+  reviewPrizeWinner: vi.fn(),
+  startManualPayout: vi.fn(),
+  updatePrizeKycStatus: vi.fn(),
 }));
 
 vi.mock('@profitopath/competition', () => ({
+  approvePayout: mocks.approvePayout,
+  approvePrize: mocks.approvePrize,
   archiveCompetition: mocks.archiveCompetition,
+  cancelManualPayout: mocks.cancelManualPayout,
   CompetitionAdminCommandError: class CompetitionAdminCommandError extends Error {},
+  derivePrizeLedger: mocks.derivePrizeLedger,
   disqualifyCompetitionEntry: mocks.disqualifyCompetitionEntry,
   finalizeLeaderboard: mocks.finalizeLeaderboard,
   InvalidStateTransitionError: class InvalidStateTransitionError extends Error {},
   LeaderboardFinalizationError: class LeaderboardFinalizationError extends Error {},
+  markManualPayoutPaid: mocks.markManualPayoutPaid,
+  PrizeOperationError: class PrizeOperationError extends Error {},
   processCompetitionLifecycle: mocks.processCompetitionLifecycle,
+  reconcileManualPayout: mocks.reconcileManualPayout,
+  recordManualPayoutFailure: mocks.recordManualPayoutFailure,
   recomputeLeaderboardForAdmin: mocks.recomputeLeaderboardForAdmin,
+  reviewPrizeWinner: mocks.reviewPrizeWinner,
+  startManualPayout: mocks.startManualPayout,
+  updatePrizeKycStatus: mocks.updatePrizeKycStatus,
 }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect }));
 vi.mock('@/server/auth/session', () => ({ requireAdmin: mocks.requireAdmin }));
 
 import {
+  approvePayoutAction,
   disqualifyEntryAction,
   finalizeLeaderboardAction,
   runDueLifecycleAction,
@@ -97,5 +119,21 @@ describe('admin server actions', () => {
     await expect(disqualifyEntryAction(form)).rejects.toThrow(
       'redirect:/admin?notice=invalid-operation',
     );
+  });
+
+  it('passes only the authenticated admin into payout approval', async () => {
+    mocks.approvePayout.mockResolvedValue({ unchanged: false });
+    const form = new FormData();
+    form.set('payoutId', 'payout-1');
+    form.set('reason', 'Second administrator reviewed the exact payout row');
+
+    await expect(approvePayoutAction(form)).rejects.toThrow(
+      'redirect:/admin?notice=payout-approved',
+    );
+    expect(mocks.approvePayout).toHaveBeenCalledWith({
+      actorUserId: 'admin-1',
+      payoutId: 'payout-1',
+      reason: 'Second administrator reviewed the exact payout row',
+    });
   });
 });

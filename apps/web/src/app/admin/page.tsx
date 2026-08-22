@@ -1,13 +1,25 @@
+import { formatUsdMinor } from '@profitopath/shared';
+
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { requireAdmin } from '@/server/auth/session';
 import { getAdminOverview } from '@/server/queries';
 
 import {
+  approvePayoutAction,
+  approvePrizeAction,
   archiveCompetitionAction,
+  cancelManualPayoutAction,
+  derivePrizeLedgerAction,
   disqualifyEntryAction,
   finalizeLeaderboardAction,
+  markManualPayoutPaidAction,
+  reconcileManualPayoutAction,
+  recordManualPayoutFailureAction,
   recomputeLeaderboardAction,
+  reviewPrizeWinnerAction,
   runDueLifecycleAction,
+  startManualPayoutAction,
+  updatePrizeKycAction,
 } from './actions';
 
 const notices: Record<string, { error?: boolean; message: string }> = {
@@ -42,6 +54,45 @@ const notices: Record<string, { error?: boolean; message: string }> = {
   'operation-failed': {
     error: true,
     message: 'The operation failed without changing authoritative state.',
+  },
+  'kyc-updated': {
+    message: 'Manual KYC state and review evidence were recorded.',
+  },
+  'payout-approved': {
+    message: 'A second administrator approved the exact payout ledger row.',
+  },
+  'payout-cancelled': {
+    message: 'The unpaid payout was cancelled and its prize was voided.',
+  },
+  'payout-failed': {
+    message: 'The failed manual payout attempt was retained for review.',
+  },
+  'payout-paid': {
+    message: 'Manual payment evidence and transaction reference were recorded.',
+  },
+  'payout-processing': {
+    message: 'The approved payout is now marked as manually processing.',
+  },
+  'payout-reconciled': {
+    message:
+      'A second reviewer reconciled the payout and issued configured credits.',
+  },
+  'prize-approved': {
+    message:
+      'The reviewed company-funded prize was approved and a pending payout created.',
+  },
+  'prizes-derived': {
+    message: 'Configured prize rows were bound to immutable final standings.',
+  },
+  'prizes-unresolved': {
+    message:
+      'Prize derivation completed with ranks held for manual policy review.',
+  },
+  'winner-confirmed': {
+    message: 'The derived winner was confirmed with audit evidence.',
+  },
+  'winner-rejected': {
+    message: 'The derived winner and prize were rejected with audit evidence.',
   },
 };
 
@@ -260,6 +311,396 @@ export default async function AdminPage({
                 )}
               </article>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="admin-prize-board">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Company-funded award ledger</p>
+            <h2>Prize operations</h2>
+          </div>
+          <p>
+            Development amounts are preconfigured, never calculated here.
+            Payment, KYC, and reconciliation are manual audited records; no
+            provider or customer balance is connected.
+          </p>
+        </div>
+        {overview.prizeOperations.length === 0 ? (
+          <p className="empty-copy">
+            No configured prize rows exist. The platform will not invent prize
+            economics.
+          </p>
+        ) : (
+          <div className="admin-prize-list">
+            {overview.prizeOperations.map((prize) => {
+              const winner = prize.winnerEntry;
+              const payout = prize.payout;
+              return (
+                <article className="admin-prize" key={prize.id}>
+                  <header>
+                    <div>
+                      <span className="data-label">
+                        {prize.competition.code} · {prize.tier.code} · rank{' '}
+                        {prize.rank}
+                      </span>
+                      <h3>{formatUsdMinor(prize.amountMinor)}</h3>
+                    </div>
+                    <span
+                      className={`status-pill status-${prize.status.toLowerCase()}`}
+                    >
+                      {statusLabel(prize.status)}
+                    </span>
+                  </header>
+                  <dl className="admin-prize-proof">
+                    <div>
+                      <dt>Winner</dt>
+                      <dd>
+                        {winner === null ? 'Unresolved' : entryName(winner)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Winner review</dt>
+                      <dd>{statusLabel(prize.winnerReviewStatus)}</dd>
+                    </div>
+                    <div>
+                      <dt>Manual KYC</dt>
+                      <dd>{statusLabel(prize.kycStatus)}</dd>
+                    </div>
+                    <div>
+                      <dt>Payout</dt>
+                      <dd>
+                        {payout === null
+                          ? 'Not created'
+                          : statusLabel(payout.status)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Final result</dt>
+                      <dd>
+                        {prize.sourceResultHash?.slice(0, 16) ?? 'Not derived'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Free entries</dt>
+                      <dd>
+                        {prize.issuedFreeEntryCredits.length}/
+                        {prize.freeEntryCredits} issued
+                      </dd>
+                    </div>
+                  </dl>
+                  {prize.reviewReason === null ? null : (
+                    <p className="admin-prize-note">{prize.reviewReason}</p>
+                  )}
+                  <div className="admin-prize-actions">
+                    {prize.sourceFinalizationId === null ? (
+                      <form
+                        action={derivePrizeLedgerAction}
+                        className="admin-prize-command"
+                      >
+                        <input
+                          name="competitionId"
+                          type="hidden"
+                          value={prize.competitionId}
+                        />
+                        <input
+                          aria-label="Prize derivation reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Derivation reason"
+                          required
+                        />
+                        <button type="submit">Derive sealed winners</button>
+                      </form>
+                    ) : null}
+                    {winner !== null &&
+                    prize.winnerReviewStatus === 'PENDING' ? (
+                      <>
+                        <form
+                          action={reviewPrizeWinnerAction}
+                          className="admin-prize-command"
+                        >
+                          <input
+                            name="prizeId"
+                            type="hidden"
+                            value={prize.id}
+                          />
+                          <input
+                            name="decision"
+                            type="hidden"
+                            value="CONFIRM"
+                          />
+                          <input
+                            aria-label="Winner confirmation reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Winner evidence"
+                            required
+                          />
+                          <button type="submit">Confirm winner</button>
+                        </form>
+                        <form
+                          action={reviewPrizeWinnerAction}
+                          className="admin-prize-command is-danger"
+                        >
+                          <input
+                            name="prizeId"
+                            type="hidden"
+                            value={prize.id}
+                          />
+                          <input name="decision" type="hidden" value="REJECT" />
+                          <input
+                            aria-label="Winner rejection reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Rejection evidence"
+                            required
+                          />
+                          <button type="submit">Reject winner</button>
+                        </form>
+                      </>
+                    ) : null}
+                    {prize.winnerReviewStatus === 'CONFIRMED' &&
+                    ['NOT_STARTED', 'REJECTED'].includes(prize.kycStatus) ? (
+                      <form
+                        action={updatePrizeKycAction}
+                        className="admin-prize-command"
+                      >
+                        <input name="prizeId" type="hidden" value={prize.id} />
+                        <input name="kycStatus" type="hidden" value="PENDING" />
+                        <input
+                          aria-label="KYC opening reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="KYC review evidence"
+                          required
+                        />
+                        <button type="submit">Open KYC review</button>
+                      </form>
+                    ) : null}
+                    {prize.kycStatus === 'PENDING' ? (
+                      <>
+                        <form
+                          action={updatePrizeKycAction}
+                          className="admin-prize-command"
+                        >
+                          <input
+                            name="prizeId"
+                            type="hidden"
+                            value={prize.id}
+                          />
+                          <input
+                            name="kycStatus"
+                            type="hidden"
+                            value="APPROVED"
+                          />
+                          <input
+                            aria-label="KYC approval reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Compliance evidence"
+                            required
+                          />
+                          <button type="submit">Approve KYC</button>
+                        </form>
+                        <form
+                          action={updatePrizeKycAction}
+                          className="admin-prize-command is-danger"
+                        >
+                          <input
+                            name="prizeId"
+                            type="hidden"
+                            value={prize.id}
+                          />
+                          <input
+                            name="kycStatus"
+                            type="hidden"
+                            value="REJECTED"
+                          />
+                          <input
+                            aria-label="KYC rejection reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Compliance reason"
+                            required
+                          />
+                          <button type="submit">Reject KYC</button>
+                        </form>
+                      </>
+                    ) : null}
+                    {prize.status === 'PENDING_REVIEW' &&
+                    prize.winnerReviewStatus === 'CONFIRMED' &&
+                    prize.kycStatus === 'APPROVED' ? (
+                      <form
+                        action={approvePrizeAction}
+                        className="admin-prize-command"
+                      >
+                        <input name="prizeId" type="hidden" value={prize.id} />
+                        <input
+                          aria-label="Prize approval reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Prize approval evidence"
+                          required
+                        />
+                        <button type="submit">Approve prize</button>
+                      </form>
+                    ) : null}
+                    {payout?.status === 'PENDING' ? (
+                      <form
+                        action={approvePayoutAction}
+                        className="admin-prize-command"
+                      >
+                        <input
+                          name="payoutId"
+                          type="hidden"
+                          value={payout.id}
+                        />
+                        <input
+                          aria-label="Payout approval reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Second-admin evidence"
+                          required
+                        />
+                        <button type="submit">Approve payout</button>
+                      </form>
+                    ) : null}
+                    {payout !== null &&
+                    ['APPROVED', 'FAILED'].includes(payout.status) ? (
+                      <form
+                        action={startManualPayoutAction}
+                        className="admin-prize-command"
+                      >
+                        <input
+                          name="payoutId"
+                          type="hidden"
+                          value={payout.id}
+                        />
+                        <input
+                          aria-label="Payout processing reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Manual transfer note"
+                          required
+                        />
+                        <button type="submit">
+                          {payout.status === 'FAILED'
+                            ? 'Retry payout'
+                            : 'Start payout'}
+                        </button>
+                      </form>
+                    ) : null}
+                    {payout?.status === 'PROCESSING' ? (
+                      <>
+                        <form
+                          action={markManualPayoutPaidAction}
+                          className="admin-prize-command is-wide"
+                        >
+                          <input
+                            name="payoutId"
+                            type="hidden"
+                            value={payout.id}
+                          />
+                          <input
+                            aria-label="Transaction reference"
+                            maxLength={255}
+                            minLength={6}
+                            name="transactionReference"
+                            placeholder="Transaction reference"
+                            required
+                          />
+                          <input
+                            aria-label="Payout completion reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Completion evidence"
+                            required
+                          />
+                          <button type="submit">Record paid</button>
+                        </form>
+                        <form
+                          action={recordManualPayoutFailureAction}
+                          className="admin-prize-command is-danger"
+                        >
+                          <input
+                            name="payoutId"
+                            type="hidden"
+                            value={payout.id}
+                          />
+                          <input
+                            aria-label="Payout failure reason"
+                            maxLength={1000}
+                            minLength={3}
+                            name="reason"
+                            placeholder="Failure evidence"
+                            required
+                          />
+                          <button type="submit">Record failed</button>
+                        </form>
+                      </>
+                    ) : null}
+                    {payout !== null &&
+                    ['PENDING', 'APPROVED', 'FAILED'].includes(
+                      payout.status,
+                    ) ? (
+                      <form
+                        action={cancelManualPayoutAction}
+                        className="admin-prize-command is-danger"
+                      >
+                        <input
+                          name="payoutId"
+                          type="hidden"
+                          value={payout.id}
+                        />
+                        <input
+                          aria-label="Payout cancellation reason"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Cancellation evidence"
+                          required
+                        />
+                        <button type="submit">Cancel payout</button>
+                      </form>
+                    ) : null}
+                    {payout?.status === 'PAID' &&
+                    payout.reconciledAt === null ? (
+                      <form
+                        action={reconcileManualPayoutAction}
+                        className="admin-prize-command"
+                      >
+                        <input
+                          name="payoutId"
+                          type="hidden"
+                          value={payout.id}
+                        />
+                        <input
+                          aria-label="Payout reconciliation note"
+                          maxLength={1000}
+                          minLength={3}
+                          name="reason"
+                          placeholder="Second-review evidence"
+                          required
+                        />
+                        <button type="submit">Reconcile payout</button>
+                      </form>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

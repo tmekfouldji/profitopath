@@ -601,12 +601,7 @@ export async function recordManualPayoutFailure(input: {
       where: { id: input.payoutId },
     });
     if (payout.status === 'FAILED') return { unchanged: true };
-    assertStateTransition(
-      'Payout',
-      payoutTransitions,
-      payout.status,
-      'FAILED',
-    );
+    assertStateTransition('Payout', payoutTransitions, payout.status, 'FAILED');
     await transaction.payout.update({
       data: { status: 'FAILED' },
       where: { id: payout.id },
