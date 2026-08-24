@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -66,5 +66,19 @@ describe('terminal order ticket browser state', () => {
         .hasAttribute('disabled'),
     ).toBe(false);
     expect(screen.getAllByText('1.10020')).toHaveLength(1);
+  });
+
+  it('treats quote Buy/Sell controls as side selection, never form submission', () => {
+    const { container } = render(ticket(true));
+    const form = container.querySelector('form');
+    const submit = vi.fn();
+    form?.addEventListener('submit', submit);
+
+    fireEvent.click(screen.getByRole('button', { name: /sell \/ bid/i }));
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(
+      container.querySelector('input[name="side"]')?.getAttribute('value'),
+    ).toBe('SELL');
   });
 });

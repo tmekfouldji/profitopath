@@ -82,6 +82,7 @@ function ProtectionForm({
         <input
           defaultValue={position.stopLossPrice ?? ''}
           inputMode="decimal"
+          key={`${position.id}:sl:${position.stopLossPrice ?? 'none'}`}
           name="stopLossPrice"
           placeholder="None"
         />
@@ -91,6 +92,7 @@ function ProtectionForm({
         <input
           defaultValue={position.takeProfitPrice ?? ''}
           inputMode="decimal"
+          key={`${position.id}:tp:${position.takeProfitPrice ?? 'none'}`}
           name="takeProfitPrice"
           placeholder="None"
         />
@@ -157,7 +159,9 @@ function TerminalLedger({ state }: { state: OwnedTerminalState }) {
                   <th>Symbol</th>
                   <th>Side</th>
                   <th>Quantity</th>
-                  <th>Entry</th>
+                  <th>Avg entry</th>
+                  <th>Mark</th>
+                  <th>Live P&amp;L</th>
                   <th>Opened UTC</th>
                   <th>Protection</th>
                 </tr>
@@ -177,6 +181,23 @@ function TerminalLedger({ state }: { state: OwnedTerminalState }) {
                     </td>
                     <td>{position.quantity}</td>
                     <td>{position.averageEntryPrice}</td>
+                    <td>{position.markPrice ?? 'Awaiting quote'}</td>
+                    <td
+                      className={
+                        position.unrealizedPnlMinor?.startsWith('-')
+                          ? 'negative'
+                          : 'positive'
+                      }
+                    >
+                      {position.unrealizedPnlMinor === null ? (
+                        '—'
+                      ) : (
+                        <>
+                          {signedMoney(position.unrealizedPnlMinor)}
+                          <small>{position.unrealizedPips} pips</small>
+                        </>
+                      )}
+                    </td>
                     <td>{dateTime(position.openedAt)}</td>
                     <td>
                       <ProtectionForm
@@ -349,13 +370,17 @@ export function TerminalWorkspace({
       'EURUSD',
   );
   const [connection, setConnection] = useState<ConnectionState>('CONNECTING');
+  const [fullscreen, setFullscreen] = useState(false);
   const [liveCandle, setLiveCandle] = useState<TerminalChartCandle | null>(
     null,
   );
+  const [protectionState, updateChartProtection, protectionPending] =
+    useActionState(updatePositionProtection, initialTerminalActionState);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedSymbolRef = useRef(selectedSymbol);
   const staleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshQueued = useRef(false);
+  const terminalRef = useRef<HTMLElement>(null);
 
   useEffect(() => setState(initialState), [initialState]);
   useEffect(() => {
@@ -383,6 +408,62 @@ export function TerminalWorkspace({
       refreshQueued.current = false;
     }
   }, [initialState.account.id]);
+
+  useEffect(() => {
+    function syncFullscreen() {
+      setFullscreen(document.fullscreenElement === terminalRef.current);
+    }
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () =>
+      document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+
+  useEffect(() => {
+    if (protectionState.status === 'SUCCESS') {
+      void refreshState();
+    }
+  }, [protectionState.status, refreshState]);
+
+  const updateProtectionFromChart = useCallback(
+    (input: {
+      kind: 'STOP_LOSS' | 'TAKE_PROFIT';
+      position: OwnedTerminalState['positions'][number];
+      price: string;
+    }) => {
+      const formData = new FormData();
+      formData.set('accountId', state.account.id);
+      formData.set('clientRequestId', crypto.randomUUID());
+      formData.set('positionId', input.position.id);
+      formData.set(
+        'stopLossPrice',
+        input.kind === 'STOP_LOSS'
+          ? input.price
+          : (input.position.stopLossPrice ?? ''),
+      );
+      formData.set(
+        'takeProfitPrice',
+        input.kind === 'TAKE_PROFIT'
+          ? input.price
+          : (input.position.takeProfitPrice ?? ''),
+      );
+      updateChartProtection(formData);
+    },
+    [state.account.id, updateChartProtection],
+  );
+
+  async function toggleFullscreen() {
+    const terminal = terminalRef.current;
+    if (terminal === null) return;
+    try {
+      if (document.fullscreenElement === terminal) {
+        await document.exitFullscreen();
+      } else {
+        await terminal.requestFullscreen();
+      }
+    } catch {
+      setFullscreen(false);
+    }
+  }
 
   useEffect(() => {
     let disposed = false;
@@ -489,7 +570,10 @@ export function TerminalWorkspace({
   );
 
   return (
-    <main className="terminal-page">
+    <main
+      className={`terminal-page ${fullscreen ? 'is-fullscreen' : ''}`}
+      ref={terminalRef}
+    >
       <header className="terminal-command-bar">
         <div className="terminal-identity">
           <span className="data-label">
@@ -507,6 +591,14 @@ export function TerminalWorkspace({
           <span />{' '}
           {connection === 'LIVE' ? 'Live mock link' : connection.toLowerCase()}
         </div>
+        <button
+          aria-pressed={fullscreen}
+          className="terminal-fullscreen-toggle"
+          onClick={() => void toggleFullscreen()}
+          type="button"
+        >
+          {fullscreen ? 'Exit full screen' : 'Full screen'}
+        </button>
       </header>
 
       <section className="risk-rail" aria-label="Competition risk rail">
@@ -570,11 +662,19 @@ export function TerminalWorkspace({
       <section className="terminal-work-grid">
         <TerminalChart
           accountId={state.account.id}
+          canEditProtection={
+            state.account.status === 'ACTIVE' &&
+            connection === 'LIVE' &&
+            !protectionPending
+          }
           historyAnchor={historyAnchor}
           initialCandles={initialCandles}
           initialSymbol={initialSymbol}
           liveCandle={liveCandle}
           markers={visibleMarkers}
+          onProtectionDrop={updateProtectionFromChart}
+          positions={state.positions}
+          protectionMessage={protectionState.message}
           symbol={selectedSymbol}
         />
         <TerminalOrderTicket

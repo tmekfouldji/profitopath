@@ -21,6 +21,28 @@
   PostgreSQL 17 and Valkey services.
 - Moved terminal action-state initialization out of the server-only module so the live order ticket
   hydrates safely before its first submission; verified the complete provisioned terminal in-browser.
+- Added a production-shaped local Compose stack: isolated web, realtime, worker, migration/seed,
+  PostgreSQL, and Valkey services; only web/realtime ports are host-published, and application
+  services wait for migration deploy and the idempotent development seed.
+- Added a local-only container environment template and hardened deployable images with OpenSSL,
+  Next standalone serving, an included Prisma query engine, and in-container readiness probes.
+- Made the quote-cache round-trip test use a controlled clock so it cannot become stale during the
+  day.
+- Added a fail-closed `MARKET_DATA_SOURCE=mock` gate and a TraderMade trial activation runbook;
+  pricing/trial correspondence alone cannot enable a provider feed or client-facing data.
+- Upgraded the simulated trading station with full-screen mode, exact live per-position marks and
+  P&L, average entry and pip display, indicator overlays, chart price-level/measurement tools, and
+  drag-to-edit server-validated SL/TP controls.
+- Kept local terminal orders in the station across the host-to-Docker runtime switch by using one
+  stable `NEXTAUTH_SECRET` for `localhost:3000`; quote Buy/Sell controls are covered as side
+  selection only and cannot submit the ticket themselves.
+- Added a professional chart drawing rail: selectable/movable trend lines, horizontal rays,
+  rectangle zones, long/short risk-reward plans with adjustable target/stop handles, measurement,
+  keyboard deletion, and per-account/symbol browser persistence. These analytical annotations are
+  deliberately non-authoritative and cannot create or modify simulated trades.
+- Added a compact `ƒx Studies` parameter window for simple/exponential moving averages and
+  Bollinger Bands, including show/hide controls, bounded period/deviation validation, line colors,
+  applied-setting labels, cancel, and defaults reset.
 
 ### Database and domain
 

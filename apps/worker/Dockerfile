@@ -6,6 +6,9 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 RUN corepack enable
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm db:generate

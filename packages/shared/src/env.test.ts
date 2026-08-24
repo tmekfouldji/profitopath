@@ -18,6 +18,7 @@ describe('parseRuntimeEnv', () => {
     expect(parsed.COMPETITION_JOBS_ENABLED).toBe(true);
     expect(parsed.COMPETITION_JOB_INTERVAL_MS).toBe(15_000);
     expect(parsed.AUTO_FINALIZE_FROZEN_COMPETITIONS).toBe(false);
+    expect(parsed.MARKET_DATA_SOURCE).toBe('mock');
     expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
   });
 
@@ -25,6 +26,20 @@ describe('parseRuntimeEnv', () => {
     expect(() =>
       parseRuntimeEnv({
         DATABASE_URL: 'mysql://localhost/app',
+        MOCK_PAYMENT_SIGNING_SECRET:
+          'test-mock-payment-secret-with-thirty-two-characters',
+        NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+        NEXTAUTH_URL: 'http://localhost:3000',
+        VALKEY_URL: 'redis://localhost:6379',
+      }),
+    ).toThrow();
+  });
+
+  it('rejects an unimplemented market-data source', () => {
+    expect(() =>
+      parseRuntimeEnv({
+        DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+        MARKET_DATA_SOURCE: 'tradermade',
         MOCK_PAYMENT_SIGNING_SECRET:
           'test-mock-payment-secret-with-thirty-two-characters',
         NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',

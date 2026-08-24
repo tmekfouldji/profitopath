@@ -372,6 +372,73 @@ Rules:
     tests and a live browser terminal smoke test pass.
   - Moved the shared state out of the server-action module, exercised the real initial state in the
     ticket test, and verified the provisioned terminal renders without the development error overlay.
+- [x] M-003 Add and verify a production-shaped local Docker Compose environment.
+  - Acceptance: web, realtime, and worker use their deployable Docker images; PostgreSQL/Valkey are
+    reachable only through the Compose network; migrations and the idempotent development seed run
+    before application services; documented health checks pass; no real market-data or payment
+    provider is enabled.
+  - Added the isolated `docker-compose.production.yml` stack and local-only container environment
+    template. Migration deploy and the idempotent seed completed before application startup; all
+    container health checks plus the web, realtime, worker, and database-backed competitions smoke
+    checks passed. The stack retains deterministic mock market data and mock payments only.
+- [x] M-004 Record the TraderMade trial offer and prepare a fail-closed provider activation path.
+  - Acceptance: the vendor response and its remaining commercial/documentation gaps are recorded;
+    the deployed environment explicitly permits only the mock feed; an operator runbook defines the
+    payment-link, credential, documentation, rights, and validation gates before any provider code
+    or customer-facing data is enabled.
+  - Recorded the 24 August pricing/trial offer and its outstanding permission/documentation gaps in
+    `11_TRADERMADE_TRIAL_ACTIVATION.md`. `MARKET_DATA_SOURCE` now accepts only `mock`, with a
+    regression test proving an unimplemented provider value fails at startup. The rebuilt Compose
+    stack is healthy with the mock source explicitly confirmed in the running worker.
+- [x] M-005 Upgrade the browser terminal into an operator-focused charting workspace.
+  - Acceptance: the terminal has an accessible browser full-screen mode; the server-owned terminal
+    state exposes exact live per-position mark price, average entry, and unrealized P&L; the chart
+    provides usable timeframes, indicator overlays, price-level/measurement/reset tools, and
+    execution markers; a trader can drag an open position's SL or TP from the chart, with the final
+    request still validated and persisted by the authoritative server protection command. Coverage
+    demonstrates the price/indicator calculations and the updated terminal state; desktop and
+    narrow layouts remain usable.
+  - Added full-screen station mode; exact server-computed per-position executable mark, average
+    entry, P&L, and pip display; moving-average and Bollinger overlays; 4h/1d timeframes; price
+    level, measure, reset, and clear controls; and draggable on-chart SL/TP handles. A drop calls
+    the existing owner-checked, auditable protection command rather than mutating browser state.
+    Formatter, typecheck, lint, and all 101 runnable tests passed; the final Docker image was
+    rebuilt and its running web image, migration/seed, realtime, worker, database, cache, and host
+    health/smoke endpoints all passed.
+- [x] M-006 Keep terminal order submissions in the trading station after a local runtime switch.
+  - Acceptance: quote-side controls never submit or navigate; a valid local browser session remains
+    valid when the same application is run from the production-shaped Docker environment; a market
+    order returns its authoritative simulated result in the ticket rather than redirecting away.
+  - Root cause was a local runtime session-signing-secret mismatch: Docker authenticated actions as
+    anonymous after the switch and correctly redirected them away from the terminal. The Compose
+    web environment now takes its stable local signing secret from root `.env`, matching production
+    secret injection and the host-run web process. Quote Buy/Sell selection has explicit regression
+    coverage; formatter, typecheck, lint, all 102 runnable tests, Compose validation, and the
+    recreated Docker web readiness check passed.
+- [x] M-007 Build professional chart drawing tools for the simulated trading station.
+  - Acceptance: the chart offers a coherent select/drawing toolbelt with trend lines, horizontal
+    rays, rectangles, long/short position-risk visualizations, and measurement; drawings can be
+    selected, adjusted, deleted, cleared, and survive a browser refresh without participating in
+    authoritative trade state. The controls remain keyboard-accessible and work at narrow widths.
+  - Added a compact workstation drawing rail with trend, ray, zone, long-plan, short-plan, and
+    measure tools. The SVG overlay anchors annotations to chart price/time coordinates; selection
+    supports whole-drawing moves and endpoint handles, while `Delete`/`Backspace` remove the selected
+    annotation and `Escape` returns to selection. Browser-only drawings are schema-validated,
+    bounded, and persisted by account and symbol in local storage; no drawing crosses the
+    server-authoritative order, position, or risk boundary. The narrow layout turns the rail into a
+    scrollable horizontal tool strip. Formatter, typecheck, lint, all 105 runnable tests, production
+    build, Docker image rebuild, and the recreated web readiness check passed.
+- [x] M-008 Add a professional indicator-parameter window to the chart.
+  - Acceptance: traders can open an accessible indicator settings dialog, enable/disable the
+    supported studies, edit and validate their periods/deviation/style values, apply or cancel a
+    draft, and reset defaults. The chart uses only the applied valid settings and remains free of
+    any client-authoritative trading behaviour.
+  - Added an accessible `ƒx Studies` settings window for the three supported indicators. Its drafts
+    offer per-study visibility, periods, line colors, and Bollinger deviations; invalid values are
+    rejected before studies are recreated, while Cancel/Escape preserve the current chart and Reset
+    restores the documented defaults. Header chips always reflect applied settings. Formatter,
+    typecheck, lint, all 110 runnable tests, the production image build, and recreated Docker web
+    readiness check passed.
 
 ## Blocked — Phase 9
 

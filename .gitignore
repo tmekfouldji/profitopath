@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.container.example
 .next/
 coverage/
 dist/

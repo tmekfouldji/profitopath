@@ -21,6 +21,7 @@ export const runtimeEnvSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
+  MARKET_DATA_SOURCE: z.literal('mock').default('mock'),
   MOCK_PAYMENT_SIGNING_SECRET: z.string().min(32),
   MOCK_MARKET_DATA_ENABLED: booleanString,
   NODE_ENV: z

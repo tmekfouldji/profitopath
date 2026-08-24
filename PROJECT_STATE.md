@@ -12,15 +12,17 @@ This file is the authoritative high-level state for Codex.
 - Legal/company working assumption: SVG Business Company, final approval pending
 - Current implementation phase: **Phase 9 — Real market-data provider (blocked on provider approval)**
 - Production deployment: not started
+- Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: not started
 
 ## Active milestone
 
-Phase 0 through Phase 8 are complete. TraderMade is the preferred provider candidate and a commercial
-inquiry is pending, but Phase 9 cannot start until the vendor supplies official API documentation and
-confirms commercial rights for customer-facing chart display, caching/fanout, and simulated execution.
-Mock market data remains active; no real provider is authorized.
+Phase 0 through Phase 8 are complete. On 24 August 2026, TraderMade offered pricing and a paid,
+seven-day refundable trial, but stated that commercial terms can be discussed after testing. The reply
+does not supply official API documentation or confirm rights for customer-facing chart display,
+caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Mock market data remains
+active; no real provider is authorized.
 
 ## Phase 0–1 completion evidence
 
@@ -158,13 +160,14 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-002 — live terminal server-action hydration fix and browser regression verification.
+M-008 — configurable indicator settings window for the browser trading station.
 
 ## Next task
 
-P9-001 — obtain the selected market-data provider, its official streaming/historical API
-documentation, and documentary confirmation of commercial customer-facing display and simulated-
-execution rights. This task is blocked pending user/vendor input; do not invent or integrate an API.
+P9-001 — obtain TraderMade's official streaming/historical API documentation and documentary
+confirmation of commercial customer-facing display, caching/fanout, retention, and simulated-
+execution rights. The 24 August pricing/trial email alone does not meet this gate; do not invent or
+integrate an API.
 
 ## Quality status
 
@@ -175,6 +178,32 @@ execution rights. This task is blocked pending user/vendor input; do not invent 
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
+- `docker compose -f docker-compose.production.yml config -q`: passed
+- production-shaped Compose startup: migrations/seed completed before the application services;
+  PostgreSQL, Valkey, web, realtime, and worker health checks passed; host web and competitions
+  smoke routes returned HTTP 200
+- TraderMade activation gate: formatter, typecheck, lint, and the focused shared-environment tests
+  passed; the rebuilt Compose stack is healthy and its running worker confirms
+  `MARKET_DATA_SOURCE=mock`
+- terminal workspace upgrade: formatter, typecheck, lint, and all 101 runnable tests passed (36
+  database integration tests are skipped without a host-exposed test database); the full-screen,
+  indicator, exact position-metric, and server-validated chart-protection paths have focused
+  coverage; the updated production-shaped Docker image and all service/host smoke checks passed
+- terminal order continuity: the production-shaped Compose stack now injects one stable local
+  `NEXTAUTH_SECRET` from root `.env`, so a `localhost:3000` session remains valid after switching
+  from the host-run app to Docker. The quote-side non-submission regression test, formatter,
+  typecheck, lint, all 102 runnable tests, Compose validation, and recreated web readiness check
+  passed.
+- professional chart drawings: browser-only, account/symbol-scoped annotations now provide a
+  select/edit rail, trend lines, horizontal rays, rectangle zones, long/short target-and-stop plan
+  visualizations, and measurement. The validated local schema bounds saved drawings while preserving
+  the simulator's server-owned order/risk boundary. Formatter, typecheck, lint, all 105 runnable
+  tests, the production build, rebuilt Docker image, and recreated web readiness check passed.
+- indicator settings: the professional `ƒx Studies` dialog provides per-study visibility, lengths,
+  line colors, and Bollinger deviations with draft/apply/cancel/reset behavior and bounded client
+  validation. Applied settings drive the existing server-supplied candle overlays only; they cannot
+  affect any order, position, or risk decision. Formatter, typecheck, lint, all 110 runnable tests,
+  production image build, and recreated Docker web readiness check passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 
@@ -182,7 +211,8 @@ execution rights. This task is blocked pending user/vendor input; do not invent 
 
 - starting simulated balance per tier is not finally approved
 - exact drawdown semantics not finally approved
-- TraderMade commercial response pending; the candidate is not approved or integrated
+- TraderMade offered pricing/a paid trial, but commercial terms, official documentation, and required
+  client-display/redistribution/simulated-execution rights are not approved or integrated
 - official provider API documentation and commercial-use/redistribution approval not supplied
 - NOWPayments merchant acceptance not completed
 - SVG legal opinion not completed

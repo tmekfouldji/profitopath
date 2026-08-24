@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   revalidatePath: vi.fn(),
   requireUser: vi.fn(),
+  setOwnedPositionProtection: vi.fn(),
   submitOwnedMarketOrder: vi.fn(),
   submitOwnedPendingOrder: vi.fn(),
 }));
@@ -12,13 +13,13 @@ vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock('@/server/auth/session', () => ({ requireUser: mocks.requireUser }));
 vi.mock('@/server/terminal', () => ({
   cancelOwnedOrder: vi.fn(),
-  setOwnedPositionProtection: vi.fn(),
+  setOwnedPositionProtection: mocks.setOwnedPositionProtection,
   submitOwnedMarketOrder: mocks.submitOwnedMarketOrder,
   submitOwnedPendingOrder: mocks.submitOwnedPendingOrder,
 }));
 
 import { initialTerminalActionState } from './action-state';
-import { submitTerminalOrder } from './actions';
+import { submitTerminalOrder, updatePositionProtection } from './actions';
 
 function orderForm(overrides: Record<string, string> = {}): FormData {
   const form = new FormData();
@@ -30,6 +31,21 @@ function orderForm(overrides: Record<string, string> = {}): FormData {
     side: 'BUY',
     symbol: 'EURUSD',
     type: 'MARKET',
+    ...overrides,
+  })) {
+    form.set(key, value);
+  }
+  return form;
+}
+
+function protectionForm(overrides: Record<string, string> = {}): FormData {
+  const form = new FormData();
+  for (const [key, value] of Object.entries({
+    accountId: 'account-1',
+    clientRequestId: 'protection-request-1',
+    positionId: 'position-1',
+    stopLossPrice: '1.09900',
+    takeProfitPrice: '1.10200',
     ...overrides,
   })) {
     form.set(key, value);
@@ -80,5 +96,34 @@ describe('terminal server actions', () => {
     });
     expect(mocks.submitOwnedMarketOrder).not.toHaveBeenCalled();
     expect(mocks.submitOwnedPendingOrder).not.toHaveBeenCalled();
+  });
+
+  it('sends a chart protection drop through the owner-checked server command', async () => {
+    mocks.setOwnedPositionProtection.mockResolvedValue({
+      positionId: 'position-1',
+    });
+
+    const result = await updatePositionProtection(
+      initialTerminalActionState,
+      protectionForm(),
+    );
+
+    expect(result).toEqual({
+      message: 'Position protection updated.',
+      status: 'SUCCESS',
+    });
+    expect(mocks.setOwnedPositionProtection).toHaveBeenCalledWith('user-1', {
+      clientRequestId: 'protection-request-1',
+      positionId: 'position-1',
+      stopLossPrice: expect.any(Decimal),
+      takeProfitPrice: expect.any(Decimal),
+      tradingAccountId: 'account-1',
+    });
+    expect(
+      mocks.setOwnedPositionProtection.mock.calls[0]?.[1].stopLossPrice.toString(),
+    ).toBe('1.099');
+    expect(
+      mocks.setOwnedPositionProtection.mock.calls[0]?.[1].takeProfitPrice.toString(),
+    ).toBe('1.102');
   });
 });

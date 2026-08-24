@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
   reactStrictMode: true,
+  serverExternalPackages: ['@prisma/client'],
   transpilePackages: [
     '@profitopath/database',
     '@profitopath/shared',

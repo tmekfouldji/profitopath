@@ -1,8 +1,10 @@
 import 'server-only';
 
 import { database } from '@profitopath/database';
+import Decimal from 'decimal.js';
 
 import { getTerminalQuoteStore } from './terminal';
+import { calculateLivePositionMetrics } from './terminal-position-metrics';
 
 function stringOrNull(value: { toString(): string } | null): string | null {
   return value?.toString() ?? null;
@@ -23,6 +25,7 @@ export async function getOwnedTerminalState(accountId: string, userId: string) {
           take: 100,
         },
         positions: {
+          include: { instrumentConfiguration: true },
           orderBy: { openedAt: 'desc' },
           where: { status: 'OPEN' },
         },
@@ -72,6 +75,26 @@ export async function getOwnedTerminalState(accountId: string, userId: string) {
     account.competitionEntry.tier.maxDrawdownMinor > currentDrawdownMinor
       ? account.competitionEntry.tier.maxDrawdownMinor - currentDrawdownMinor
       : 0n;
+  const liveQuotes = new Map(
+    quotes.flatMap((quote) => {
+      if (
+        quote.status === 'MISSING' ||
+        quote.ask === null ||
+        quote.bid === null
+      ) {
+        return [];
+      }
+      return [
+        [
+          quote.symbol,
+          {
+            ask: new Decimal(quote.ask),
+            bid: new Decimal(quote.bid),
+          },
+        ] as const,
+      ];
+    }),
+  );
   return {
     account: {
       balanceMinor: account.balanceMinor.toString(),
@@ -153,17 +176,35 @@ export async function getOwnedTerminalState(accountId: string, userId: string) {
       terminalReason: order.terminalReason,
       type: order.type,
     })),
-    positions: account.positions.map((position) => ({
-      averageEntryPrice: position.averageEntryPrice.toString(),
-      id: position.id,
-      openedAt: position.openedAt.toISOString(),
-      quantity: position.quantity.toString(),
-      realizedPnl: position.realizedPnl.toString(),
-      side: position.side,
-      stopLossPrice: stringOrNull(position.stopLossPrice),
-      symbol: position.symbol,
-      takeProfitPrice: stringOrNull(position.takeProfitPrice),
-    })),
+    positions: account.positions.map((position) => {
+      const quote = liveQuotes.get(position.symbol);
+      const liveMetrics = calculateLivePositionMetrics({
+        ask: quote?.ask ?? null,
+        averageEntryPrice: new Decimal(position.averageEntryPrice.toString()),
+        bid: quote?.bid ?? null,
+        contractSize: new Decimal(
+          position.instrumentConfiguration.contractSize.toString(),
+        ),
+        priceScale: position.instrumentConfiguration.priceScale,
+        quantity: new Decimal(position.quantity.toString()),
+        side: position.side,
+      });
+      return {
+        averageEntryPrice: position.averageEntryPrice.toString(),
+        id: position.id,
+        markPrice: liveMetrics?.markPrice ?? null,
+        openedAt: position.openedAt.toISOString(),
+        priceScale: position.instrumentConfiguration.priceScale,
+        quantity: position.quantity.toString(),
+        realizedPnl: position.realizedPnl.toString(),
+        side: position.side,
+        stopLossPrice: stringOrNull(position.stopLossPrice),
+        symbol: position.symbol,
+        takeProfitPrice: stringOrNull(position.takeProfitPrice),
+        unrealizedPips: liveMetrics?.unrealizedPips ?? null,
+        unrealizedPnlMinor: liveMetrics?.unrealizedPnlMinor ?? null,
+      };
+    }),
     quotes,
     version: snapshot?.sequence.toString() ?? '0',
   };

@@ -73,6 +73,7 @@ Codex must treat the project-tracking files in the repository as persistent memo
 - `SESSION_HANDOFF.md`
 - `CHANGELOG.md`
 - `10_MARKET_DATA_CACHING_AND_CANDLES.md` for market-data/charting work
+- `11_TRADERMADE_TRIAL_ACTIVATION.md` for the provider-trial approval and activation gate
 
 Read them at the start of every session and update them before ending any substantial session.
 
@@ -107,6 +108,41 @@ Local services:
 The web application exposes `/api/health/live` for process liveness and `/api/health/ready` for
 PostgreSQL/Valkey readiness. The realtime and worker services expose `/health/live` and
 `/health/ready`. Stop local dependencies with `docker compose down`.
+
+## Production-shaped local Docker environment
+
+Use this isolated environment to run the web, realtime, worker, migration/seed, PostgreSQL, and
+Valkey services in containers. It mirrors the production service boundaries and Docker images while
+intentionally retaining local PostgreSQL/Valkey containers and deterministic mock market data; the
+actual production design uses managed PostgreSQL/Valkey and remains blocked on the provider/legal
+gates documented in `PROJECT_STATE.md`.
+
+```bash
+cp .env.example .env # only if it does not already exist; this is the local session-secret source
+cp .env.container.example .env.container.local
+docker compose -f docker-compose.production.yml up --build -d
+docker compose -f docker-compose.production.yml ps
+```
+
+The Docker stack uses the same `NEXTAUTH_SECRET` from the root `.env` as a host-run local web
+process. This mirrors production's single stable secret-manager value across web replicas and
+prevents existing `localhost:3000` sessions from being invalidated merely by switching runtimes.
+
+The migration container applies only tracked migrations with `prisma migrate deploy` and performs
+the idempotent development seed before web, realtime, and worker services start. Only the web and
+realtime ports are published to the host:
+
+- web: `http://localhost:3000`
+- realtime health: `http://localhost:3001/health/ready`
+- worker health: `docker compose -f docker-compose.production.yml exec worker node -e "fetch('http://localhost:3002/health/ready').then(async response => { console.log(await response.text()); process.exit(response.ok ? 0 : 1) })"`
+
+Stop the entire production-shaped local stack with:
+
+```bash
+docker compose -f docker-compose.production.yml down
+```
+
+Add `--volumes` only when intentionally deleting the local container database data.
 
 Database commands:
 

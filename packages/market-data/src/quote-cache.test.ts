@@ -32,13 +32,14 @@ class MemoryQuoteCache implements QuoteCacheClient {
 describe('shared quote cache', () => {
   it('round-trips exact normalized quotes through rebuildable cache state', async () => {
     const cache = new MemoryQuoteCache();
-    const store = new ValkeyQuoteStore(cache);
+    const timestamp = new Date('2026-08-24T09:00:00.000Z');
+    const store = new ValkeyQuoteStore(cache, 30, () => timestamp);
     await store.publish({
       ask: new Decimal('1.10020'),
       bid: new Decimal('1.10000'),
       sequence: 42n,
       symbol: 'eurusd',
-      timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      timestamp,
     });
 
     await expect(store.get('EURUSD')).resolves.toEqual({
@@ -46,7 +47,7 @@ describe('shared quote cache', () => {
       bid: new Decimal('1.10000'),
       sequence: 42n,
       symbol: 'EURUSD',
-      timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      timestamp,
     });
     expect(cache.messages).toHaveLength(1);
   });
