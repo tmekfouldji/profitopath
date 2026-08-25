@@ -257,7 +257,9 @@ integrate an API.
   price coordinates on every logical viewport-range update and during captured drag/wheel scaling, with
   one refresh per animation frame. The focused regression proves a saved ray moves with both axes while
   preserving its stored anchors. Formatter, full typecheck, lint, 14 focused chart tests, and the web
-  production build passed; Docker Desktop remains unavailable for rebuilt-image visual QA.
+  production build passed. A no-cache production Compose rebuild and force-recreate completed; PostgreSQL,
+  Valkey, web, realtime, and worker are healthy, and a live terminal browser check confirmed the ray moves
+  with the chart during a pan.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

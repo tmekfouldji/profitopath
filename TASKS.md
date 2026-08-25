@@ -579,6 +579,8 @@ Rules:
   - Reprojected overlay coordinates on every Lightweight Charts logical-range update and on captured
     drag/wheel viewport interactions, coalesced to one animation frame. The focused regression confirms
     that a saved ray follows both its time and price coordinates without mutating its saved anchor data.
+    A no-cache production Compose rebuild, service-health checks, and a live terminal pan confirmed the
+    behavior in the rebuilt web image.
 
 ## Blocked — Phase 9
 

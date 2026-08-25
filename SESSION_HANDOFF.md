@@ -95,13 +95,15 @@ pricing is not documentation or written commercial authorization for customer-fa
   web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
 - M-020 passed formatter, full typecheck, lint, 14 focused drawing/menu/chart tests, and a production web
   build. Its regression verifies a saved ray follows both time and price-scale movement without changing
-  the persisted anchor; Docker Desktop remains unavailable for a rebuilt-image visual check.
+  the persisted anchor. Docker Desktop returned for this verification: a no-cache rebuild of every
+  deployable image and force-recreated Compose stack passed all service readiness checks; live browser QA
+  confirmed the ray reprojects as the chart is panned.
 
 ### Local runtime
 
-- A prior `docker-compose.production.yml` web image remains reachable at `http://localhost:3000`, but
-  Docker Desktop/the `docker` CLI was unavailable while completing M-016. Rebuild the `web` service before
-  relying on it to verify the new chart selectors; realtime, worker, PostgreSQL, and Valkey remain internal.
+- The production-shaped Compose stack was rebuilt without cache and force-recreated on 25 August 2026.
+  PostgreSQL, Valkey, web, realtime, and worker health checks pass; the web app is reachable at
+  `http://localhost:3000` and realtime health at `http://localhost:3001/health/ready`.
 - The root `.env` is the local source for `NEXTAUTH_SECRET`; do not commit local secrets or vendor
   credentials. The base `docker-compose.yml` is a separate host-run development option.
 
