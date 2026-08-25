@@ -74,6 +74,9 @@
 - Kept browser-only drawing overlays locked to their time/price anchors while the chart is panned or
   zoomed. Logical-range changes and drag/wheel viewport interactions now reproject SVG coordinates once
   per animation frame without changing stored drawing anchors or simulated trading state.
+- Added TradingView-style drawing constraints: Shift locks new trend lines horizontally or vertically,
+  Ctrl snaps new drawing/measurement prices to the closest candle OHLC value, and measurements lock as
+  chart-bound visuals on their second click.
 
 ### Database and domain
 

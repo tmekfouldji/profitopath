@@ -11,7 +11,8 @@ refined it into a compact TradingView-style command surface, and M-014 added usa
 for browser annotations. M-015 added chart-only fullscreen, M-016 added optional chart Buy/Sell quote
 selectors, M-017 added a TradingView-style studies legend, M-018 made those studies selectable, and M-019
 added multiple independent study instances. M-020 keeps browser drawings synchronized to their chart
-time/price anchors while the viewport moves or scales. Phase 9 remains blocked at P9-001: TraderMade's trial
+time/price anchors while the viewport moves or scales. M-021 adds Shift/Ctrl drawing constraints and
+click-to-lock measurements. Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -32,6 +33,11 @@ pricing is not documentation or written commercial authorization for customer-fa
   visible logical-range change, and during captured drag/wheel viewport interactions. Stored drawing
   points remain immutable time/price anchors; their SVG x/y values are recalculated from the live chart
   scales, including the existing future-space mapping.
+- New trend lines lock to the dominant horizontal or vertical chart axis while Shift is held. Ctrl snaps
+  new drawing and measurement price points to the closest open, high, low, or close of their exact chart
+  candle; points in future space remain unsnapped. Measure is now a first-click anchor and live preview,
+  then locks as a chart-bound visual on its second click. These tools stay browser-only and cannot affect
+  an order, position, simulator, or market-data state.
 - The chart toolbar provides a separate full-screen control for the chart panel. It expands only the
   chart (including timeframes, studies, drawing tools, annotations, protected position levels, context
   menu, and chart controls), while the terminal-level full-screen control remains independent.
@@ -98,6 +104,9 @@ pricing is not documentation or written commercial authorization for customer-fa
   the persisted anchor. Docker Desktop returned for this verification: a no-cache rebuild of every
   deployable image and force-recreated Compose stack passed all service readiness checks; live browser QA
   confirmed the ray reprojects as the chart is panned.
+- M-021 passed formatter, full typecheck, lint, 18 focused drawing/menu/chart tests, and a production
+  Docker web build. The rebuilt web container is healthy and live browser QA confirmed the measurement
+  locks and remains visible after its second chart click.
 
 ### Local runtime
 
@@ -113,7 +122,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018/M-019/M-020 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018/M-019/M-020/M-021 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

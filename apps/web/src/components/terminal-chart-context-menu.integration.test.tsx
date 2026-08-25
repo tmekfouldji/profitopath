@@ -276,6 +276,56 @@ describe('terminal chart context-menu integration', () => {
     expect(ray?.getAttribute('y1')).toBe('210');
   });
 
+  it('locks a measurement on its second click instead of clearing it on pointer release', () => {
+    renderChart({ overlayCoordinates: true });
+    candleSeries.coordinateToPrice
+      .mockReturnValueOnce(1.1)
+      .mockReturnValueOnce(1.106)
+      .mockReturnValueOnce(1.105)
+      .mockReturnValue(1.099);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Measure price and time range' }),
+    );
+    const canvas = screen.getByLabelText('EURUSD interactive chart canvas');
+
+    fireEvent.pointerDown(canvas, {
+      button: 0,
+      clientX: 120,
+      clientY: 160,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(canvas, {
+      clientX: 240,
+      clientY: 220,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+    fireEvent.pointerDown(canvas, {
+      button: 0,
+      clientX: 220,
+      clientY: 210,
+      pointerId: 2,
+    });
+
+    expect(document.querySelector('.chart-measurement')?.textContent).toContain(
+      '+0.00500 · 50.0 pips',
+    );
+    expect(
+      screen.getByText('Measurement locked · Select Measure to replace'),
+    ).toBeTruthy();
+
+    fireEvent.pointerMove(canvas, {
+      clientX: 320,
+      clientY: 260,
+      pointerId: 2,
+    });
+
+    expect(document.querySelector('.chart-measurement')?.textContent).toContain(
+      '+0.00500 · 50.0 pips',
+    );
+  });
+
   it('requests browser fullscreen for the chart panel only', () => {
     renderChart();
 

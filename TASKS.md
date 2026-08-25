@@ -582,6 +582,16 @@ Rules:
     A no-cache production Compose rebuild, service-health checks, and a live terminal pan confirmed the
     behavior in the rebuilt web image.
 
+- [x] M-021 Add TradingView-style chart-drawing constraints and click-to-lock measurement.
+  - Acceptance: Shift constrains a new trend line to its dominant horizontal or vertical axis; Ctrl snaps
+    new drawing and measurement price anchors to the closest OHLC value of the candle under the pointer;
+    a measurement starts on its first click, previews under the cursor, and remains on the chart when the
+    second click fixes it. These client-only visual tools must not modify simulated orders, positions, or
+    market data, and focused coverage must verify their constraint and completion behavior.
+  - Added deterministic horizontal/vertical Shift locking, exact per-candle OHLC Ctrl snapping, and a
+    chart-coordinate-bound click-to-lock measurement. Focused unit/component tests, full static checks,
+    production image build, web readiness, and live two-click measurement QA passed.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

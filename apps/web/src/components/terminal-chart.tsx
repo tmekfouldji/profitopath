@@ -49,6 +49,10 @@ import {
   futureDrawingTimeAtLogicalPosition,
 } from './terminal-chart-future-space';
 import {
+  constrainTrendLinePoint,
+  snapChartPointToCandleOhlc,
+} from './terminal-chart-constraints';
+import {
   TerminalChartContextMenu,
   type TerminalChartCommandTool,
 } from './terminal-chart-context-menu';
@@ -115,9 +119,9 @@ interface ChartPoint extends TerminalChartDrawingPoint {
   y: number;
 }
 
-interface MeasureDrag {
+interface ChartMeasure {
   current: ChartPoint;
-  pointerId: number;
+  isComplete: boolean;
   start: ChartPoint;
 }
 
@@ -276,7 +280,7 @@ export function TerminalChart({
   );
   const [keepDrawing, setKeepDrawing] = useState(false);
   const [lastPriceVisible, setLastPriceVisible] = useState(true);
-  const [measure, setMeasure] = useState<MeasureDrag | null>(null);
+  const [measure, setMeasure] = useState<ChartMeasure | null>(null);
   const [overlayRevision, setOverlayRevision] = useState(0);
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(
     null,
@@ -766,6 +770,14 @@ export function TerminalChart({
     return { price, time, x, y };
   }
 
+  function snapChartPoint(point: ChartPoint, ctrlKey: boolean): ChartPoint {
+    if (!ctrlKey) return point;
+    return snapChartPointToCandleOhlc({
+      candles: chartData(candlesRef.current),
+      point,
+    });
+  }
+
   function latestLogicalAnchor() {
     const latest = candlesRef.current.at(-1);
     const chart = chartRef.current;
@@ -912,18 +924,24 @@ export function TerminalChart({
       setContextMenu(null);
     }
     if (event.button !== 0 || tool === 'CURSOR') return;
-    const point = chartPoint(event);
-    if (point === null) return;
+    const rawPoint = chartPoint(event);
+    if (rawPoint === null) return;
+    const point = snapChartPoint(rawPoint, event.ctrlKey);
     event.preventDefault();
     if (tool === 'HORIZONTAL_RAY') {
       addHorizontalRay(point);
       return;
     }
-    event.currentTarget.setPointerCapture(event.pointerId);
     if (tool === 'MEASURE') {
-      setMeasure({ current: point, pointerId: event.pointerId, start: point });
+      if (measure === null || measure.isComplete) {
+        setMeasure({ current: point, isComplete: false, start: point });
+      } else {
+        setMeasure({ ...measure, current: point, isComplete: true });
+        if (!keepDrawing) setTool('CURSOR');
+      }
       return;
     }
+    event.currentTarget.setPointerCapture(event.pointerId);
     setDraft({
       current: point,
       pointerId: event.pointerId,
@@ -933,36 +951,47 @@ export function TerminalChart({
   }
 
   function handleStagePointerMove(event: PointerEvent<HTMLDivElement>) {
-    const point = chartPoint(event);
-    if (point === null) return;
+    const rawPoint = chartPoint(event);
+    if (rawPoint === null) return;
     const edit = drawingEditRef.current;
     if (edit?.pointerId === event.pointerId) {
       const next =
         edit.mode === 'MOVE'
           ? translateTerminalChartDrawing(edit.drawing, {
-              price: point.price - edit.start.price,
-              time: point.time - edit.start.time,
+              price: rawPoint.price - edit.start.price,
+              time: rawPoint.time - edit.start.time,
             })
           : replaceTerminalChartDrawingPoint(
               edit.drawing,
               edit.mode,
               edit.drawing.kind === 'HORIZONTAL_RAY'
-                ? { price: point.price, time: edit.drawing.first.time }
-                : { price: point.price, time: point.time },
+                ? { price: rawPoint.price, time: edit.drawing.first.time }
+                : { price: rawPoint.price, time: rawPoint.time },
             );
       setDrawings((current) =>
         current.map((drawing) => (drawing.id === next.id ? next : drawing)),
       );
       return;
     }
+    const point = snapChartPoint(rawPoint, event.ctrlKey);
     const draft = drawingDraftRef.current;
     if (draft?.pointerId === event.pointerId) {
-      setDraft({ ...draft, current: point });
+      const current =
+        draft.tool === 'TRENDLINE'
+          ? constrainTrendLinePoint({
+              current: point,
+              shiftKey: event.shiftKey,
+              start: draft.start,
+            })
+          : point;
+      setDraft({ ...draft, current });
       return;
     }
-    if (measure?.pointerId === event.pointerId) {
+    if (measure !== null && !measure.isComplete && tool === 'MEASURE') {
       setMeasure((current) =>
-        current === null ? current : { ...current, current: point },
+        current === null || current.isComplete
+          ? current
+          : { ...current, current: point },
       );
     }
   }
@@ -976,7 +1005,7 @@ export function TerminalChart({
     const draft = drawingDraftRef.current;
     if (draft?.pointerId === event.pointerId) {
       event.currentTarget.releasePointerCapture(event.pointerId);
-      const current = chartPoint(event) ?? draft.current;
+      const current = draft.current;
       if (
         Math.abs(current.x - draft.start.x) > 3 ||
         Math.abs(current.y - draft.start.y) > 3
@@ -989,9 +1018,6 @@ export function TerminalChart({
       if (!keepDrawing) setTool('CURSOR');
       return;
     }
-    if (measure?.pointerId !== event.pointerId) return;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    if (!keepDrawing) setTool('CURSOR');
   }
 
   function beginDrawingEdit(
@@ -1331,14 +1357,23 @@ export function TerminalChart({
           'draft',
         );
 
-  const measureStyle =
+  const measurePoints =
     measure === null
+      ? null
+      : {
+          current: overlayPoint(measure.current),
+          start: overlayPoint(measure.start),
+        };
+  const measureStyle =
+    measurePoints === null ||
+    measurePoints.current === null ||
+    measurePoints.start === null
       ? undefined
       : {
-          height: `${Math.abs(measure.current.y - measure.start.y)}px`,
-          left: `${Math.min(measure.current.x, measure.start.x)}px`,
-          top: `${Math.min(measure.current.y, measure.start.y)}px`,
-          width: `${Math.abs(measure.current.x - measure.start.x)}px`,
+          height: `${Math.abs(measurePoints.current.y - measurePoints.start.y)}px`,
+          left: `${Math.min(measurePoints.current.x, measurePoints.start.x)}px`,
+          top: `${Math.min(measurePoints.current.y, measurePoints.start.y)}px`,
+          width: `${Math.abs(measurePoints.current.x - measurePoints.start.x)}px`,
         };
   const measurePips =
     measure === null
@@ -1588,7 +1623,7 @@ export function TerminalChart({
             aria-label="Measure price and time range"
             aria-pressed={tool === 'MEASURE'}
             onClick={() => selectDrawingTool('MEASURE')}
-            title="Measure price range"
+            title="Click once to start and once to lock a price/time measurement"
             type="button"
           >
             <span aria-hidden="true">↕</span>
@@ -1756,10 +1791,16 @@ export function TerminalChart({
         <span>
           <span id="chart-tool-status">
             {tool === 'CURSOR'
-              ? selectedDrawingId === null
-                ? 'Select a drawing to edit'
-                : 'Drag line or handles · Delete removes'
-              : `${tool === 'MEASURE' ? 'Measure' : drawingLabel(tool)} active`}
+              ? measure?.isComplete
+                ? 'Measurement locked · Select Measure to replace'
+                : selectedDrawingId === null
+                  ? 'Select a drawing to edit'
+                  : 'Drag line or handles · Delete removes'
+              : tool === 'MEASURE'
+                ? measure === null || measure.isComplete
+                  ? 'Measure active · Click to start'
+                  : 'Measure active · Click a second point to lock'
+                : `${drawingLabel(tool)} active`}
           </span>{' '}
           · Right-click for chart tools ·{' '}
           {protectionMessage || 'Mock data · UTC'}

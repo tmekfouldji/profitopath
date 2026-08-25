@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-020 — Chart drawing scale synchronization.
+M-021 — Chart drawing constraints and click-to-lock measurement.
 
 ## Next task
 
@@ -260,6 +260,11 @@ integrate an API.
   production build passed. A no-cache production Compose rebuild and force-recreate completed; PostgreSQL,
   Valkey, web, realtime, and worker are healthy, and a live terminal browser check confirmed the ray moves
   with the chart during a pan.
+- chart drawing constraints: Shift locks a new trend line to the dominant horizontal/vertical axis, while
+  Ctrl snaps a new drawing or measure anchor to the closest OHLC value on its candle. Measurements now
+  start on a first click, preview under the cursor, and lock in place on the second click while remaining
+  bound to chart coordinates. Formatter, full typecheck, lint, 18 focused chart tests, production Docker
+  web build/readiness, and a live two-click measurement check passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live
