@@ -539,6 +539,17 @@ Rules:
     Formatter, web typecheck, lint, 14 focused tests, and the production web build passed. Docker Desktop
     was unavailable in this session, so the existing local container could not be rebuilt for this change.
 
+- [x] M-017 Add a TradingView-style active-studies legend to the chart pane.
+  - Acceptance: applied studies appear as a compact, color-matched list at the chart pane's top-left,
+    with their current configured parameters and latest values; the list remains legible alongside the
+    drawing rail, live quote controls, and chart-only fullscreen, adapts at narrow widths, and the
+    existing Studies settings dialog remains the source of truth for enablement and parameters.
+  - Replaced the duplicate header study chips with a plot-local legend that shows each applied study's
+    configured label, color, and latest calculated value. It sits beside the desktop drawing rail, moves
+    below the narrow drawing strip, and preserves chart-only fullscreen. Formatter, web typecheck, lint,
+    17 focused tests, and the production web build passed; Docker Desktop remains unavailable for an
+    image rebuild and live visual pass.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

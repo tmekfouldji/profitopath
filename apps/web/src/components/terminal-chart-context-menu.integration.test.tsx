@@ -59,7 +59,13 @@ beforeEach(() => {
   });
 });
 
-function renderChart({ futureSpace = false }: { futureSpace?: boolean } = {}) {
+function renderChart({
+  candleCount = 1,
+  futureSpace = false,
+}: {
+  candleCount?: number;
+  futureSpace?: boolean;
+} = {}) {
   chartApi.addSeries.mockImplementation(() => candleSeries);
   candleSeries.priceToCoordinate.mockReturnValue(futureSpace ? 120 : null);
   chartApi.timeScale.mockImplementation(() => ({
@@ -80,16 +86,14 @@ function renderChart({ futureSpace = false }: { futureSpace?: boolean } = {}) {
       accountId: 'account-1',
       canEditProtection: false,
       historyAnchor: '2024-08-14T12:00:00.000Z',
-      initialCandles: [
-        {
-          close: '1.08432',
-          high: '1.08500',
-          isFinal: true,
-          low: '1.08300',
-          open: '1.08400',
-          openTime: '2024-08-14T12:00:00.000Z',
-        },
-      ],
+      initialCandles: Array.from({ length: candleCount }, (_, index) => ({
+        close: '1.08432',
+        high: '1.08500',
+        isFinal: true,
+        low: '1.08300',
+        open: '1.08400',
+        openTime: new Date(Date.UTC(2024, 7, 14, 12, index)).toISOString(),
+      })),
       initialSymbol: 'EURUSD',
       liveCandle: null,
       markers: [],
@@ -174,6 +178,18 @@ describe('terminal chart context-menu integration', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Chart full screen' }));
 
     expect(requestChartFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists each applied study with its configured parameters and latest value in the chart pane', () => {
+    renderChart({ candleCount: 20 });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Studies' }));
+    fireEvent.click(screen.getByLabelText('Simple moving average visibility'));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+
+    const legend = screen.getByLabelText('Active chart studies');
+    expect(within(legend).getByText('SMA 20')).toBeTruthy();
+    expect(within(legend).getByText('1.08432')).toBeTruthy();
   });
 
   it('shows optional chart quote selectors and routes a side choice without submitting', () => {

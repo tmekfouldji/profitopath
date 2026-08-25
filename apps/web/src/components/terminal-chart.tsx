@@ -143,6 +143,12 @@ interface ChartContextMenuState {
   position: { x: number; y: number };
 }
 
+interface ChartStudyLegendItem {
+  color: string;
+  label: string;
+  values: string[];
+}
+
 function chartTime(value: string): UTCTimestamp {
   return Math.floor(new Date(value).getTime() / 1_000) as UTCTimestamp;
 }
@@ -283,6 +289,64 @@ export function TerminalChart({
     [positions, symbol],
   );
   const priceScale = activePositions[0]?.priceScale ?? 5;
+  const studyCandles = useMemo(
+    () =>
+      chartData(candles).map((candle) => ({
+        close: candle.close,
+        time: Number(candle.time),
+      })),
+    [candles],
+  );
+  const studyLegend = useMemo(() => {
+    const items: ChartStudyLegendItem[] = [];
+    for (const indicator of indicatorOrder) {
+      if (!indicators.includes(indicator)) continue;
+      const label = indicatorLabel(indicator, indicatorSettings);
+      const color = indicatorSettings[indicator].color;
+      if (indicator === 'SMA_20') {
+        const value = simpleMovingAverage(
+          studyCandles,
+          indicatorSettings.SMA_20.period,
+        ).at(-1);
+        items.push({
+          color,
+          label,
+          values:
+            value === undefined ? [] : [priceText(value.close, priceScale)],
+        });
+        continue;
+      }
+      if (indicator === 'EMA_50') {
+        const value = exponentialMovingAverage(
+          studyCandles,
+          indicatorSettings.EMA_50.period,
+        ).at(-1);
+        items.push({
+          color,
+          label,
+          values:
+            value === undefined ? [] : [priceText(value.close, priceScale)],
+        });
+        continue;
+      }
+      const values = bollingerBands(
+        studyCandles,
+        indicatorSettings.BOLLINGER.period,
+        indicatorSettings.BOLLINGER.deviations,
+      ).at(-1);
+      items.push({
+        color,
+        label,
+        values:
+          values === undefined
+            ? []
+            : [values.upper, values.middle, values.lower].map((value) =>
+                priceText(value, priceScale),
+              ),
+      });
+    }
+    return items;
+  }, [indicatorSettings, indicators, priceScale, studyCandles]);
 
   useEffect(() => {
     candlesRef.current = candles;
@@ -523,10 +587,6 @@ export function TerminalChart({
       activeChart.removeSeries(series);
     }
     indicatorSeriesRef.current = [];
-    const studyCandles = chartData(candles).map((candle) => ({
-      close: candle.close,
-      time: Number(candle.time),
-    }));
     function addStudy(
       color: string,
       values: { time: number; value: number }[],
@@ -588,7 +648,7 @@ export function TerminalChart({
         bands.map((value) => ({ time: value.time, value: value.lower })),
       );
     }
-  }, [candles, chartGeneration, indicatorSettings, indicators]);
+  }, [chartGeneration, indicatorSettings, indicators, studyCandles]);
 
   async function selectTimeframe(next: ChartTimeframe) {
     setTimeframe(next);
@@ -614,14 +674,6 @@ export function TerminalChart({
     } catch {
       setHistoryState('EXHAUSTED');
     }
-  }
-
-  function toggleIndicator(indicator: Indicator) {
-    setIndicators((current) =>
-      current.includes(indicator)
-        ? current.filter((entry) => entry !== indicator)
-        : [...current, indicator],
-    );
   }
 
   function chartPoint(event: {
@@ -1270,20 +1322,6 @@ export function TerminalChart({
               <span aria-hidden="true">ƒx</span> Studies
               {indicators.length === 0 ? null : <b>{indicators.length}</b>}
             </button>
-            {indicatorOrder.map((indicator) => (
-              <button
-                aria-pressed={indicators.includes(indicator)}
-                className={
-                  indicators.includes(indicator) ? 'is-active' : undefined
-                }
-                key={indicator}
-                onClick={() => toggleIndicator(indicator)}
-                title={`Toggle ${indicatorLabel(indicator, indicatorSettings)}`}
-                type="button"
-              >
-                {indicatorLabel(indicator, indicatorSettings)}
-              </button>
-            ))}
           </div>
           <button
             aria-pressed={chartFullscreen}
@@ -1325,6 +1363,33 @@ export function TerminalChart({
         tabIndex={0}
       >
         <div className="chart-canvas" ref={containerRef} />
+        {studyLegend.length === 0 ? null : (
+          <aside
+            aria-label="Active chart studies"
+            className="chart-study-legend"
+          >
+            {studyLegend.map((study) => (
+              <div
+                aria-label={`${study.label}${
+                  study.values.length === 0
+                    ? ', calculating'
+                    : `, ${study.values.join(', ')}`
+                }`}
+                className="chart-study-legend-item"
+                key={study.label}
+              >
+                <i
+                  aria-hidden="true"
+                  style={{ backgroundColor: study.color }}
+                />
+                <span>{study.label}</span>
+                <b>
+                  {study.values.length === 0 ? '—' : study.values.join(' ')}
+                </b>
+              </div>
+            ))}
+          </aside>
+        )}
         {quoteButtonsVisible ? (
           <aside
             aria-label="Chart Buy/Sell selectors"

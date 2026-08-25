@@ -64,6 +64,8 @@
 - Added a default-off Chart settings toggle for live chart Buy/Sell quote selectors. They synchronize the
   selected side with the order ticket and remain unavailable without a live quote; only the ticket's
   explicit submit can call the server-authoritative simulated-order command.
+- Moved applied-study labels into a compact, color-matched chart-pane legend at the top-left, showing
+  each configured study and its latest value while retaining the Studies dialog for parameter changes.
 
 ### Database and domain
 
