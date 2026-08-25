@@ -371,6 +371,7 @@ export function TerminalWorkspace({
       initialState.instruments[0]?.symbol ??
       'EURUSD',
   );
+  const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
   const [connection, setConnection] = useState<ConnectionState>('CONNECTING');
   const [fullscreen, setFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(() =>
@@ -681,9 +682,14 @@ export function TerminalWorkspace({
           initialSymbol={initialSymbol}
           liveCandle={liveCandle}
           markers={visibleMarkers}
+          onOrderSideSelect={setOrderSide}
           onProtectionDrop={updateProtectionFromChart}
+          orderSide={orderSide}
           positions={state.positions}
           protectionMessage={protectionState.message}
+          quote={state.quotes.find(
+            (candidate) => candidate.symbol === selectedSymbol,
+          )}
           symbol={selectedSymbol}
         />
         <TerminalOrderTicket
@@ -692,8 +698,10 @@ export function TerminalWorkspace({
           connectionLive={connection === 'LIVE'}
           instruments={state.instruments}
           onRefresh={refreshState}
+          orderSide={orderSide}
           quotes={state.quotes}
           selectedSymbol={selectedSymbol}
+          setOrderSide={setOrderSide}
           setSelectedSymbol={setSelectedSymbol}
         />
       </section>

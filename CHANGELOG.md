@@ -61,6 +61,9 @@
 - Added a dedicated chart-only full-screen mode. It expands the chart panel—not the full terminal—and
   preserves the chart's studies, drawings, context menu, and protected position levels until Escape or
   the chart exit control is used.
+- Added a default-off Chart settings toggle for live chart Buy/Sell quote selectors. They synchronize the
+  selected side with the order ticket and remain unavailable without a live quote; only the ticket's
+  explicit submit can call the server-authoritative simulated-order command.
 
 ### Database and domain
 

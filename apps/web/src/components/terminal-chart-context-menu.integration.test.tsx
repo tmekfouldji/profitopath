@@ -25,6 +25,7 @@ const candleSeries = {
 };
 
 const requestChartFullscreen = vi.fn();
+const onOrderSideSelect = vi.fn();
 
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: 'candlestick',
@@ -51,6 +52,7 @@ afterEach(() => {
 beforeEach(() => {
   window.localStorage.clear();
   requestChartFullscreen.mockReset();
+  onOrderSideSelect.mockReset();
   Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
     configurable: true,
     value: requestChartFullscreen,
@@ -91,9 +93,17 @@ function renderChart({ futureSpace = false }: { futureSpace?: boolean } = {}) {
       initialSymbol: 'EURUSD',
       liveCandle: null,
       markers: [],
+      onOrderSideSelect,
       onProtectionDrop: vi.fn(),
+      orderSide: 'BUY',
       positions: [],
       protectionMessage: '',
+      quote: {
+        ask: '1.08452',
+        bid: '1.08432',
+        status: 'LIVE',
+        symbol: 'EURUSD',
+      },
       symbol: 'EURUSD',
     }),
   );
@@ -164,5 +174,28 @@ describe('terminal chart context-menu integration', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Chart full screen' }));
 
     expect(requestChartFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows optional chart quote selectors and routes a side choice without submitting', () => {
+    renderChart();
+
+    fireEvent.contextMenu(
+      screen.getByLabelText('EURUSD interactive chart canvas'),
+      { clientX: 160, clientY: 180 },
+    );
+    const menu = screen.getByLabelText('Chart command menu');
+    fireEvent.click(
+      within(menu).getByRole('button', { name: 'Open chart settings' }),
+    );
+    fireEvent.click(
+      within(menu).getByRole('button', { name: 'Show Buy/Sell buttons' }),
+    );
+
+    expect(screen.getByLabelText('Chart Buy/Sell selectors')).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Select Sell / bid 1.08432' }),
+    );
+
+    expect(onOrderSideSelect).toHaveBeenCalledWith('SELL');
   });
 });

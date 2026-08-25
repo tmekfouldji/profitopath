@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-015 — Chart-only fullscreen workspace mode.
+M-016 — Optional chart Buy/Sell quote selectors.
 
 ## Next task
 
@@ -233,6 +233,12 @@ integrate an API.
   normal terminal without affecting the existing whole-terminal fullscreen mode. Formatter, web
   typecheck, lint, nine focused tests, production Docker rebuild/readiness, and live browser enter/exit
   verification passed.
+- chart Buy/Sell selectors: Chart settings now includes a default-off Buy/Sell control overlay, using the
+  current live bid/ask and available in normal plus chart-only fullscreen views. Choosing one synchronizes
+  the existing ticket-side state; it neither navigates nor submits a simulated order, and no stale/missing
+  quote can be selected. Formatter, web typecheck, lint, 14 focused tests, and the web production build
+  passed. Docker Desktop was unavailable in this session, so the already-running
+  local container still serves the prior image and was not represented as verification for this change.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

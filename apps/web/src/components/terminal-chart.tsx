@@ -82,6 +82,13 @@ export interface TerminalChartPosition {
   takeProfitPrice: string | null;
 }
 
+export interface TerminalChartQuote {
+  ask: string | null;
+  bid: string | null;
+  status: 'LIVE' | 'MISSING';
+  symbol: string;
+}
+
 const timeframeSeconds = {
   '1d': 86_400,
   '1h': 3_600,
@@ -199,9 +206,12 @@ export function TerminalChart({
   initialSymbol,
   liveCandle,
   markers,
+  onOrderSideSelect,
   onProtectionDrop,
+  orderSide,
   positions,
   protectionMessage,
+  quote,
   symbol,
 }: {
   accountId: string;
@@ -211,13 +221,16 @@ export function TerminalChart({
   initialSymbol: string;
   liveCandle: TerminalChartCandle | null;
   markers: TerminalChartMarker[];
+  onOrderSideSelect(side: 'BUY' | 'SELL'): void;
   onProtectionDrop(input: {
     kind: ProtectionKind;
     position: TerminalChartPosition;
     price: string;
   }): void;
+  orderSide: 'BUY' | 'SELL';
   positions: TerminalChartPosition[];
   protectionMessage: string;
+  quote: TerminalChartQuote | undefined;
   symbol: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -235,6 +248,7 @@ export function TerminalChart({
   const [candles, setCandles] = useState(initialCandles);
   const [chartFullscreen, setChartFullscreen] = useState(false);
   const [chartGeneration, setChartGeneration] = useState(0);
+  const [quoteButtonsVisible, setQuoteButtonsVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<ChartContextMenuState | null>(
     null,
   );
@@ -1311,6 +1325,45 @@ export function TerminalChart({
         tabIndex={0}
       >
         <div className="chart-canvas" ref={containerRef} />
+        {quoteButtonsVisible ? (
+          <aside
+            aria-label="Chart Buy/Sell selectors"
+            className="chart-quote-buttons"
+            onContextMenu={(event) => event.preventDefault()}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <span>Order side</span>
+            <div>
+              <button
+                aria-label={`Select Sell / bid ${quote?.bid ?? 'unavailable'}`}
+                aria-pressed={orderSide === 'SELL'}
+                className="is-sell"
+                disabled={quote?.status !== 'LIVE' || quote.bid === null}
+                onClick={() => onOrderSideSelect('SELL')}
+                title="Select Sell in the simulated order ticket"
+                type="button"
+              >
+                <small>Sell</small>
+                <strong>{quote?.bid ?? '—'}</strong>
+              </button>
+              <button
+                aria-label={`Select Buy / ask ${quote?.ask ?? 'unavailable'}`}
+                aria-pressed={orderSide === 'BUY'}
+                className="is-buy"
+                disabled={quote?.status !== 'LIVE' || quote.ask === null}
+                onClick={() => onOrderSideSelect('BUY')}
+                title="Select Buy in the simulated order ticket"
+                type="button"
+              >
+                <small>Buy</small>
+                <strong>{quote?.ask ?? '—'}</strong>
+              </button>
+            </div>
+            <small className="chart-quote-buttons-note">
+              Select side · submit from ticket
+            </small>
+          </aside>
+        ) : null}
         <aside
           className="chart-drawing-toolbar"
           aria-label="Chart drawing tools"
@@ -1421,9 +1474,13 @@ export function TerminalChart({
             onTogglePositionLevels={() =>
               setPositionLevelsVisible((current) => !current)
             }
+            onToggleQuoteButtons={() =>
+              setQuoteButtonsVisible((current) => !current)
+            }
             point={contextMenu.point}
             position={contextMenu.position}
             positionLevelsHidden={!positionLevelsVisible}
+            quoteButtonsVisible={quoteButtonsVisible}
             selectedDrawing={selectedDrawingId !== null}
             symbol={symbol}
             timeframe={timeframe}

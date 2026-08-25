@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { createElement } from 'react';
+import { createElement, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/app/terminal/[accountId]/actions', () => ({
@@ -29,17 +29,24 @@ const liveQuotes = [
   },
 ];
 
-function ticket(connectionLive: boolean) {
+function TicketHarness({ connectionLive }: { connectionLive: boolean }) {
+  const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
   return createElement(TerminalOrderTicket, {
     accountActive: true,
     accountId: 'account-1',
     connectionLive,
     instruments,
     onRefresh: vi.fn(),
+    orderSide,
     quotes: liveQuotes,
     selectedSymbol: 'EURUSD',
+    setOrderSide,
     setSelectedSymbol: vi.fn(),
   });
+}
+
+function ticket(connectionLive: boolean) {
+  return createElement(TicketHarness, { connectionLive });
 }
 
 afterEach(cleanup);

@@ -24,6 +24,7 @@ function renderMenu(
     onToggleKeepDrawing: vi.fn(),
     onToggleLastPrice: vi.fn(),
     onTogglePositionLevels: vi.fn(),
+    onToggleQuoteButtons: vi.fn(),
   };
 
   render(
@@ -36,6 +37,7 @@ function renderMenu(
       point: { price: 1.08432, time: 1_723_967_200 },
       position: { x: 16, y: 20 },
       positionLevelsHidden: false,
+      quoteButtonsVisible: false,
       selectedDrawing: false,
       symbol: 'EURUSD',
       timeframe: '1m',
@@ -76,6 +78,9 @@ describe('terminal chart context menu', () => {
     fireEvent.click(
       screen.getByRole('button', { name: /hide position lines/i }),
     );
+    fireEvent.click(
+      screen.getByRole('button', { name: /show buy\/sell buttons/i }),
+    );
     fireEvent.click(screen.getByRole('button', { name: /chart settings/i }));
     fireEvent.click(screen.getByRole('button', { name: /hide drawings/i }));
 
@@ -83,6 +88,7 @@ describe('terminal chart context menu', () => {
     expect(handlers.onToggleLastPrice).toHaveBeenCalledOnce();
     expect(handlers.onToggleDrawings).toHaveBeenCalledOnce();
     expect(handlers.onTogglePositionLevels).toHaveBeenCalledOnce();
+    expect(handlers.onToggleQuoteButtons).toHaveBeenCalledOnce();
     expect(handlers.onClose).not.toHaveBeenCalled();
   });
 

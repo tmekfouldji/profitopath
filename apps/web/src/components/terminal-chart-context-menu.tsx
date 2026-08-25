@@ -43,9 +43,11 @@ export function TerminalChartContextMenu({
   onToggleKeepDrawing,
   onToggleLastPrice,
   onTogglePositionLevels,
+  onToggleQuoteButtons,
   point,
   position,
   positionLevelsHidden,
+  quoteButtonsVisible,
   selectedDrawing,
   symbol,
   timeframe,
@@ -67,9 +69,11 @@ export function TerminalChartContextMenu({
   onToggleKeepDrawing(): void;
   onToggleLastPrice(): void;
   onTogglePositionLevels(): void;
+  onToggleQuoteButtons(): void;
   point: TerminalChartMenuPoint;
   position: { x: number; y: number };
   positionLevelsHidden: boolean;
+  quoteButtonsVisible: boolean;
   selectedDrawing: boolean;
   symbol: string;
   timeframe: string;
@@ -274,6 +278,11 @@ export function TerminalChartContextMenu({
             {positionLevelsHidden
               ? 'Show position lines'
               : 'Hide position lines'}
+          </button>
+          <button onClick={onToggleQuoteButtons} type="button">
+            {quoteButtonsVisible
+              ? 'Hide Buy/Sell buttons'
+              : 'Show Buy/Sell buttons'}
           </button>
         </div>
       ) : null}

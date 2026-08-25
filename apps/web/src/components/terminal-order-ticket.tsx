@@ -26,8 +26,10 @@ export function TerminalOrderTicket({
   connectionLive,
   instruments,
   onRefresh,
+  orderSide,
   quotes,
   selectedSymbol,
+  setOrderSide,
   setSelectedSymbol,
 }: {
   accountActive: boolean;
@@ -35,8 +37,10 @@ export function TerminalOrderTicket({
   connectionLive: boolean;
   instruments: TicketInstrument[];
   onRefresh(): Promise<void>;
+  orderSide: 'BUY' | 'SELL';
   quotes: TicketQuote[];
   selectedSymbol: string;
+  setOrderSide(side: 'BUY' | 'SELL'): void;
   setSelectedSymbol(symbol: string): void;
 }) {
   const [state, action, pending] = useActionState(
@@ -44,7 +48,6 @@ export function TerminalOrderTicket({
     initialTerminalActionState,
   );
   const [clientOrderId, setClientOrderId] = useState(() => crypto.randomUUID());
-  const [side, setSide] = useState<'BUY' | 'SELL'>('BUY');
   const [type, setType] = useState<'LIMIT' | 'MARKET' | 'STOP'>('MARKET');
   const quote = quotes.find((candidate) => candidate.symbol === selectedSymbol);
   const instrument = instruments.find(
@@ -72,11 +75,11 @@ export function TerminalOrderTicket({
         </span>
       </header>
       <div className="quote-dealing-box" aria-label={`${selectedSymbol} quote`}>
-        <button onClick={() => setSide('SELL')} type="button">
+        <button onClick={() => setOrderSide('SELL')} type="button">
           <span>Sell / bid</span>
           <strong>{quote?.bid ?? '—'}</strong>
         </button>
-        <button onClick={() => setSide('BUY')} type="button">
+        <button onClick={() => setOrderSide('BUY')} type="button">
           <span>Buy / ask</span>
           <strong>{quote?.ask ?? '—'}</strong>
         </button>
@@ -84,7 +87,7 @@ export function TerminalOrderTicket({
       <form action={action} className="ticket-form">
         <input name="accountId" type="hidden" value={accountId} />
         <input name="clientOrderId" type="hidden" value={clientOrderId} />
-        <input name="side" type="hidden" value={side} />
+        <input name="side" type="hidden" value={orderSide} />
         <label>
           Symbol
           <select
@@ -134,10 +137,10 @@ export function TerminalOrderTicket({
             Trigger price
             <input
               defaultValue={
-                side === 'BUY' ? (quote?.ask ?? '') : (quote?.bid ?? '')
+                orderSide === 'BUY' ? (quote?.ask ?? '') : (quote?.bid ?? '')
               }
               inputMode="decimal"
-              key={`${selectedSymbol}:${side}:${type}`}
+              key={`${selectedSymbol}:${orderSide}:${type}`}
               name="price"
               required
               step={
@@ -152,30 +155,32 @@ export function TerminalOrderTicket({
         )}
         <div className="side-switcher" aria-label="Order side">
           <button
-            aria-pressed={side === 'SELL'}
-            className={side === 'SELL' ? 'is-sell' : ''}
-            onClick={() => setSide('SELL')}
+            aria-pressed={orderSide === 'SELL'}
+            className={orderSide === 'SELL' ? 'is-sell' : ''}
+            onClick={() => setOrderSide('SELL')}
             type="button"
           >
             Sell
           </button>
           <button
-            aria-pressed={side === 'BUY'}
-            className={side === 'BUY' ? 'is-buy' : ''}
-            onClick={() => setSide('BUY')}
+            aria-pressed={orderSide === 'BUY'}
+            className={orderSide === 'BUY' ? 'is-buy' : ''}
+            onClick={() => setOrderSide('BUY')}
             type="button"
           >
             Buy
           </button>
         </div>
         <button
-          className={`button ${side === 'BUY' ? 'button-buy' : 'button-sell'}`}
+          className={`button ${
+            orderSide === 'BUY' ? 'button-buy' : 'button-sell'
+          }`}
           disabled={!canTrade}
           type="submit"
         >
           {pending
             ? 'Sending to server…'
-            : `${side === 'BUY' ? 'Buy' : 'Sell'} ${type.toLowerCase()}`}
+            : `${orderSide === 'BUY' ? 'Buy' : 'Sell'} ${type.toLowerCase()}`}
         </button>
         <p
           aria-live="polite"

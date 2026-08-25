@@ -8,7 +8,8 @@ Phase 0 through Phase 8 are complete. The production-shaped environment and adva
 are integrated with the M-009 control-room visual refresh and the M-010 hydration-boundary fix. M-011
 hardened authentication and session handling. M-012 added a first-party chart command menu, M-013
 refined it into a compact TradingView-style command surface, and M-014 added usable future chart space
-for browser annotations. M-015 added chart-only fullscreen. Phase 9 remains blocked at P9-001: TraderMade's trial
+for browser annotations. M-015 added chart-only fullscreen, and M-016 added optional chart Buy/Sell quote selectors.
+Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -28,6 +29,10 @@ pricing is not documentation or written commercial authorization for customer-fa
 - The chart toolbar provides a separate full-screen control for the chart panel. It expands only the
   chart (including timeframes, studies, drawing tools, annotations, protected position levels, context
   menu, and chart controls), while the terminal-level full-screen control remains independent.
+- Chart settings now offers a default-off Buy/Sell selector overlay. It displays only live server quotes,
+  shares the selected side with the order ticket, and keeps the existing explicit ticket submission as the
+  sole route to the server-authoritative simulated-order action. It is therefore present in chart-only
+  fullscreen without creating an unsafe implicit one-click trade.
 - M-011 fixed callback continuation: login and registration retain only one validated root-relative
   protected destination. Repeated or unsafe callbacks cannot crash the form or redirect externally.
   Successful credential navigation requires a confirmed Auth.js result.
@@ -63,11 +68,15 @@ pricing is not documentation or written commercial authorization for customer-fa
 - M-015 passed formatter, web typecheck, lint, and nine focused tests. The production-shaped Docker web
   service rebuilt and is healthy; live browser checks confirmed the chart alone expands to the viewport
   and its exit control returns to the normal terminal.
+- M-016 passed formatter, web typecheck, lint, 14 focused chart/ticket/workspace tests, and a production
+  web build. Docker Desktop was unavailable in this session, so the running local container is the prior
+  image and needs a normal Compose rebuild before visual verification of this change.
 
 ### Local runtime
 
-- `docker-compose.production.yml` is running: web is `http://localhost:3000`; realtime health is
-  `http://localhost:3001/health/ready`. Worker, PostgreSQL, and Valkey remain internal.
+- A prior `docker-compose.production.yml` web image remains reachable at `http://localhost:3000`, but
+  Docker Desktop/the `docker` CLI was unavailable while completing M-016. Rebuild the `web` service before
+  relying on it to verify the new chart selectors; realtime, worker, PostgreSQL, and Valkey remain internal.
 - The root `.env` is the local source for `NEXTAUTH_SECRET`; do not commit local secrets or vendor
   credentials. The base `docker-compose.yml` is a separate host-run development option.
 
@@ -77,7 +86,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

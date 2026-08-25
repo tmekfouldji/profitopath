@@ -527,6 +527,18 @@ Rules:
     Formatter, web typecheck, lint, nine focused tests, production Docker rebuild/readiness, and live
     browser enter/exit verification passed.
 
+- [x] M-016 Add optional Buy/Sell quote selectors to the chart.
+  - Acceptance: Chart settings can show or hide a clearly labelled live bid/ask control in normal and
+    chart-only fullscreen modes; its Buy/Sell choice is shared with the order ticket without navigating
+    away or submitting an order; unavailable quotes cannot be selected; explicit ticket submission
+    remains the only browser path to the server-authoritative simulated-order command; focused coverage,
+    project memory, and runtime verification are updated.
+  - Added a default-off Chart settings toggle that overlays live bid/ask side selectors in both normal
+    and chart-only fullscreen modes. The chart and order ticket now share their selected side; the chart
+    controls are disabled without a live quote and explicitly direct the trader to submit from the ticket.
+    Formatter, web typecheck, lint, 14 focused tests, and the production web build passed. Docker Desktop
+    was unavailable in this session, so the existing local container could not be rebuilt for this change.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and
