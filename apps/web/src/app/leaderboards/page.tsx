@@ -20,10 +20,30 @@ export default async function LeaderboardsPage() {
           <h1>Weekly standings</h1>
         </div>
         <p>
-          Live ranks come from persisted account valuations. Sealed weeks remain
-          available with their immutable result hash and UTC cutoff.
+          Follow eligible performance by tier. Live boards use persisted account
+          valuations; sealed weeks retain their immutable result evidence.
         </p>
       </header>
+
+      <section className="standings-explainer" aria-label="How standings work">
+        <div>
+          <span>01</span>
+          <strong>One board per tier</strong>
+          <p>Rookie, Trader, and Elite never compete against each other.</p>
+        </div>
+        <div>
+          <span>02</span>
+          <strong>Server-ranked</strong>
+          <p>Scores use persisted valuations, breach state, and eligibility.</p>
+        </div>
+        <div>
+          <span>03</span>
+          <strong>Frozen at cutoff</strong>
+          <p>
+            Final standings retain policy, rules, timing, and result evidence.
+          </p>
+        </div>
+      </section>
 
       <section>
         <div className="section-heading">

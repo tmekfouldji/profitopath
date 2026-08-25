@@ -134,6 +134,7 @@ describe('terminal workstation presentation', () => {
       createElement(TerminalWorkspace, {
         historyAnchor: '2026-08-24T12:00:00.000Z',
         initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
         initialSymbol: 'EURUSD',
         initialState: state,
         markers: [],
@@ -168,6 +169,7 @@ describe('terminal workstation presentation', () => {
       createElement(TerminalWorkspace, {
         historyAnchor: '2026-08-24T12:00:00.000Z',
         initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
         initialSymbol: 'EURUSD',
         initialState: state,
         markers: [],

@@ -15,8 +15,8 @@ export function WeekTape({ activeSession = 0 }: { activeSession?: number }) {
             {index === 4
               ? 'Freeze'
               : index === activeSession
-                ? 'Current'
-                : 'Session'}
+                ? 'Open'
+                : 'Trade'}
           </span>
         </div>
       ))}

@@ -46,7 +46,7 @@ export default async function TerminalPage({
     openTime: candle.openTime.toISOString(),
   }));
   const markers: TerminalChartMarker[] = state.executions.map((execution) => ({
-    color: execution.side === 'BUY' ? '#56d6c9' : '#ff8065',
+    color: execution.side === 'BUY' ? '#82a8ff' : '#ff806d',
     position: execution.side === 'BUY' ? 'belowBar' : 'aboveBar',
     shape: execution.side === 'BUY' ? 'arrowUp' : 'arrowDown',
     text: `${execution.symbol} ${execution.side} ${execution.quantity}`,
@@ -57,6 +57,7 @@ export default async function TerminalPage({
     <TerminalWorkspace
       historyAnchor={to.toISOString()}
       initialCandles={initialCandles}
+      initialRenderedAt={new Date().toISOString()}
       initialSymbol={initialSymbol}
       initialState={state}
       markers={markers}

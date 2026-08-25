@@ -21,6 +21,9 @@
   PostgreSQL 17 and Valkey services.
 - Moved terminal action-state initialization out of the server-only module so the live order ticket
   hydrates safely before its first submission; verified the complete provisioned terminal in-browser.
+- Integrated the production-shaped terminal/chart upgrade with the race-week visual refresh, resolved
+  their project-memory task collision, and made the terminal week-progress clock deterministic across
+  server rendering and client hydration.
 - Added a production-shaped local Compose stack: isolated web, realtime, worker, migration/seed,
   PostgreSQL, and Valkey services; only web/realtime ports are host-published, and application
   services wait for migration deploy and the idempotent development seed.
@@ -67,6 +70,15 @@
   and PostgreSQL relation-graph coverage.
 - Introduced a responsive weekly trading-desk visual system and verified it at desktop and mobile
   widths with keyboard-focus and reduced-motion support.
+- Refreshed the product around a modern race-week control-room identity with responsive navigation,
+  clearer action language, softer information surfaces, a unified terminal/chart palette, and
+  product-wide status styling.
+- Expanded the public home into an explanatory competition journey covering the weekly sequence,
+  order/risk lifecycle, tier comparison, simulated-only boundaries, and auditable result model.
+- Added trader dashboard orientation metrics, clearer competition/tier descriptions, a standings
+  explainer, registration guidance, and direct “Open trading terminal” action language.
+- Fixed visually hidden terminal order-type radio controls so they cannot create horizontal viewport
+  overflow; verified public and authenticated journeys at 1440px and 390px widths.
 - Verified the Auth migration, deterministic seed, all 20 tests, and production build against
   PostgreSQL/Valkey service containers in GitHub Actions.
 

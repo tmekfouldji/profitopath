@@ -351,6 +351,7 @@ function TerminalLedger({ state }: { state: OwnedTerminalState }) {
 export function TerminalWorkspace({
   historyAnchor,
   initialCandles,
+  initialRenderedAt,
   initialSymbol,
   initialState,
   markers,
@@ -358,6 +359,7 @@ export function TerminalWorkspace({
 }: {
   historyAnchor: string;
   initialCandles: TerminalChartCandle[];
+  initialRenderedAt: string;
   initialSymbol: string;
   initialState: OwnedTerminalState;
   markers: TerminalChartMarker[];
@@ -371,6 +373,9 @@ export function TerminalWorkspace({
   );
   const [connection, setConnection] = useState<ConnectionState>('CONNECTING');
   const [fullscreen, setFullscreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() =>
+    new Date(initialRenderedAt).getTime(),
+  );
   const [liveCandle, setLiveCandle] = useState<TerminalChartCandle | null>(
     null,
   );
@@ -383,6 +388,11 @@ export function TerminalWorkspace({
   const terminalRef = useRef<HTMLElement>(null);
 
   useEffect(() => setState(initialState), [initialState]);
+  useEffect(() => {
+    setCurrentTime(Date.now());
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   useEffect(() => {
     selectedSymbolRef.current = selectedSymbol;
     setLiveCandle(null);
@@ -561,12 +571,11 @@ export function TerminalWorkspace({
   const drawdownLimit = Number(state.account.tier.maxDrawdownMinor);
   const drawdownPercent =
     drawdownLimit === 0 ? 0 : Math.min(100, (drawdown / drawdownLimit) * 100);
-  const now = Date.now();
   const starts = new Date(state.account.competition.tradingStartsAt).getTime();
   const ends = new Date(state.account.competition.tradingEndsAt).getTime();
   const weekPercent = Math.max(
     0,
-    Math.min(100, ((now - starts) / Math.max(1, ends - starts)) * 100),
+    Math.min(100, ((currentTime - starts) / Math.max(1, ends - starts)) * 100),
   );
 
   return (

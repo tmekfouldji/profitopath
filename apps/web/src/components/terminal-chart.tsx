@@ -369,33 +369,33 @@ export function TerminalChart({
     const chart = createChart(container, {
       autoSize: true,
       crosshair: {
-        horzLine: { color: '#36505a', labelBackgroundColor: '#153f43' },
-        vertLine: { color: '#36505a', labelBackgroundColor: '#153f43' },
+        horzLine: { color: '#40577b', labelBackgroundColor: '#182b50' },
+        vertLine: { color: '#40577b', labelBackgroundColor: '#182b50' },
       },
       grid: {
-        horzLines: { color: '#18323d' },
-        vertLines: { color: '#18323d' },
+        horzLines: { color: '#1c2d47' },
+        vertLines: { color: '#1c2d47' },
       },
       layout: {
         attributionLogo: false,
-        background: { color: '#0b202b', type: ColorType.Solid },
-        textColor: '#8da5ab',
+        background: { color: '#0e1a2d', type: ColorType.Solid },
+        textColor: '#9aaac3',
       },
-      rightPriceScale: { borderColor: '#29434d' },
+      rightPriceScale: { borderColor: '#2a3c59' },
       timeScale: {
-        borderColor: '#29434d',
+        borderColor: '#2a3c59',
         rightOffset: 5,
         timeVisible: true,
       },
     });
     const series = chart.addSeries(CandlestickSeries, {
-      borderDownColor: '#ff8065',
-      borderUpColor: '#56d6c9',
-      downColor: '#ff8065',
+      borderDownColor: '#ff806d',
+      borderUpColor: '#82a8ff',
+      downColor: '#ff806d',
       priceFormat: { minMove: 0.00001, precision: 5, type: 'price' },
-      wickDownColor: '#ff9a84',
-      wickUpColor: '#7ce4da',
-      upColor: '#56d6c9',
+      wickDownColor: '#ffae9f',
+      wickUpColor: '#aec3ff',
+      upColor: '#82a8ff',
     });
     chartRef.current = chart;
     seriesRef.current = series;

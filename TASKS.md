@@ -358,6 +358,28 @@ Rules:
 
 ## Maintenance — Local runtime verification
 
+- [x] M-009 Refresh the product-wide visual system and core trader journeys without changing domain
+      behavior or the blocked real-provider phase.
+  - Acceptance: the public home, navigation, authentication, competition discovery, dashboard,
+    leaderboards, checkout, terminal, and administrative surfaces share an intentional responsive
+    design system; important states and next actions are easier to understand; keyboard focus,
+    reduced motion, and mobile layouts remain supported; no trading rule, prize allocation, payment
+    behavior, market-data authority, or provider integration changes; formatter, typecheck, lint,
+    tests, build, and desktop/mobile visual checks pass.
+  - Implemented the race-week control-room design system across public, authentication, competition,
+    leaderboard, dashboard, checkout, terminal, and administrative surfaces; added explanatory home,
+    tier, standing, and dashboard content; fixed terminal radio-control viewport overflow; verified
+    key journeys at 1440px and 390px; all 127 tests and the production build pass.
+- [x] M-010 Integrate the published production-terminal work with the local product-wide visual
+      refresh and verify the combined project state.
+  - Acceptance: origin/main is fast-forwarded without losing local work; task IDs and project memory
+    are reconciled; the merged advanced chart and race-week UI render together without hydration or
+    console errors; formatter, Prisma validation/generation, typecheck, lint, all database-backed
+    tests, production build, and repository diff checks pass.
+  - Fast-forwarded to remote commit `7bba4a4`, reapplied the preserved M-009 work, resolved only the
+    project-memory conflicts, and fixed the terminal week-progress hydration clock. All 146 tests,
+    production build, focused browser routes, advanced chart controls, and console checks passed.
+
 - [x] M-001 Make the documented local seed and health-check workflow exact, then verify the complete
       mock-backed stack locally.
   - Acceptance: `pnpm db:seed` loads the repository-root development environment without manual shell

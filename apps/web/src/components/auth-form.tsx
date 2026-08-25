@@ -93,6 +93,9 @@ export function AuthForm({
           required
           type="password"
         />
+        {mode === 'register' ? (
+          <small className="field-help">Use at least 12 characters.</small>
+        ) : null}
       </label>
       {error === undefined ? null : (
         <p aria-live="polite" className="form-error" role="alert">

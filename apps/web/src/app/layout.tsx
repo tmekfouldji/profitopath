@@ -13,8 +13,12 @@ import './globals.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  description: 'Weekly simulated trading competitions',
-  title: 'Profitopath',
+  description:
+    'Auditable weekly simulated trading competitions with persistent server-owned accounts.',
+  title: {
+    default: 'Profitopath — Weekly trading competitions',
+    template: '%s · Profitopath',
+  },
 };
 
 export default async function RootLayout({
@@ -34,7 +38,14 @@ export default async function RootLayout({
           />
           {children}
           <footer className="site-footer">
-            <span>Profitopath / simulated competition ledger</span>
+            <div>
+              <strong>Profitopath</strong>
+              <span>Weekly simulated trading competitions</span>
+            </div>
+            <nav aria-label="Footer navigation">
+              <a href="/competitions">Competitions</a>
+              <a href="/leaderboards">Standings</a>
+            </nav>
             <span>Fictitious capital · no live brokerage execution</span>
           </footer>
         </div>

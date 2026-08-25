@@ -14,8 +14,8 @@ export default async function CompetitionsPage() {
           <h1>Competition board</h1>
         </div>
         <p>
-          Every week has a fixed trading window, independent tier leaderboards,
-          and a final server-side freeze.
+          Find the next five-session window, inspect its entry tiers, and join
+          the week that fits your risk level. All times are shown in UTC.
         </p>
       </header>
 
@@ -42,6 +42,7 @@ export default async function CompetitionsPage() {
                 {statusLabel(competition.status)}
               </span>
               <div>
+                <span className="row-kicker">Five-session competition</span>
                 <strong>{competition.name}</strong>
                 <span>
                   {formatCompetitionWindow(
@@ -55,7 +56,7 @@ export default async function CompetitionsPage() {
                 <strong>{competition._count.entries}</strong>
               </div>
               <span className="row-arrow" aria-hidden="true">
-                ↗
+                →
               </span>
             </Link>
           ))}

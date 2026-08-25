@@ -160,7 +160,8 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-008 — configurable indicator settings window for the browser trading station.
+M-010 — integrated the published production-terminal work with the M-009 visual refresh and fixed
+the live terminal's deterministic week-progress hydration boundary.
 
 ## Next task
 
@@ -174,7 +175,7 @@ integrate an API.
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
-- `RUN_DATABASE_TESTS=true pnpm test`: all 127 tests passed locally
+- `RUN_DATABASE_TESTS=true pnpm test`: all 146 tests passed locally across 54 test files
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
@@ -206,6 +207,24 @@ integrate an API.
   production image build, and recreated Docker web readiness check passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
+- local browser visual QA passed for the home, competition discovery/detail, dashboard, and live
+  terminal at 1440px desktop and 390px mobile widths with no page-level horizontal overflow
+- post-integration browser smoke passed for home, competitions, dashboard, and the provisioned
+  advanced terminal; studies, drawing tools, and order ticket rendered with no console warnings or
+  errors after the deterministic hydration-clock fix
+
+## Maintenance completion evidence
+
+- established a cohesive midnight-blue, lap-blue, amber, and coral control-room design system with
+  shared rounded surfaces, focus treatment, responsive navigation, status language, and data styling
+- expanded the home experience into an explanatory competition journey with the five-session week,
+  four-step lifecycle, tier comparison, and explicit simulated/server-owned/result assurances
+- improved competition discovery, tier selection, standing provenance, authentication guidance, and
+  trader-dashboard orientation without changing persisted data or server authority
+- aligned terminal chart colors with the product palette and fixed visually hidden order-type radio
+  controls that could expand the terminal beyond the viewport
+- preserved keyboard focus and reduced-motion behavior and verified the dense terminal at desktop
+  and mobile widths
 
 ## Blockers
 

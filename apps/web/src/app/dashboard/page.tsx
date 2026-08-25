@@ -30,6 +30,12 @@ export default async function DashboardPage({
     getTraderPrizeOverview(user.id),
     searchParams,
   ]);
+  const activeAccounts = entries.filter(
+    (entry) => entry.tradingAccount?.status === 'ACTIVE',
+  ).length;
+  const rankedEntries = [...leaderboardSummaries.values()].filter(
+    (summary) => summary.rank !== null,
+  ).length;
 
   return (
     <main className="content-page">
@@ -39,10 +45,28 @@ export default async function DashboardPage({
           <h1>Trading desk</h1>
         </div>
         <p>
-          This view is reconstructed from persisted entries and accounts.
-          Closing the browser never closes a position or suspends rule checks.
+          Your competition home base. Open a terminal, check your standing, and
+          follow every weekly entry from signup to final result.
         </p>
       </header>
+
+      <section aria-label="Trading desk summary" className="dashboard-summary">
+        <div>
+          <span>Competition entries</span>
+          <strong>{entries.length}</strong>
+          <small>All weeks attached to this profile</small>
+        </div>
+        <div>
+          <span>Active terminals</span>
+          <strong>{activeAccounts}</strong>
+          <small>Server-owned simulated accounts</small>
+        </div>
+        <div>
+          <span>Published ranks</span>
+          <strong>{rankedEntries}</strong>
+          <small>Live, frozen, or final placements</small>
+        </div>
+      </section>
 
       {params.notice === 'mock-payment-confirmed' ? (
         <p className="notice-banner" role="status">
@@ -96,10 +120,10 @@ export default async function DashboardPage({
                       </strong>
                     </div>
                     <Link
-                      className="button button-secondary"
+                      className="button button-primary account-terminal-link"
                       href={`/terminal/${entry.tradingAccount.id}`}
                     >
-                      Open terminal shell
+                      Open trading terminal
                     </Link>
                   </>
                 )}

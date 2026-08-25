@@ -7,6 +7,13 @@ import { getCompetition } from '@/server/queries';
 
 import { startMockCheckout } from './actions';
 
+const tierDescriptions: Record<string, string> = {
+  ELITE:
+    'The widest risk range for traders who want the highest-pressure week.',
+  ROOKIE: 'A clear first step for learning the weekly competition rhythm.',
+  TRADER: 'A balanced middle tier with more room to build a weekly result.',
+};
+
 export default async function CompetitionPage({
   params,
   searchParams,
@@ -78,8 +85,13 @@ export default async function CompetitionPage({
             <article className="tier-card" key={tier.id}>
               <span className="data-label">{tier.code}</span>
               <h3>{tier.name}</h3>
+              <p className="tier-description">
+                {tierDescriptions[tier.code] ??
+                  'A dedicated tier with its own weekly leaderboard.'}
+              </p>
               <strong className="tier-price">
                 {formatUsdMinor(tier.entryFeeMinor)}
+                <small> / weekly entry</small>
               </strong>
               <dl>
                 <div>
@@ -110,7 +122,9 @@ export default async function CompetitionPage({
                   }
                   type="submit"
                 >
-                  Start mock checkout
+                  {competition.status === 'SCHEDULED'
+                    ? `Choose ${tier.name}`
+                    : 'Entry unavailable'}
                 </button>
               </form>
             </article>
