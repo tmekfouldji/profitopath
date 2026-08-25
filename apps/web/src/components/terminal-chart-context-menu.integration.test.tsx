@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -14,7 +15,9 @@ const chartApi = {
   addSeries: vi.fn(),
   applyOptions: vi.fn(),
   remove: vi.fn(),
+  subscribeClick: vi.fn(),
   timeScale: vi.fn(),
+  unsubscribeClick: vi.fn(),
 };
 
 const candleSeries = {
@@ -26,6 +29,10 @@ const candleSeries = {
 
 const requestChartFullscreen = vi.fn();
 const onOrderSideSelect = vi.fn();
+const lineSeries: Array<{
+  applyOptions: ReturnType<typeof vi.fn>;
+  setData: ReturnType<typeof vi.fn>;
+}> = [];
 
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: 'candlestick',
@@ -42,7 +49,9 @@ afterEach(() => {
   chartApi.addSeries.mockReset();
   chartApi.applyOptions.mockReset();
   chartApi.remove.mockReset();
+  chartApi.subscribeClick.mockReset();
   chartApi.timeScale.mockReset();
+  chartApi.unsubscribeClick.mockReset();
   candleSeries.applyOptions.mockReset();
   candleSeries.coordinateToPrice.mockClear();
   candleSeries.priceToCoordinate.mockClear();
@@ -66,7 +75,13 @@ function renderChart({
   candleCount?: number;
   futureSpace?: boolean;
 } = {}) {
-  chartApi.addSeries.mockImplementation(() => candleSeries);
+  lineSeries.length = 0;
+  chartApi.addSeries.mockImplementation((seriesType) => {
+    if (seriesType === 'candlestick') return candleSeries;
+    const series = { applyOptions: vi.fn(), setData: vi.fn() };
+    lineSeries.push(series);
+    return series;
+  });
   candleSeries.priceToCoordinate.mockReturnValue(futureSpace ? 120 : null);
   chartApi.timeScale.mockImplementation(() => ({
     coordinateToLogical: () => (futureSpace ? 4 : 0),
@@ -190,6 +205,35 @@ describe('terminal chart context-menu integration', () => {
     const legend = screen.getByLabelText('Active chart studies');
     expect(within(legend).getByText('SMA 20')).toBeTruthy();
     expect(within(legend).getByText('1.08432')).toBeTruthy();
+  });
+
+  it('selects studies from the chart legend or plotted line and opens settings for the selected study', () => {
+    renderChart({ candleCount: 50 });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Studies' }));
+    fireEvent.click(screen.getByLabelText('Simple moving average visibility'));
+    fireEvent.click(
+      screen.getByLabelText('Exponential moving average visibility'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+
+    const sma = screen.getByRole('button', { name: /^Select SMA 20/ });
+    const ema = screen.getByRole('button', { name: /^Select EMA 50/ });
+    expect(sma).toHaveProperty('ariaPressed', 'true');
+
+    fireEvent.click(ema);
+    expect(ema).toHaveProperty('ariaPressed', 'true');
+
+    const onChartClick = chartApi.subscribeClick.mock.calls[0]?.[0];
+    act(() => onChartClick({ hoveredInfo: { series: lineSeries[0] } }));
+    expect(sma).toHaveProperty('ariaPressed', 'true');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Open settings for SMA 20' }),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Indicator settings' }),
+    ).toBeTruthy();
   });
 
   it('shows optional chart quote selectors and routes a side choice without submitting', () => {

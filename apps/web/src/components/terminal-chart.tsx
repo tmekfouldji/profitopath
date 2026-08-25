@@ -10,6 +10,7 @@ import {
   type IChartApi,
   type ISeriesApi,
   type Logical,
+  type MouseEventParams,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
@@ -145,6 +146,7 @@ interface ChartContextMenuState {
 
 interface ChartStudyLegendItem {
   color: string;
+  indicator: Indicator;
   label: string;
   values: string[];
 }
@@ -245,7 +247,10 @@ export function TerminalChart({
   const drawingDraftRef = useRef<DrawingDraft | null>(null);
   const drawingEditRef = useRef<DrawingEdit | null>(null);
   const historyStateRef = useRef<'IDLE' | 'LOADING' | 'EXHAUSTED'>('IDLE');
-  const indicatorSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
+  const indicatorSeriesOwnersRef = useRef(new Map<object, Indicator>());
+  const indicatorSeriesRef = useRef<
+    Array<{ indicator: Indicator; series: ISeriesApi<'Line'> }>
+  >([]);
   const chartPanelRef = useRef<HTMLElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -272,6 +277,9 @@ export function TerminalChart({
     cloneChartIndicatorSettings(defaultChartIndicatorSettings),
   );
   const [indicatorSettingsOpen, setIndicatorSettingsOpen] = useState(false);
+  const [selectedIndicator, setSelectedIndicator] = useState<Indicator | null>(
+    null,
+  );
   const [keepDrawing, setKeepDrawing] = useState(false);
   const [lastPriceVisible, setLastPriceVisible] = useState(true);
   const [measure, setMeasure] = useState<MeasureDrag | null>(null);
@@ -310,6 +318,7 @@ export function TerminalChart({
         ).at(-1);
         items.push({
           color,
+          indicator,
           label,
           values:
             value === undefined ? [] : [priceText(value.close, priceScale)],
@@ -323,6 +332,7 @@ export function TerminalChart({
         ).at(-1);
         items.push({
           color,
+          indicator,
           label,
           values:
             value === undefined ? [] : [priceText(value.close, priceScale)],
@@ -336,6 +346,7 @@ export function TerminalChart({
       ).at(-1);
       items.push({
         color,
+        indicator,
         label,
         values:
           values === undefined
@@ -347,6 +358,13 @@ export function TerminalChart({
     }
     return items;
   }, [indicatorSettings, indicators, priceScale, studyCandles]);
+
+  useEffect(() => {
+    setSelectedIndicator((current) => {
+      if (current !== null && indicators.includes(current)) return current;
+      return indicators[0] ?? null;
+    });
+  }, [indicators]);
 
   useEffect(() => {
     candlesRef.current = candles;
@@ -517,6 +535,14 @@ export function TerminalChart({
       time: chartTime(marker.time),
     }));
     createSeriesMarkers(series, markerData);
+    const onChartClick = (param: MouseEventParams<Time>) => {
+      const hoveredSeries =
+        param.hoveredInfo?.series ?? param.hoveredSeries ?? null;
+      if (hoveredSeries === null) return;
+      const indicator = indicatorSeriesOwnersRef.current.get(hoveredSeries);
+      if (indicator !== undefined) setSelectedIndicator(indicator);
+    };
+    chart.subscribeClick?.(onChartClick);
     chart.timeScale().fitContent();
     setChartGeneration((value) => value + 1);
     const onRange = async (range: { from: number; to: number } | null) => {
@@ -553,6 +579,7 @@ export function TerminalChart({
     chart.timeScale().subscribeVisibleLogicalRangeChange(onRange);
     return () => {
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRange);
+      chart.unsubscribeClick?.(onChartClick);
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
@@ -583,11 +610,13 @@ export function TerminalChart({
     const chart = chartRef.current;
     if (chart === null) return;
     const activeChart = chart;
-    for (const series of indicatorSeriesRef.current) {
+    for (const { series } of indicatorSeriesRef.current) {
       activeChart.removeSeries(series);
     }
     indicatorSeriesRef.current = [];
+    indicatorSeriesOwnersRef.current.clear();
     function addStudy(
+      indicator: Indicator,
       color: string,
       values: { time: number; value: number }[],
     ) {
@@ -604,10 +633,12 @@ export function TerminalChart({
           value: value.value,
         })),
       );
-      indicatorSeriesRef.current.push(series);
+      indicatorSeriesOwnersRef.current.set(series, indicator);
+      indicatorSeriesRef.current.push({ indicator, series });
     }
     if (indicators.includes('SMA_20')) {
       addStudy(
+        'SMA_20',
         indicatorSettings.SMA_20.color,
         simpleMovingAverage(studyCandles, indicatorSettings.SMA_20.period).map(
           (value) => ({
@@ -619,6 +650,7 @@ export function TerminalChart({
     }
     if (indicators.includes('EMA_50')) {
       addStudy(
+        'EMA_50',
         indicatorSettings.EMA_50.color,
         exponentialMovingAverage(
           studyCandles,
@@ -636,19 +668,30 @@ export function TerminalChart({
         indicatorSettings.BOLLINGER.deviations,
       );
       addStudy(
+        'BOLLINGER',
         indicatorSettings.BOLLINGER.color,
         bands.map((value) => ({ time: value.time, value: value.upper })),
       );
       addStudy(
+        'BOLLINGER',
         indicatorSettings.BOLLINGER.color,
         bands.map((value) => ({ time: value.time, value: value.middle })),
       );
       addStudy(
+        'BOLLINGER',
         indicatorSettings.BOLLINGER.color,
         bands.map((value) => ({ time: value.time, value: value.lower })),
       );
     }
   }, [chartGeneration, indicatorSettings, indicators, studyCandles]);
+
+  useEffect(() => {
+    for (const { indicator, series } of indicatorSeriesRef.current) {
+      series.applyOptions({
+        lineWidth: selectedIndicator === indicator ? 2 : 1,
+      });
+    }
+  }, [chartGeneration, selectedIndicator]);
 
   async function selectTimeframe(next: ChartTimeframe) {
     setTimeframe(next);
@@ -1367,25 +1410,48 @@ export function TerminalChart({
           <aside
             aria-label="Active chart studies"
             className="chart-study-legend"
+            onContextMenu={(event) => event.preventDefault()}
+            onPointerDown={(event) => event.stopPropagation()}
           >
             {studyLegend.map((study) => (
               <div
-                aria-label={`${study.label}${
-                  study.values.length === 0
-                    ? ', calculating'
-                    : `, ${study.values.join(', ')}`
+                className={`chart-study-legend-item ${
+                  selectedIndicator === study.indicator ? 'is-selected' : ''
                 }`}
-                className="chart-study-legend-item"
                 key={study.label}
               >
-                <i
-                  aria-hidden="true"
-                  style={{ backgroundColor: study.color }}
-                />
-                <span>{study.label}</span>
-                <b>
-                  {study.values.length === 0 ? '—' : study.values.join(' ')}
-                </b>
+                <button
+                  aria-label={`Select ${study.label}${
+                    study.values.length === 0
+                      ? ', calculating'
+                      : `, ${study.values.join(', ')}`
+                  }`}
+                  aria-pressed={selectedIndicator === study.indicator}
+                  className="chart-study-legend-select"
+                  onClick={() => setSelectedIndicator(study.indicator)}
+                  type="button"
+                >
+                  <i
+                    aria-hidden="true"
+                    style={{ backgroundColor: study.color }}
+                  />
+                  <span>{study.label}</span>
+                  <b>
+                    {study.values.length === 0 ? '—' : study.values.join(' ')}
+                  </b>
+                </button>
+                <button
+                  aria-label={`Open settings for ${study.label}`}
+                  className="chart-study-legend-settings"
+                  onClick={() => {
+                    setSelectedIndicator(study.indicator);
+                    setIndicatorSettingsOpen(true);
+                  }}
+                  title={`Change ${study.label} settings`}
+                  type="button"
+                >
+                  <span aria-hidden="true">⚙</span>
+                </button>
               </div>
             ))}
           </aside>

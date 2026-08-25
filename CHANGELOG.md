@@ -66,6 +66,8 @@
   explicit submit can call the server-authoritative simulated-order command.
 - Moved applied-study labels into a compact, color-matched chart-pane legend at the top-left, showing
   each configured study and its latest value while retaining the Studies dialog for parameter changes.
+- Made chart studies selectable from either their legend row or plotted line, with a visible selected state,
+  emphasized line, and direct per-study settings control.
 
 ### Database and domain
 

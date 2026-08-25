@@ -9,7 +9,8 @@ are integrated with the M-009 control-room visual refresh and the M-010 hydratio
 hardened authentication and session handling. M-012 added a first-party chart command menu, M-013
 refined it into a compact TradingView-style command surface, and M-014 added usable future chart space
 for browser annotations. M-015 added chart-only fullscreen, M-016 added optional chart Buy/Sell quote
-selectors, and M-017 added a TradingView-style studies legend. Phase 9 remains blocked at P9-001: TraderMade's trial
+selectors, M-017 added a TradingView-style studies legend, and M-018 made those studies selectable.
+Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -36,6 +37,9 @@ pricing is not documentation or written commercial authorization for customer-fa
 - Applied studies render inside the chart pane as a compact top-left legend: the configured label, line
   color, and latest computed value are shown for each moving average or Bollinger Band. The toolbar now
   retains one `ƒx Studies` settings entry rather than duplicating active-study chips.
+- Each chart-study legend row is interactive and exposes a focused selected state plus a per-study gear
+  button. Clicking a plotted study line uses Lightweight Charts' hit information to select its owner and
+  strengthen that visual line; these interactions affect no simulator command or market-data state.
 - M-011 fixed callback continuation: login and registration retain only one validated root-relative
   protected destination. Repeated or unsafe callbacks cannot crash the form or redirect externally.
   Successful credential navigation requires a confirmed Auth.js result.
@@ -77,6 +81,8 @@ pricing is not documentation or written commercial authorization for customer-fa
 - M-017 passed formatter, web typecheck, lint, 17 focused chart/ticket/workspace tests, and a production
   web build. Docker Desktop remains unavailable, so the container needs its normal Compose rebuild before
   a live visual verification of the legend.
+- M-018 passed formatter, web typecheck, lint, 18 focused chart/ticket/workspace tests, and a production
+  web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
 
 ### Local runtime
 
@@ -92,7 +98,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

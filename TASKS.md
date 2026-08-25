@@ -550,6 +550,16 @@ Rules:
     17 focused tests, and the production web build passed; Docker Desktop remains unavailable for an
     image rebuild and live visual pass.
 
+- [x] M-018 Make chart studies selectable with an in-pane selected-state control.
+  - Acceptance: a trader can select an applied study from its chart legend or its plotted line; the
+    top-left legend clearly identifies the selected study, exposes its live values, and provides a direct
+    settings control without hiding the chart; selection and the settings dialog operate only on visual
+    study preferences and never affect authoritative trading state.
+  - Added interactive legend rows and per-study settings buttons. A selected study gains a clear legend
+    state plus a stronger plotted line; clicking a plotted Lightweight Charts study line also selects its
+    owner. The existing settings dialog remains visual-only. Formatter, web typecheck, lint, 18 focused
+    tests, and the production web build passed; Docker Desktop remains unavailable for rebuilt-image QA.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

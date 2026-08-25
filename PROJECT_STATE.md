@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-017 — TradingView-style active-studies legend.
+M-018 — Selectable chart studies and settings controls.
 
 ## Next task
 
@@ -244,6 +244,10 @@ integrate an API.
   The Studies dialog remains the only configuration surface, replacing duplicate toolbar study toggles.
   Formatter, web typecheck, lint, 17 focused tests, and the web production build passed. Docker Desktop
   remains unavailable for a rebuilt-image visual check.
+- selectable chart studies: legend rows now select their study and reveal a direct settings button; the
+  selected plotted study also has a stronger line. A Lightweight Charts click on an indicator line selects
+  that study in the legend. These are chart display preferences only. Formatter, web typecheck, lint, 18
+  focused tests, and the web production build passed; Docker Desktop remains unavailable for live QA.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live
