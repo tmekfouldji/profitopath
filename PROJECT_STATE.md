@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-014 — Future chart space for browser drawing annotations.
+M-015 — Chart-only fullscreen workspace mode.
 
 ## Next task
 
@@ -227,6 +227,12 @@ integrate an API.
   can now be created or edited past the latest candle; saved future annotations map back to that space
   and remain browser-only. Formatter, web typecheck, lint, focused unit/component coverage, production
   Docker rebuild/readiness, and a real-browser future-margin visual check passed.
+- chart-only fullscreen: the chart toolbar now has an independent Fullscreen API control that expands
+  only the chart panel to the viewport. Chart timeframes, studies, drawing tools, annotations, position
+  levels, context menu, and chart controls remain available; Escape or the exit control returns to the
+  normal terminal without affecting the existing whole-terminal fullscreen mode. Formatter, web
+  typecheck, lint, nine focused tests, production Docker rebuild/readiness, and live browser enter/exit
+  verification passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

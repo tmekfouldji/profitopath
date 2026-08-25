@@ -58,6 +58,9 @@
 - Added a 16-bar right-side chart margin and future-time coordinate mapping, so browser annotations can
   be placed and edited past the latest loaded candle. Those future drawing points persist locally and
   transition naturally to normal chart coordinates when matching candle data arrives.
+- Added a dedicated chart-only full-screen mode. It expands the chart panel—not the full terminal—and
+  preserves the chart's studies, drawings, context menu, and protected position levels until Escape or
+  the chart exit control is used.
 
 ### Database and domain
 

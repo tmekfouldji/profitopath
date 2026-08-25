@@ -1178,6 +1178,18 @@ a {
   background: var(--panel);
 }
 
+.terminal-chart-panel:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.terminal-chart-panel:fullscreen .chart-stage {
+  min-height: 0;
+}
+
 .chart-toolbar,
 .ticket-heading {
   display: flex;
@@ -1194,6 +1206,26 @@ a {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.chart-fullscreen-toggle {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--data);
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.chart-fullscreen-toggle:hover,
+.chart-fullscreen-toggle[aria-pressed='true'] {
+  border-color: var(--aqua);
+  background: var(--aqua-deep);
+  color: var(--aqua);
 }
 
 .chart-toolbar > div:first-child,

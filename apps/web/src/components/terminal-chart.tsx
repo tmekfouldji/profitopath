@@ -227,11 +227,13 @@ export function TerminalChart({
   const drawingEditRef = useRef<DrawingEdit | null>(null);
   const historyStateRef = useRef<'IDLE' | 'LOADING' | 'EXHAUSTED'>('IDLE');
   const indicatorSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
+  const chartPanelRef = useRef<HTMLElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const timeframeRef = useRef<ChartTimeframe>('1m');
   const loadingOlderRef = useRef(false);
   const [candles, setCandles] = useState(initialCandles);
+  const [chartFullscreen, setChartFullscreen] = useState(false);
   const [chartGeneration, setChartGeneration] = useState(0);
   const [contextMenu, setContextMenu] = useState<ChartContextMenuState | null>(
     null,
@@ -299,6 +301,15 @@ export function TerminalChart({
     const bounds = stage.getBoundingClientRect();
     setStageSize({ height: bounds.height, width: bounds.width });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    function syncChartFullscreen() {
+      setChartFullscreen(document.fullscreenElement === chartPanelRef.current);
+    }
+    document.addEventListener('fullscreenchange', syncChartFullscreen);
+    return () =>
+      document.removeEventListener('fullscreenchange', syncChartFullscreen);
   }, []);
 
   useEffect(() => {
@@ -648,6 +659,20 @@ export function TerminalChart({
   function selectDrawingTool(next: TerminalChartCommandTool) {
     setSelectedDrawingId(null);
     setTool(next);
+  }
+
+  async function toggleChartFullscreen() {
+    const panel = chartPanelRef.current;
+    if (panel === null) return;
+    try {
+      if (document.fullscreenElement === panel) {
+        await document.exitFullscreen();
+      } else {
+        await panel.requestFullscreen();
+      }
+    } catch {
+      setChartFullscreen(false);
+    }
   }
 
   function addHorizontalRay(point: ChartPoint) {
@@ -1192,7 +1217,11 @@ export function TerminalChart({
         10 ** Math.max(0, priceScale - 1);
 
   return (
-    <section className="terminal-chart-panel" aria-label={`${symbol} chart`}>
+    <section
+      aria-label={`${symbol} chart`}
+      className={`terminal-chart-panel ${chartFullscreen ? 'is-chart-fullscreen' : ''}`}
+      ref={chartPanelRef}
+    >
       <header className="chart-toolbar">
         <div>
           <span className="data-label">Market / {symbol}</span>
@@ -1242,6 +1271,15 @@ export function TerminalChart({
               </button>
             ))}
           </div>
+          <button
+            aria-pressed={chartFullscreen}
+            className="chart-fullscreen-toggle"
+            onClick={() => void toggleChartFullscreen()}
+            title="Show only this chart in browser full screen"
+            type="button"
+          >
+            {chartFullscreen ? 'Exit chart full screen' : 'Chart full screen'}
+          </button>
         </div>
       </header>
       {indicatorSettingsOpen ? (

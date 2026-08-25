@@ -24,6 +24,8 @@ const candleSeries = {
   setData: vi.fn(),
 };
 
+const requestChartFullscreen = vi.fn();
+
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: 'candlestick',
   ColorType: { Solid: 'solid' },
@@ -48,6 +50,11 @@ afterEach(() => {
 
 beforeEach(() => {
   window.localStorage.clear();
+  requestChartFullscreen.mockReset();
+  Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+    configurable: true,
+    value: requestChartFullscreen,
+  });
 });
 
 function renderChart({ futureSpace = false }: { futureSpace?: boolean } = {}) {
@@ -149,5 +156,13 @@ describe('terminal chart context-menu integration', () => {
     );
 
     expect(screen.getByText('1 browser drawing · select to edit')).toBeTruthy();
+  });
+
+  it('requests browser fullscreen for the chart panel only', () => {
+    renderChart();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chart full screen' }));
+
+    expect(requestChartFullscreen).toHaveBeenCalledTimes(1);
   });
 });

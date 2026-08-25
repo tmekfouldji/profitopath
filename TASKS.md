@@ -514,6 +514,18 @@ Rules:
     annotation times map back to the same logical coordinate and become normal chart timestamps when
     data reaches them. Focused unit/component regressions, formatter, web typecheck, lint, production
     Docker rebuild/readiness, and a real-browser future-margin visual check passed.
+- [x] M-015 Add a chart-only fullscreen workspace mode.
+  - Acceptance: a chart-local control enters browser fullscreen for the chart panel only, keeping the
+    chart toolbar, studies, drawing tools, annotations, context menu, and protected position levels
+    usable while excluding the terminal order ticket, metrics, and ledger. Escape and the control exit
+    cleanly; whole-terminal fullscreen remains independent. Focused coverage, browser verification, and
+    project memory are updated.
+  - Added a chart-toolbar control that uses the Fullscreen API on the chart panel alone. In that mode,
+    the chart stage expands to the viewport while retaining timeframes, studies, drawing tools,
+    annotations, protected position levels, the context menu, and reset/clear controls. Escape or the
+    exit control restores the terminal; whole-terminal fullscreen remains available independently.
+    Formatter, web typecheck, lint, nine focused tests, production Docker rebuild/readiness, and live
+    browser enter/exit verification passed.
 
 ## Blocked — Phase 9
 
