@@ -560,6 +560,17 @@ Rules:
     owner. The existing settings dialog remains visual-only. Formatter, web typecheck, lint, 18 focused
     tests, and the production web build passed; Docker Desktop remains unavailable for rebuilt-image QA.
 
+- [x] M-019 Support multiple independent instances of each chart study.
+  - Acceptance: a trader can add, configure, select, and remove multiple SMA, EMA, and Bollinger Band
+    instances in the Studies window; every instance renders independently with its own parameters and
+    color, appears separately in the selectable top-left legend, and remains browser-only with bounded
+    client validation.
+  - Replaced the fixed one-per-type study model with independently identified SMA, EMA, and Bollinger
+    instances. The Studies window now adds, removes, validates, resets, and counts up to 12 instances;
+    duplicate kinds receive distinct default colors and ordinal legend labels. Formatter, web typecheck,
+    lint, 22 focused tests, and the production web build passed; Docker Desktop remains unavailable for
+    rebuilt-image QA.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

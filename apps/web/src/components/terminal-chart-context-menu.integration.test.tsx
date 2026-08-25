@@ -195,26 +195,29 @@ describe('terminal chart context-menu integration', () => {
     expect(requestChartFullscreen).toHaveBeenCalledTimes(1);
   });
 
-  it('lists each applied study with its configured parameters and latest value in the chart pane', () => {
-    renderChart({ candleCount: 20 });
+  it('lists multiple applied studies with independent parameters and latest values in the chart pane', () => {
+    renderChart({ candleCount: 50 });
 
     fireEvent.click(screen.getByRole('button', { name: 'Studies' }));
-    fireEvent.click(screen.getByLabelText('Simple moving average visibility'));
+    fireEvent.click(screen.getByRole('button', { name: 'SMA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'SMA' }));
+    fireEvent.change(screen.getByLabelText('Simple moving average 2 length'), {
+      target: { value: '50' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
 
     const legend = screen.getByLabelText('Active chart studies');
-    expect(within(legend).getByText('SMA 20')).toBeTruthy();
-    expect(within(legend).getByText('1.08432')).toBeTruthy();
+    expect(within(legend).getByText('SMA 20 · 1')).toBeTruthy();
+    expect(within(legend).getByText('SMA 50 · 2')).toBeTruthy();
+    expect(within(legend).getAllByText('1.08432')).toHaveLength(2);
   });
 
   it('selects studies from the chart legend or plotted line and opens settings for the selected study', () => {
     renderChart({ candleCount: 50 });
 
     fireEvent.click(screen.getByRole('button', { name: 'Studies' }));
-    fireEvent.click(screen.getByLabelText('Simple moving average visibility'));
-    fireEvent.click(
-      screen.getByLabelText('Exponential moving average visibility'),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'SMA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'EMA' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
 
     const sma = screen.getByRole('button', { name: /^Select SMA 20/ });

@@ -5,52 +5,60 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TerminalChartIndicatorDialog } from './terminal-chart-indicator-dialog';
-import { defaultChartIndicatorSettings } from './terminal-chart-indicators';
 
 afterEach(cleanup);
 
+function dialog(onApply = vi.fn()) {
+  render(
+    createElement(TerminalChartIndicatorDialog, {
+      instances: [],
+      onApply,
+      onClose: vi.fn(),
+      selectedStudyId: null,
+    }),
+  );
+  return onApply;
+}
+
 describe('terminal chart indicator settings dialog', () => {
-  it('applies a validated study period and enabled state only after confirmation', () => {
-    const onApply = vi.fn();
+  it('adds and applies multiple independent instances of the same study', () => {
+    const onApply = dialog();
 
-    render(
-      createElement(TerminalChartIndicatorDialog, {
-        activeIndicators: ['SMA_20'],
-        onApply,
-        onClose: vi.fn(),
-        settings: defaultChartIndicatorSettings,
-      }),
-    );
-
-    fireEvent.change(screen.getByLabelText('Simple moving average length'), {
-      target: { value: '34' },
+    fireEvent.click(screen.getByRole('button', { name: 'SMA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'SMA' }));
+    fireEvent.change(screen.getByLabelText('Simple moving average 2 length'), {
+      target: { value: '50' },
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+
+    expect(onApply).toHaveBeenCalledWith([
+      expect.objectContaining({ kind: 'SMA', period: 20 }),
+      expect.objectContaining({ kind: 'SMA', period: 50 }),
+    ]);
+  });
+
+  it('removes an individual study instance before applying', () => {
+    const onApply = dialog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'EMA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'EMA' }));
     fireEvent.click(
-      screen.getByLabelText('Exponential moving average visibility'),
+      screen.getByRole('button', {
+        name: 'Remove Exponential moving average 2',
+      }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
 
-    expect(onApply).toHaveBeenCalledWith({
-      activeIndicators: ['SMA_20', 'EMA_50'],
-      settings: expect.objectContaining({
-        SMA_20: expect.objectContaining({ period: 34 }),
-      }),
-    });
+    expect(onApply).toHaveBeenCalledWith([
+      expect.objectContaining({ kind: 'EMA', period: 50 }),
+    ]);
   });
 
   it('does not apply settings outside the allowed Bollinger range', () => {
-    const onApply = vi.fn();
+    const onApply = dialog();
 
-    render(
-      createElement(TerminalChartIndicatorDialog, {
-        activeIndicators: ['BOLLINGER'],
-        onApply,
-        onClose: vi.fn(),
-        settings: defaultChartIndicatorSettings,
-      }),
-    );
-
-    fireEvent.change(screen.getByLabelText('Bollinger deviations'), {
+    fireEvent.click(screen.getByRole('button', { name: 'Bollinger' }));
+    fireEvent.change(screen.getByLabelText('Bollinger Bands deviations'), {
       target: { value: '11' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));

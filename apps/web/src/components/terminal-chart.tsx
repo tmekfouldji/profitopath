@@ -32,10 +32,8 @@ import {
 } from './terminal-chart-studies';
 import { TerminalChartIndicatorDialog } from './terminal-chart-indicator-dialog';
 import {
-  cloneChartIndicatorSettings,
-  defaultChartIndicatorSettings,
   indicatorLabel,
-  type ChartIndicatorId,
+  type ChartIndicatorInstance,
 } from './terminal-chart-indicators';
 import {
   parseTerminalChartDrawings,
@@ -100,11 +98,9 @@ const timeframeSeconds = {
 } as const;
 
 type ChartTimeframe = keyof typeof timeframeSeconds;
-type Indicator = ChartIndicatorId;
 type ChartTool = 'CURSOR' | 'MEASURE' | TerminalChartDrawingKind;
 type ProtectionKind = 'STOP_LOSS' | 'TAKE_PROFIT';
 
-const indicatorOrder: readonly Indicator[] = ['SMA_20', 'EMA_50', 'BOLLINGER'];
 const futureChartMarginBars = 16;
 
 interface ProtectionDrag {
@@ -146,7 +142,7 @@ interface ChartContextMenuState {
 
 interface ChartStudyLegendItem {
   color: string;
-  indicator: Indicator;
+  id: string;
   label: string;
   values: string[];
 }
@@ -247,9 +243,9 @@ export function TerminalChart({
   const drawingDraftRef = useRef<DrawingDraft | null>(null);
   const drawingEditRef = useRef<DrawingEdit | null>(null);
   const historyStateRef = useRef<'IDLE' | 'LOADING' | 'EXHAUSTED'>('IDLE');
-  const indicatorSeriesOwnersRef = useRef(new Map<object, Indicator>());
+  const indicatorSeriesOwnersRef = useRef(new Map<object, string>());
   const indicatorSeriesRef = useRef<
-    Array<{ indicator: Indicator; series: ISeriesApi<'Line'> }>
+    Array<{ id: string; series: ISeriesApi<'Line'> }>
   >([]);
   const chartPanelRef = useRef<HTMLElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -272,12 +268,9 @@ export function TerminalChart({
   const [historyState, setHistoryState] = useState<
     'IDLE' | 'LOADING' | 'EXHAUSTED'
   >('IDLE');
-  const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [indicatorSettings, setIndicatorSettings] = useState(() =>
-    cloneChartIndicatorSettings(defaultChartIndicatorSettings),
-  );
+  const [indicators, setIndicators] = useState<ChartIndicatorInstance[]>([]);
   const [indicatorSettingsOpen, setIndicatorSettingsOpen] = useState(false);
-  const [selectedIndicator, setSelectedIndicator] = useState<Indicator | null>(
+  const [selectedIndicatorId, setSelectedIndicatorId] = useState<string | null>(
     null,
   );
   const [keepDrawing, setKeepDrawing] = useState(false);
@@ -307,32 +300,38 @@ export function TerminalChart({
   );
   const studyLegend = useMemo(() => {
     const items: ChartStudyLegendItem[] = [];
-    for (const indicator of indicatorOrder) {
-      if (!indicators.includes(indicator)) continue;
-      const label = indicatorLabel(indicator, indicatorSettings);
-      const color = indicatorSettings[indicator].color;
-      if (indicator === 'SMA_20') {
-        const value = simpleMovingAverage(
-          studyCandles,
-          indicatorSettings.SMA_20.period,
-        ).at(-1);
+    const totals = new Map<string, number>();
+    const occurrences = new Map<string, number>();
+    for (const indicator of indicators) {
+      totals.set(indicator.kind, (totals.get(indicator.kind) ?? 0) + 1);
+    }
+    for (const indicator of indicators) {
+      const occurrence = (occurrences.get(indicator.kind) ?? 0) + 1;
+      occurrences.set(indicator.kind, occurrence);
+      const label = `${indicatorLabel(indicator)}${
+        (totals.get(indicator.kind) ?? 0) > 1 ? ` · ${occurrence}` : ''
+      }`;
+      if (indicator.kind === 'SMA') {
+        const value = simpleMovingAverage(studyCandles, indicator.period).at(
+          -1,
+        );
         items.push({
-          color,
-          indicator,
+          color: indicator.color,
+          id: indicator.id,
           label,
           values:
             value === undefined ? [] : [priceText(value.close, priceScale)],
         });
         continue;
       }
-      if (indicator === 'EMA_50') {
+      if (indicator.kind === 'EMA') {
         const value = exponentialMovingAverage(
           studyCandles,
-          indicatorSettings.EMA_50.period,
+          indicator.period,
         ).at(-1);
         items.push({
-          color,
-          indicator,
+          color: indicator.color,
+          id: indicator.id,
           label,
           values:
             value === undefined ? [] : [priceText(value.close, priceScale)],
@@ -341,12 +340,12 @@ export function TerminalChart({
       }
       const values = bollingerBands(
         studyCandles,
-        indicatorSettings.BOLLINGER.period,
-        indicatorSettings.BOLLINGER.deviations,
+        indicator.period,
+        indicator.deviations ?? 2,
       ).at(-1);
       items.push({
-        color,
-        indicator,
+        color: indicator.color,
+        id: indicator.id,
         label,
         values:
           values === undefined
@@ -357,12 +356,14 @@ export function TerminalChart({
       });
     }
     return items;
-  }, [indicatorSettings, indicators, priceScale, studyCandles]);
+  }, [indicators, priceScale, studyCandles]);
 
   useEffect(() => {
-    setSelectedIndicator((current) => {
-      if (current !== null && indicators.includes(current)) return current;
-      return indicators[0] ?? null;
+    setSelectedIndicatorId((current) => {
+      if (current !== null && indicators.some((item) => item.id === current)) {
+        return current;
+      }
+      return indicators[0]?.id ?? null;
     });
   }, [indicators]);
 
@@ -540,7 +541,7 @@ export function TerminalChart({
         param.hoveredInfo?.series ?? param.hoveredSeries ?? null;
       if (hoveredSeries === null) return;
       const indicator = indicatorSeriesOwnersRef.current.get(hoveredSeries);
-      if (indicator !== undefined) setSelectedIndicator(indicator);
+      if (indicator !== undefined) setSelectedIndicatorId(indicator);
     };
     chart.subscribeClick?.(onChartClick);
     chart.timeScale().fitContent();
@@ -616,7 +617,7 @@ export function TerminalChart({
     indicatorSeriesRef.current = [];
     indicatorSeriesOwnersRef.current.clear();
     function addStudy(
-      indicator: Indicator,
+      indicator: ChartIndicatorInstance,
       color: string,
       values: { time: number; value: number }[],
     ) {
@@ -633,65 +634,61 @@ export function TerminalChart({
           value: value.value,
         })),
       );
-      indicatorSeriesOwnersRef.current.set(series, indicator);
-      indicatorSeriesRef.current.push({ indicator, series });
+      indicatorSeriesOwnersRef.current.set(series, indicator.id);
+      indicatorSeriesRef.current.push({ id: indicator.id, series });
     }
-    if (indicators.includes('SMA_20')) {
-      addStudy(
-        'SMA_20',
-        indicatorSettings.SMA_20.color,
-        simpleMovingAverage(studyCandles, indicatorSettings.SMA_20.period).map(
-          (value) => ({
+    for (const indicator of indicators) {
+      if (indicator.kind === 'SMA') {
+        addStudy(
+          indicator,
+          indicator.color,
+          simpleMovingAverage(studyCandles, indicator.period).map((value) => ({
             time: value.time,
             value: value.close,
-          }),
-        ),
-      );
-    }
-    if (indicators.includes('EMA_50')) {
-      addStudy(
-        'EMA_50',
-        indicatorSettings.EMA_50.color,
-        exponentialMovingAverage(
-          studyCandles,
-          indicatorSettings.EMA_50.period,
-        ).map((value) => ({
-          time: value.time,
-          value: value.close,
-        })),
-      );
-    }
-    if (indicators.includes('BOLLINGER')) {
+          })),
+        );
+        continue;
+      }
+      if (indicator.kind === 'EMA') {
+        addStudy(
+          indicator,
+          indicator.color,
+          exponentialMovingAverage(studyCandles, indicator.period).map(
+            (value) => ({ time: value.time, value: value.close }),
+          ),
+        );
+        continue;
+      }
       const bands = bollingerBands(
         studyCandles,
-        indicatorSettings.BOLLINGER.period,
-        indicatorSettings.BOLLINGER.deviations,
+        indicator.period,
+        indicator.deviations ?? 2,
       );
       addStudy(
-        'BOLLINGER',
-        indicatorSettings.BOLLINGER.color,
+        indicator,
+        indicator.color,
         bands.map((value) => ({ time: value.time, value: value.upper })),
       );
       addStudy(
-        'BOLLINGER',
-        indicatorSettings.BOLLINGER.color,
+        indicator,
+        indicator.color,
         bands.map((value) => ({ time: value.time, value: value.middle })),
       );
       addStudy(
-        'BOLLINGER',
-        indicatorSettings.BOLLINGER.color,
+        indicator,
+        indicator.color,
         bands.map((value) => ({ time: value.time, value: value.lower })),
       );
     }
-  }, [chartGeneration, indicatorSettings, indicators, studyCandles]);
+  }, [chartGeneration, indicators, studyCandles]);
 
   useEffect(() => {
-    for (const { indicator, series } of indicatorSeriesRef.current) {
+    for (const { id, series } of indicatorSeriesRef.current) {
       series.applyOptions({
-        lineWidth: selectedIndicator === indicator ? 2 : 1,
+        lineWidth: selectedIndicatorId === id ? 2 : 1,
       });
     }
-  }, [chartGeneration, selectedIndicator]);
+  }, [chartGeneration, selectedIndicatorId]);
 
   async function selectTimeframe(next: ChartTimeframe) {
     setTimeframe(next);
@@ -1379,14 +1376,13 @@ export function TerminalChart({
       </header>
       {indicatorSettingsOpen ? (
         <TerminalChartIndicatorDialog
-          activeIndicators={indicators}
-          onApply={({ activeIndicators, settings }) => {
-            setIndicators(activeIndicators);
-            setIndicatorSettings(settings);
+          instances={indicators}
+          onApply={(instances) => {
+            setIndicators(instances);
             setIndicatorSettingsOpen(false);
           }}
           onClose={() => setIndicatorSettingsOpen(false)}
-          settings={indicatorSettings}
+          selectedStudyId={selectedIndicatorId}
         />
       ) : null}
       <div
@@ -1416,9 +1412,9 @@ export function TerminalChart({
             {studyLegend.map((study) => (
               <div
                 className={`chart-study-legend-item ${
-                  selectedIndicator === study.indicator ? 'is-selected' : ''
+                  selectedIndicatorId === study.id ? 'is-selected' : ''
                 }`}
-                key={study.label}
+                key={study.id}
               >
                 <button
                   aria-label={`Select ${study.label}${
@@ -1426,9 +1422,9 @@ export function TerminalChart({
                       ? ', calculating'
                       : `, ${study.values.join(', ')}`
                   }`}
-                  aria-pressed={selectedIndicator === study.indicator}
+                  aria-pressed={selectedIndicatorId === study.id}
                   className="chart-study-legend-select"
-                  onClick={() => setSelectedIndicator(study.indicator)}
+                  onClick={() => setSelectedIndicatorId(study.id)}
                   type="button"
                 >
                   <i
@@ -1444,7 +1440,7 @@ export function TerminalChart({
                   aria-label={`Open settings for ${study.label}`}
                   className="chart-study-legend-settings"
                   onClick={() => {
-                    setSelectedIndicator(study.indicator);
+                    setSelectedIndicatorId(study.id);
                     setIndicatorSettingsOpen(true);
                   }}
                   title={`Change ${study.label} settings`}

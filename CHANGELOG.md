@@ -68,6 +68,9 @@
   each configured study and its latest value while retaining the Studies dialog for parameter changes.
 - Made chart studies selectable from either their legend row or plotted line, with a visible selected state,
   emphasized line, and direct per-study settings control.
+- Replaced the fixed one-per-type study controls with up to 12 independently configurable SMA, EMA, and
+  Bollinger Band instances, including distinct default colors, per-instance removal, and separate legend
+  entries.
 
 ### Database and domain
 

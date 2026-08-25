@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-018 — Selectable chart studies and settings controls.
+M-019 — Multiple independent chart-study instances.
 
 ## Next task
 
@@ -248,6 +248,11 @@ integrate an API.
   selected plotted study also has a stronger line. A Lightweight Charts click on an indicator line selects
   that study in the legend. These are chart display preferences only. Formatter, web typecheck, lint, 18
   focused tests, and the web production build passed; Docker Desktop remains unavailable for live QA.
+- multiple chart studies: SMA, EMA, and Bollinger Bands are no longer limited to one instance per kind.
+  The `ƒx Studies` window now adds/removes independently identified instances (up to 12), validates each
+  configuration, provides distinct default colors for duplicates, and displays ordinal labels plus values
+  in the selectable chart legend. Formatter, web typecheck, lint, 22 focused tests, and the web production
+  build passed; Docker Desktop remains unavailable for live visual QA.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

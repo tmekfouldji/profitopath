@@ -2006,12 +2006,84 @@ a {
   display: grid;
 }
 
+.indicator-add-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: rgb(86 214 201 / 4%);
+}
+
+.indicator-add-tools > span,
+.indicator-add-tools > small {
+  color: var(--muted);
+  font: 0.52rem var(--data);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.indicator-add-tools > small {
+  margin-left: auto;
+}
+
+.indicator-add-tools button,
+.indicator-remove {
+  min-height: 1.75rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--line);
+  background: #071923;
+  color: var(--fog);
+  cursor: pointer;
+  font: 0.55rem var(--data);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.indicator-add-tools button:hover,
+.indicator-add-tools button:focus-visible,
+.indicator-remove:hover,
+.indicator-remove:focus-visible {
+  border-color: var(--aqua);
+  color: var(--aqua);
+  outline: 0;
+}
+
+.indicator-add-tools button:disabled {
+  color: #4d666d;
+  cursor: not-allowed;
+}
+
+.indicator-empty {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
 .indicator-setting-list fieldset {
+  position: relative;
   min-width: 0;
   margin: 0;
   padding: 0.85rem 1rem 1rem;
   border: 0;
   border-bottom: 1px solid var(--line-soft);
+}
+
+.indicator-setting-list fieldset.is-selected {
+  background: linear-gradient(90deg, rgb(41 98 255 / 12%), transparent 55%);
+  box-shadow: inset 2px 0 var(--aqua);
+}
+
+.indicator-remove {
+  position: absolute;
+  top: 0.62rem;
+  right: 1rem;
+  min-height: 1.45rem;
+  padding-block: 0.18rem;
+  color: #c9897d;
 }
 
 .indicator-setting-list fieldset.is-disabled {

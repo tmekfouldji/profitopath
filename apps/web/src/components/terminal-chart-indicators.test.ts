@@ -1,54 +1,68 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  cloneChartIndicatorSettings,
-  defaultChartIndicatorSettings,
+  cloneChartIndicatorInstances,
+  createChartIndicatorInstance,
   indicatorLabel,
-  validateChartIndicatorSettings,
+  maximumChartIndicatorInstances,
+  validateChartIndicatorInstances,
 } from './terminal-chart-indicators';
 
-describe('terminal chart indicator settings', () => {
-  it('labels settings using the live configured periods', () => {
-    const settings = cloneChartIndicatorSettings(defaultChartIndicatorSettings);
-    settings.SMA_20.period = 34;
-    settings.BOLLINGER.deviations = 2.5;
+describe('chart indicator instances', () => {
+  it('creates independent instances of the same study with distinct default colors', () => {
+    const fast = createChartIndicatorInstance('SMA', 'sma-fast');
+    const slow = createChartIndicatorInstance('SMA', 'sma-slow', 1);
+    slow.period = 50;
 
-    expect(indicatorLabel('SMA_20', settings)).toBe('SMA 34');
-    expect(indicatorLabel('BOLLINGER', settings)).toBe('BB 20, 2.5');
+    expect(indicatorLabel(fast)).toBe('SMA 20');
+    expect(indicatorLabel(slow)).toBe('SMA 50');
+    expect(slow.color).not.toBe(fast.color);
   });
 
-  it('accepts a bounded valid configuration', () => {
-    const settings = cloneChartIndicatorSettings(defaultChartIndicatorSettings);
-    settings.EMA_50.period = 200;
-    settings.BOLLINGER.deviations = 3;
+  it('clones and validates independently configured study instances', () => {
+    const instances = [
+      createChartIndicatorInstance('EMA', 'ema-50'),
+      {
+        ...createChartIndicatorInstance('BOLLINGER', 'bands-20'),
+        deviations: 3,
+      },
+    ];
+    const copy = cloneChartIndicatorInstances(instances);
+    copy[0]!.period = 200;
 
-    expect(validateChartIndicatorSettings(settings)).toMatchObject({
-      ok: true,
-    });
+    expect(instances[0]!.period).toBe(50);
+    expect(validateChartIndicatorInstances(copy)).toMatchObject({ ok: true });
   });
 
-  it('rejects invalid length, deviation, and color values before they reach a chart study', () => {
-    const invalidPeriod = cloneChartIndicatorSettings(
-      defaultChartIndicatorSettings,
-    );
-    invalidPeriod.SMA_20.period = 0;
-    expect(validateChartIndicatorSettings(invalidPeriod)).toMatchObject({
+  it('rejects invalid instances, duplicate identifiers, and unbounded study lists', () => {
+    const invalidPeriod = createChartIndicatorInstance('SMA', 'sma-1');
+    invalidPeriod.period = 0;
+    expect(validateChartIndicatorInstances([invalidPeriod])).toMatchObject({
+      message: expect.stringContaining('length'),
       ok: false,
     });
 
-    const invalidDeviation = cloneChartIndicatorSettings(
-      defaultChartIndicatorSettings,
-    );
-    invalidDeviation.BOLLINGER.deviations = 11;
-    expect(validateChartIndicatorSettings(invalidDeviation)).toMatchObject({
+    const invalidDeviation = createChartIndicatorInstance('BOLLINGER', 'bb-1');
+    invalidDeviation.deviations = 11;
+    expect(validateChartIndicatorInstances([invalidDeviation])).toMatchObject({
+      message: expect.stringContaining('deviations'),
       ok: false,
     });
 
-    const invalidColor = cloneChartIndicatorSettings(
-      defaultChartIndicatorSettings,
+    const duplicate = createChartIndicatorInstance('EMA', 'same');
+    expect(
+      validateChartIndicatorInstances([duplicate, { ...duplicate }]),
+    ).toMatchObject({
+      message: expect.stringContaining('unique'),
+      ok: false,
+    });
+
+    const tooMany = Array.from(
+      { length: maximumChartIndicatorInstances + 1 },
+      (_, index) => createChartIndicatorInstance('SMA', `sma-${index}`),
     );
-    invalidColor.EMA_50.color = 'aqua';
-    expect(validateChartIndicatorSettings(invalidColor)).toMatchObject({
+    expect(validateChartIndicatorInstances(tooMany)).toMatchObject({
+      message: expect.stringContaining('No more than'),
       ok: false,
     });
   });
