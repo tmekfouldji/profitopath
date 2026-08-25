@@ -160,8 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-010 — integrated the published production-terminal work with the M-009 visual refresh and fixed
-the live terminal's deterministic week-progress hydration boundary.
+M-011 — authentication/session hardening and production Docker Prisma-engine packaging.
 
 ## Next task
 
@@ -205,6 +204,13 @@ integrate an API.
   validation. Applied settings drive the existing server-supplied candle overlays only; they cannot
   affect any order, position, or risk decision. Formatter, typecheck, lint, all 110 runnable tests,
   production image build, and recreated Docker web readiness check passed.
+- authentication/session hardening: safe callback normalization prevents repeated or external callback
+  failures; login and registration preserve a valid protected destination; credential failures are
+  rate-limited in Valkey with hashed identifiers and audited; realtime periodically revokes inactive
+  users; and the web standalone image now carries Prisma's engine at its dependency lookup path.
+  Formatter, typecheck, lint, all 126 runnable tests, Docker production build, duplicate-callback,
+  disposable registration/login/session, readiness, and database-backed route smoke checks passed.
+  `12_AUTH_SESSION_HARDENING.md` records the deferred public-production account-lifecycle work.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

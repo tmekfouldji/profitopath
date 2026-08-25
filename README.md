@@ -74,6 +74,7 @@ Codex must treat the project-tracking files in the repository as persistent memo
 - `CHANGELOG.md`
 - `10_MARKET_DATA_CACHING_AND_CANDLES.md` for market-data/charting work
 - `11_TRADERMADE_TRIAL_ACTIVATION.md` for the provider-trial approval and activation gate
+- `12_AUTH_SESSION_HARDENING.md` for authentication controls and production follow-up work
 
 Read them at the start of every session and update them before ending any substantial session.
 

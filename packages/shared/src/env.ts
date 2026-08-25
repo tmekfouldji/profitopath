@@ -8,6 +8,24 @@ const booleanString = z
   .transform((value) => value === 'true');
 
 export const runtimeEnvSchema = z.object({
+  AUTH_LOGIN_EMAIL_MAX_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(5),
+  AUTH_LOGIN_IP_MAX_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10_000)
+    .default(25),
+  AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(86_400)
+    .default(900),
   AUTO_FINALIZE_FROZEN_COMPETITIONS: booleanString,
   BUSINESS_TIMEZONE: z.string().min(1).default('UTC'),
   COMPETITION_JOB_INTERVAL_MS: z.coerce

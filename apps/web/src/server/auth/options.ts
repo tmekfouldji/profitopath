@@ -3,6 +3,7 @@ import 'server-only';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { database } from '@profitopath/database';
 import {
+  createLogger,
   hashPassword,
   loginInputSchema,
   parseRuntimeEnv,
@@ -11,7 +12,35 @@ import {
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+import { authLoginRateLimiter, loginAuditIdentifier } from './login-rate-limit';
+
 const env = parseRuntimeEnv();
+const logger = createLogger({ service: 'web-auth', version: '0.1.0' });
+
+async function recordFailedSignIn(
+  email: string,
+  reason:
+    | 'ACCOUNT_INACTIVE'
+    | 'AUTH_RATE_LIMIT_UNAVAILABLE'
+    | 'INVALID_CREDENTIALS'
+    | 'RATE_LIMITED',
+): Promise<void> {
+  await database.auditEvent
+    .create({
+      data: {
+        action: 'SIGN_IN_FAILED',
+        after: { reason },
+        entityId: `credential:${loginAuditIdentifier(email)}`,
+        entityType: 'Authentication',
+      },
+    })
+    .catch((error: unknown) => {
+      logger.error(
+        { error, loginIdentifier: loginAuditIdentifier(email), reason },
+        'Failed to write credential failure audit event',
+      );
+    });
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(database),
@@ -61,9 +90,23 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       name: 'Email and password',
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginInputSchema.safeParse(credentials);
         if (!parsed.success) {
+          return null;
+        }
+
+        const rateLimit = await authLoginRateLimiter.check(
+          parsed.data.email,
+          request.headers ?? {},
+        );
+        if (!rateLimit.allowed) {
+          await recordFailedSignIn(
+            parsed.data.email,
+            rateLimit.unavailable
+              ? 'AUTH_RATE_LIMIT_UNAVAILABLE'
+              : 'RATE_LIMITED',
+          );
           return null;
         }
 
@@ -71,12 +114,22 @@ export const authOptions: NextAuthOptions = {
           include: { credential: true },
           where: { email: parsed.data.email },
         });
-        if (
-          user?.credential === null ||
-          user === null ||
-          user.status !== 'ACTIVE'
-        ) {
+        if (user === null || user.credential === null) {
           await hashPassword(parsed.data.password);
+          await authLoginRateLimiter.recordFailure(
+            parsed.data.email,
+            request.headers ?? {},
+          );
+          await recordFailedSignIn(parsed.data.email, 'INVALID_CREDENTIALS');
+          return null;
+        }
+        if (user.status !== 'ACTIVE') {
+          await hashPassword(parsed.data.password);
+          await authLoginRateLimiter.recordFailure(
+            parsed.data.email,
+            request.headers ?? {},
+          );
+          await recordFailedSignIn(parsed.data.email, 'ACCOUNT_INACTIVE');
           return null;
         }
 
@@ -85,6 +138,11 @@ export const authOptions: NextAuthOptions = {
           user.credential.passwordHash,
         );
         if (!valid) {
+          await authLoginRateLimiter.recordFailure(
+            parsed.data.email,
+            request.headers ?? {},
+          );
+          await recordFailedSignIn(parsed.data.email, 'INVALID_CREDENTIALS');
           return null;
         }
 

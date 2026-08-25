@@ -2,24 +2,20 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { AuthForm } from '@/components/auth-form';
+import { authPageHref, safeCallbackUrl } from '@/lib/auth-callback';
 import { getSession } from '@/server/auth/session';
-
-function safeCallback(value: string | undefined): string {
-  return value?.startsWith('/') === true && !value.startsWith('//')
-    ? value
-    : '/dashboard';
-}
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
 }) {
+  const { callbackUrl } = await searchParams;
+  const destination = safeCallbackUrl(callbackUrl);
   const session = await getSession();
   if (session?.user !== undefined) {
-    redirect('/dashboard');
+    redirect(destination);
   }
-  const { callbackUrl } = await searchParams;
 
   return (
     <main className="auth-page">
@@ -32,9 +28,12 @@ export default async function LoginPage({
             state.
           </p>
         </div>
-        <AuthForm callbackUrl={safeCallback(callbackUrl)} mode="login" />
+        <AuthForm callbackUrl={destination} mode="login" />
         <p className="form-aside">
-          New here? <Link href="/register">Create a trading profile</Link>
+          New here?{' '}
+          <Link href={authPageHref('/register', destination)}>
+            Create a trading profile
+          </Link>
         </p>
       </section>
     </main>

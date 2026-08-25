@@ -25,11 +25,11 @@ export function AuthForm({
       password,
       redirect: false,
     });
-    if (result?.error !== undefined) {
+    if (result === undefined || !result.ok || result.error !== null) {
       setError('Email or password was not recognized.');
       return false;
     }
-    router.push(result?.url ?? callbackUrl);
+    router.replace(callbackUrl);
     router.refresh();
     return true;
   }
@@ -57,7 +57,9 @@ export function AuthForm({
           setError(
             response.status === 409
               ? 'An account already uses this email. Sign in instead.'
-              : 'Check your details and use a password of at least 12 characters.',
+              : response.status >= 500
+                ? 'Registration is temporarily unavailable. Try again.'
+                : 'Check your details and use a password of at least 12 characters.',
           );
           return;
         }

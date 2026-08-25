@@ -2,12 +2,19 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { AuthForm } from '@/components/auth-form';
+import { authPageHref, safeCallbackUrl } from '@/lib/auth-callback';
 import { getSession } from '@/server/auth/session';
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const destination = safeCallbackUrl(callbackUrl);
   const session = await getSession();
   if (session?.user !== undefined) {
-    redirect('/dashboard');
+    redirect(destination);
   }
 
   return (
@@ -22,9 +29,10 @@ export default async function RegisterPage() {
             entry.
           </p>
         </div>
-        <AuthForm callbackUrl="/dashboard" mode="register" />
+        <AuthForm callbackUrl={destination} mode="register" />
         <p className="form-aside">
-          Already registered? <Link href="/login">Sign in</Link>
+          Already registered?{' '}
+          <Link href={authPageHref('/login', destination)}>Sign in</Link>
         </p>
       </section>
     </main>

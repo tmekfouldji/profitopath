@@ -36,6 +36,7 @@ interface SocketContext {
 
 const sockets = new Map<WebSocket, SocketContext>();
 const websocketServer = new WebSocketServer({ noServer: true });
+const authorizationRevalidationIntervalMs = 60_000;
 
 function requestCookies(header: string | undefined): Record<string, string> {
   if (header === undefined) {
@@ -117,6 +118,42 @@ async function sendSnapshot(socket: WebSocket, context: SocketContext) {
   socket.send(JSON.stringify(snapshot));
 }
 
+async function revalidateSocketAuthorizations(): Promise<void> {
+  const activeSockets = [...sockets.entries()];
+  if (activeSockets.length === 0) {
+    return;
+  }
+
+  const activeAccountIds = new Set(
+    (
+      await database.tradingAccount.findMany({
+        select: { id: true },
+        where: {
+          id: {
+            in: [
+              ...new Set(activeSockets.map(([, context]) => context.accountId)),
+            ],
+          },
+          competitionEntry: { user: { status: 'ACTIVE' } },
+        },
+      })
+    ).map((account) => account.id),
+  );
+
+  for (const [socket, context] of activeSockets) {
+    if (!activeAccountIds.has(context.accountId)) {
+      socket.close(4401, 'Session no longer authorized');
+    }
+  }
+}
+
+const authorizationRevalidationTimer = setInterval(() => {
+  void revalidateSocketAuthorizations().catch((error: unknown) => {
+    logger.warn({ error }, 'Realtime authorization revalidation failed');
+  });
+}, authorizationRevalidationIntervalMs);
+authorizationRevalidationTimer.unref();
+
 websocketServer.on('connection', (socket) => {
   const context = sockets.get(socket);
   if (context === undefined) {
@@ -180,7 +217,10 @@ server.on('upgrade', async (request, socket, head) => {
     }
     const account = await database.tradingAccount.findFirst({
       select: { id: true },
-      where: { competitionEntry: { userId: token.sub }, id: accountId },
+      where: {
+        competitionEntry: { user: { status: 'ACTIVE' }, userId: token.sub },
+        id: accountId,
+      },
     });
     if (account === null) {
       socket.destroy();
@@ -228,6 +268,7 @@ async function shutdown(signal: string): Promise<void> {
     socket.close(1001, 'Service shutdown');
   }
   websocketServer.close();
+  clearInterval(authorizationRevalidationTimer);
   quoteSubscriber.disconnect();
   valkey.disconnect();
   await database.$disconnect();

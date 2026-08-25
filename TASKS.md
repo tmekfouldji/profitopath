@@ -461,6 +461,20 @@ Rules:
     restores the documented defaults. Header chips always reflect applied settings. Formatter,
     typecheck, lint, all 110 runnable tests, the production image build, and recreated Docker web
     readiness check passed.
+- [x] M-011 Harden authentication redirects, credential throttling, session revocation, and Docker
+      database-runtime packaging.
+  - Acceptance: malformed or repeated callback URLs cannot crash or redirect externally; login and
+    registration resume a valid protected route; credential results are handled defensively; failed
+    credential attempts are throttled and audited without storing plaintext identifiers; realtime
+    connections lose access when their user becomes inactive; and the deployed web bundle locates the
+    Prisma engine for database-backed authenticated pages. The operator follow-up checklist, focused
+    regression coverage, and verification results are recorded.
+  - Added safe callback normalization and login/registration continuation, defensive credential
+    result handling, hashed email/network Valkey limits with failed-login audits, active-user WebSocket
+    revalidation, and the corrected Prisma standalone-engine paths. The documented Docker stack
+    rebuilt successfully; disposable signup/login/session, duplicate-callback, readiness, and
+    database-backed route smoke checks passed alongside formatter, typecheck, lint, and all 126
+    runnable tests. `12_AUTH_SESSION_HARDENING.md` records the remaining production follow-up work.
 
 ## Blocked — Phase 9
 

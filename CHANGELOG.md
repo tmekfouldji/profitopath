@@ -60,6 +60,18 @@
 
 ### Authentication and application shell
 
+- Hardened authentication continuation and session handling: login/registration retain only one
+  validated internal callback route; repeated, external, protocol-relative, and backslash callbacks
+  safely fall back to the dashboard; credential client navigation now requires a confirmed Auth.js
+  result.
+- Added privacy-preserving failed-login throttling using Valkey keys hashed from the normalized email
+  and client network, fail-closed Valkey handling, and failed-sign-in audit records without plaintext
+  login identifiers.
+- Added current-active-user checks at realtime upgrade plus batch WebSocket revalidation, and copied
+  Prisma's native engine into the actual Next standalone dependency lookup path used by
+  database-backed authenticated route bundles.
+- Added `12_AUTH_SESSION_HARDENING.md` with the remaining production setup, monitoring, email,
+  password-lifecycle, MFA, and isolated end-to-end test requirements.
 - Added Auth.js-compatible account, session, verification-token, and password-credential models
   with a forward-only Prisma migration.
 - Added salted scrypt credential hashing, normalized registration, typed sessions, immediate
