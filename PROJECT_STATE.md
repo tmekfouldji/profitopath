@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-011 — authentication/session hardening and production Docker Prisma-engine packaging.
+M-012 — TradingView-inspired chart command menu and workstation display controls.
 
 ## Next task
 
@@ -211,6 +211,12 @@ integrate an API.
   Formatter, typecheck, lint, all 126 runnable tests, Docker production build, duplicate-callback,
   disposable registration/login/session, readiness, and database-backed route smoke checks passed.
   `12_AUTH_SESSION_HARDENING.md` records the deferred public-production account-lifecycle work.
+- chart command menu: the first-party Lightweight Charts terminal now provides a keyboard-accessible
+  right-click command menu at the chart's actual price/time. It describes and exposes the supported
+  selection, trend, horizontal-ray, rectangle, long/short-plan, and measurement tools; adds local
+  grid/last-price/visibility/repeat-drawing/view management; and preserves the browser-only drawing
+  boundary. The five focused menu tests, formatter, typecheck, lint, full test run, production build,
+  production Docker rebuild/readiness, and browser right-click/horizontal-ray smoke check passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

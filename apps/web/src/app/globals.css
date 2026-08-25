@@ -1384,6 +1384,144 @@ a {
   background: #071923;
 }
 
+.chart-context-menu {
+  position: absolute;
+  z-index: 12;
+  width: min(18.5rem, calc(100% - 1rem));
+  max-height: calc(100% - 1rem);
+  overflow: auto;
+  border: 1px solid rgb(86 214 201 / 50%);
+  outline: 0;
+  background:
+    linear-gradient(135deg, rgb(86 214 201 / 11%), transparent 42%),
+    rgb(5 20 29 / 98%);
+  box-shadow: 0 1.15rem 3rem rgb(0 0 0 / 48%);
+  color: var(--fog);
+  font-family: var(--data);
+}
+
+.chart-context-menu:focus-visible {
+  outline: 2px solid var(--aqua);
+  outline-offset: 2px;
+}
+
+.chart-context-menu-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.22rem 0.5rem;
+  padding: 0.7rem 0.75rem 0.62rem;
+  border-bottom: 1px solid rgb(86 214 201 / 28%);
+}
+
+.chart-context-menu-heading > span,
+.chart-context-menu-label {
+  color: var(--aqua);
+  font-size: 0.48rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.chart-context-menu-heading > strong {
+  color: var(--fog);
+  font-size: 0.93rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.chart-context-menu-heading > small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.48rem;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.chart-context-menu-heading > button {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 0.95rem/1 var(--data);
+}
+
+.chart-context-menu-heading > button:hover,
+.chart-context-menu-heading > button:focus-visible {
+  border-color: var(--aqua);
+  color: var(--aqua);
+}
+
+.chart-context-menu-section {
+  display: grid;
+  padding: 0.44rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.chart-context-menu-section:last-child {
+  border-bottom: 0;
+}
+
+.chart-context-menu-label {
+  padding: 0 0.75rem 0.32rem;
+}
+
+.chart-context-menu-section > button {
+  display: grid;
+  grid-template-columns: 1.3rem 1fr;
+  column-gap: 0.42rem;
+  padding: 0.37rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--fog);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chart-context-menu-section > button > span {
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--aqua);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.chart-context-menu-section > button > b {
+  font-size: 0.59rem;
+  font-weight: 500;
+  letter-spacing: 0.035em;
+}
+
+.chart-context-menu-section > button > small {
+  margin-top: 0.08rem;
+  color: var(--muted);
+  font-size: 0.46rem;
+  letter-spacing: 0.025em;
+}
+
+.chart-context-menu-section > button:hover,
+.chart-context-menu-section > button:focus-visible,
+.chart-context-menu-section > button[aria-pressed='true'] {
+  background: rgb(86 214 201 / 11%);
+  color: var(--aqua);
+  outline: 0;
+}
+
+.chart-context-menu-section > button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--aqua);
+}
+
+.chart-context-menu-section > button:disabled {
+  color: #4d666d;
+  cursor: not-allowed;
+}
+
+.chart-context-menu-section > button:disabled > span {
+  color: #4d666d;
+}
+
 .chart-drawing-overlay {
   position: absolute;
   z-index: 2;
@@ -3207,6 +3345,16 @@ a {
     flex: 0 0 auto;
     border-right: 1px solid var(--line-soft);
     border-bottom: 0;
+  }
+
+  .chart-context-menu {
+    width: min(18rem, calc(100% - 0.9rem));
+    max-height: calc(100% - 0.9rem);
+  }
+
+  .chart-context-menu-section > button {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
   }
 
   .indicator-dialog-backdrop {

@@ -6,7 +6,7 @@ Codex must rewrite this file at the end of every substantial work session.
 
 Phase 0 through Phase 8 are complete. The production-shaped environment and advanced trading terminal
 are integrated with the M-009 control-room visual refresh and the M-010 hydration-boundary fix. M-011
-hardened authentication and session handling. Phase 9 remains blocked at P9-001: TraderMade's trial
+hardened authentication and session handling. M-012 added a first-party chart command menu. Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -16,7 +16,10 @@ pricing is not documentation or written commercial authorization for customer-fa
   standalone serving, static assets, Prisma's engine, and the shared root-environment session secret.
 - The browser terminal includes full-screen mode, server-computed position metrics, studies, drawings,
   measurement tools, persisted browser-only annotations, and server-validated draggable SL/TP
-  controls. The M-009 visual system applies across public, authentication, competition, dashboard,
+  controls. The M-012 menu opens via right-click or `Shift+F10` at the current chart price/time and
+  explains/selects the actual available drawing and measurement tools. It can add a local horizontal
+  ray at that point and offers local view, visibility, repeat-drawing, and drawing-management controls;
+  it cannot create orders or change server-authoritative state. The M-009 visual system applies across public, authentication, competition, dashboard,
   leaderboard, administrative, and terminal surfaces without changing server authority.
 - M-011 fixed callback continuation: login and registration retain only one validated root-relative
   protected destination. Repeated or unsafe callbacks cannot crash the form or redirect externally.
@@ -39,6 +42,10 @@ pricing is not documentation or written commercial authorization for customer-fa
 - The M-011 Docker web image built successfully. Its engine is present in both standalone lookup
   paths; readiness and database-backed `/competitions` return 200; the repeated-callback login URL
   returns 200; and a disposable registration/login/session smoke test returned 201/200/active.
+- M-012 passed formatter, web typecheck, lint, five focused menu/component integration tests, a full
+  test run, and production build. The rebuilt production-shaped Docker web service is healthy; the
+  browser smoke opened the menu through a real right-click and verified its horizontal-ray command
+  creates only one browser-local drawing.
 
 ### Local runtime
 
@@ -53,7 +60,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

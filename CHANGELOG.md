@@ -46,6 +46,11 @@
 - Added a compact `ƒx Studies` parameter window for simple/exponential moving averages and
   Bollinger Bands, including show/hide controls, bounded period/deviation validation, line colors,
   applied-setting labels, cancel, and defaults reset.
+- Added a TradingView-inspired chart command menu: right-click or `Shift+F10` now exposes the
+  chart's supported drawing and measurement tools with plain-language descriptions, places a
+  horizontal ray at the selected chart price, and provides safe local view/visibility/drawing
+  controls. It is a first-party Lightweight Charts feature; no TradingView Charting Library or
+  client-authoritative trading action was added.
 
 ### Database and domain
 

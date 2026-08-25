@@ -475,6 +475,23 @@ Rules:
     rebuilt successfully; disposable signup/login/session, duplicate-callback, readiness, and
     database-backed route smoke checks passed alongside formatter, typecheck, lint, and all 126
     runnable tests. `12_AUTH_SESSION_HARDENING.md` records the remaining production follow-up work.
+- [x] M-012 Add a TradingView-inspired chart command menu and workstation display controls.
+  - Acceptance: right-click and keyboard context-menu invocation open an accessible, viewport-bounded
+    command menu at the chart price/time; its actions expose the terminal's supported drawing,
+    measurement, view, visibility, and drawing-management controls with clear descriptions; users can
+    toggle chart grid and last-price visibility, reset/recenter the view, and manage browser-only
+    drawings without modifying authoritative orders, positions, risk, or market data. The desktop and
+    narrow layouts remain usable, focused regression coverage is added, and project memory/quality
+    evidence is updated.
+  - Added an accessible chart command menu triggered by right-click, `Shift+F10`, or the keyboard
+    context-menu key. It shows the actual price/time under the pointer, explains the supported
+    selection, trend, ray, rectangle, long/short-plan, and measurement tools, places a horizontal
+    ray at that price, and exposes fit/latest, grid, last-price, visibility, repeat-drawing, and local
+    drawing-management controls. The context menu and annotations remain browser-only; no command can
+    submit an order or alter persisted trading/risk state. Official public TradingView tool/settings
+    guidance informed the vocabulary, while the implementation remains first-party Lightweight
+    Charts. Focused component/integration coverage, production Docker rebuild, readiness check, and
+    browser right-click/action smoke checks passed.
 
 ## Blocked — Phase 9
 

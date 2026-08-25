@@ -44,6 +44,10 @@ import {
   type TerminalChartDrawingKind,
   type TerminalChartDrawingPoint,
 } from './terminal-chart-drawings';
+import {
+  TerminalChartContextMenu,
+  type TerminalChartCommandTool,
+} from './terminal-chart-context-menu';
 
 export interface TerminalChartCandle {
   close: string;
@@ -119,6 +123,11 @@ interface DrawingEdit {
   mode: 'FIRST' | 'MOVE' | 'SECOND' | 'THIRD';
   pointerId: number;
   start: ChartPoint;
+}
+
+interface ChartContextMenuState {
+  point: ChartPoint;
+  position: { x: number; y: number };
 }
 
 function chartTime(value: string): UTCTimestamp {
@@ -218,10 +227,15 @@ export function TerminalChart({
   const loadingOlderRef = useRef(false);
   const [candles, setCandles] = useState(initialCandles);
   const [chartGeneration, setChartGeneration] = useState(0);
+  const [contextMenu, setContextMenu] = useState<ChartContextMenuState | null>(
+    null,
+  );
   const [drag, setDrag] = useState<ProtectionDrag | null>(null);
   const [drawingDraft, setDrawingDraft] = useState<DrawingDraft | null>(null);
   const [drawings, setDrawings] = useState<TerminalChartDrawing[]>([]);
   const [drawingsScope, setDrawingsScope] = useState<string | null>(null);
+  const [drawingsVisible, setDrawingsVisible] = useState(true);
+  const [gridVisible, setGridVisible] = useState(true);
   const [historyState, setHistoryState] = useState<
     'IDLE' | 'LOADING' | 'EXHAUSTED'
   >('IDLE');
@@ -230,11 +244,14 @@ export function TerminalChart({
     cloneChartIndicatorSettings(defaultChartIndicatorSettings),
   );
   const [indicatorSettingsOpen, setIndicatorSettingsOpen] = useState(false);
+  const [keepDrawing, setKeepDrawing] = useState(false);
+  const [lastPriceVisible, setLastPriceVisible] = useState(true);
   const [measure, setMeasure] = useState<MeasureDrag | null>(null);
   const [overlayRevision, setOverlayRevision] = useState(0);
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(
     null,
   );
+  const [positionLevelsVisible, setPositionLevelsVisible] = useState(true);
   const [stageSize, setStageSize] = useState({ height: 0, width: 0 });
   const [timeframe, setTimeframe] = useState<ChartTimeframe>('1m');
   const [tool, setTool] = useState<ChartTool>('CURSOR');
@@ -291,6 +308,7 @@ export function TerminalChart({
     setSelectedDrawingId(null);
     drawingDraftRef.current = null;
     drawingEditRef.current = null;
+    setContextMenu(null);
     setDrawingDraft(null);
   }, [accountId, symbol]);
 
@@ -451,6 +469,22 @@ export function TerminalChart({
   }, [candles]);
 
   useEffect(() => {
+    chartRef.current?.applyOptions({
+      grid: {
+        horzLines: { color: '#1c2d47', visible: gridVisible },
+        vertLines: { color: '#1c2d47', visible: gridVisible },
+      },
+    });
+  }, [chartGeneration, gridVisible]);
+
+  useEffect(() => {
+    seriesRef.current?.applyOptions({
+      lastValueVisible: lastPriceVisible,
+      priceLineVisible: lastPriceVisible,
+    });
+  }, [chartGeneration, lastPriceVisible]);
+
+  useEffect(() => {
     const chart = chartRef.current;
     if (chart === null) return;
     const activeChart = chart;
@@ -559,7 +593,10 @@ export function TerminalChart({
     );
   }
 
-  function chartPoint(event: PointerEvent<Element>): ChartPoint | null {
+  function chartPoint(event: {
+    clientX: number;
+    clientY: number;
+  }): ChartPoint | null {
     const stage = stageRef.current;
     const series = seriesRef.current;
     const chart = chartRef.current;
@@ -571,6 +608,74 @@ export function TerminalChart({
     const time = chart.timeScale().coordinateToTime(x as Coordinate);
     if (price === null || typeof time !== 'number') return null;
     return { price, time, x, y };
+  }
+
+  function selectDrawingTool(next: TerminalChartCommandTool) {
+    setSelectedDrawingId(null);
+    setTool(next);
+  }
+
+  function addHorizontalRay(point: ChartPoint) {
+    const drawing: TerminalChartDrawing = {
+      first: { price: point.price, time: point.time },
+      id: drawingId(),
+      kind: 'HORIZONTAL_RAY',
+      version: 1,
+    };
+    setDrawings((current) => [...current, drawing]);
+    setSelectedDrawingId(drawing.id);
+    if (!keepDrawing) setTool('CURSOR');
+  }
+
+  function removeSelectedDrawing() {
+    setDrawings((current) =>
+      current.filter((drawing) => drawing.id !== selectedDrawingId),
+    );
+    setSelectedDrawingId(null);
+  }
+
+  function clearDrawings() {
+    setDrawings([]);
+    setSelectedDrawingId(null);
+  }
+
+  function openContextMenu(point: ChartPoint) {
+    const stage = stageRef.current;
+    if (stage === null) return;
+    const bounds = stage.getBoundingClientRect();
+    const horizontalMargin = 8;
+    const menuWidth = 296;
+    const menuHeight = 420;
+    setContextMenu({
+      point,
+      position: {
+        x: Math.max(
+          horizontalMargin,
+          Math.min(
+            point.x + 8,
+            Math.max(horizontalMargin, bounds.width - menuWidth),
+          ),
+        ),
+        y: Math.max(
+          horizontalMargin,
+          Math.min(
+            point.y + 8,
+            Math.max(horizontalMargin, bounds.height - menuHeight),
+          ),
+        ),
+      },
+    });
+  }
+
+  function openKeyboardContextMenu() {
+    const stage = stageRef.current;
+    if (stage === null) return;
+    const bounds = stage.getBoundingClientRect();
+    const point = chartPoint({
+      clientX: bounds.left + bounds.width / 2,
+      clientY: bounds.top + bounds.height / 2,
+    });
+    if (point !== null) openContextMenu(point);
   }
 
   function setDraft(next: DrawingDraft | null) {
@@ -613,20 +718,15 @@ export function TerminalChart({
   }
 
   function handleStagePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (contextMenu !== null && event.button === 0) {
+      setContextMenu(null);
+    }
     if (event.button !== 0 || tool === 'CURSOR') return;
     const point = chartPoint(event);
     if (point === null) return;
     event.preventDefault();
     if (tool === 'HORIZONTAL_RAY') {
-      const drawing: TerminalChartDrawing = {
-        first: { price: point.price, time: point.time },
-        id: drawingId(),
-        kind: tool,
-        version: 1,
-      };
-      setDrawings((current) => [...current, drawing]);
-      setSelectedDrawingId(drawing.id);
-      setTool('CURSOR');
+      addHorizontalRay(point);
       return;
     }
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -696,12 +796,12 @@ export function TerminalChart({
         setSelectedDrawingId(drawing.id);
       }
       setDraft(null);
-      setTool('CURSOR');
+      if (!keepDrawing) setTool('CURSOR');
       return;
     }
     if (measure?.pointerId !== event.pointerId) return;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    setTool('CURSOR');
+    if (!keepDrawing) setTool('CURSOR');
   }
 
   function beginDrawingEdit(
@@ -725,8 +825,20 @@ export function TerminalChart({
   }
 
   function handleStageKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (
+      event.key === 'ContextMenu' ||
+      (event.shiftKey && event.key === 'F10')
+    ) {
+      event.preventDefault();
+      openKeyboardContextMenu();
+      return;
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
+      if (contextMenu !== null) {
+        setContextMenu(null);
+        return;
+      }
       drawingEditRef.current = null;
       setDraft(null);
       setMeasure(null);
@@ -1099,6 +1211,11 @@ export function TerminalChart({
         className={`chart-stage is-tool-${tool.toLowerCase()}`}
         aria-describedby="chart-tool-status"
         aria-label={`${symbol} interactive chart canvas`}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          const point = chartPoint(event);
+          if (point !== null) openContextMenu(point);
+        }}
         onKeyDown={handleStageKeyDown}
         onPointerDown={handleStagePointerDown}
         onPointerMove={handleStagePointerMove}
@@ -1115,7 +1232,7 @@ export function TerminalChart({
           <button
             aria-label="Select and edit drawings"
             aria-pressed={tool === 'CURSOR'}
-            onClick={() => setTool('CURSOR')}
+            onClick={() => selectDrawingTool('CURSOR')}
             title="Select and edit drawings (Escape)"
             type="button"
           >
@@ -1125,10 +1242,7 @@ export function TerminalChart({
           <button
             aria-label="Draw trend line"
             aria-pressed={tool === 'TRENDLINE'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('TRENDLINE');
-            }}
+            onClick={() => selectDrawingTool('TRENDLINE')}
             title="Trend line"
             type="button"
           >
@@ -1138,10 +1252,7 @@ export function TerminalChart({
           <button
             aria-label="Draw horizontal ray"
             aria-pressed={tool === 'HORIZONTAL_RAY'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('HORIZONTAL_RAY');
-            }}
+            onClick={() => selectDrawingTool('HORIZONTAL_RAY')}
             title="Horizontal ray"
             type="button"
           >
@@ -1151,10 +1262,7 @@ export function TerminalChart({
           <button
             aria-label="Draw rectangle zone"
             aria-pressed={tool === 'RECTANGLE'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('RECTANGLE');
-            }}
+            onClick={() => selectDrawingTool('RECTANGLE')}
             title="Rectangle zone"
             type="button"
           >
@@ -1164,10 +1272,7 @@ export function TerminalChart({
           <button
             aria-label="Draw long position plan"
             aria-pressed={tool === 'LONG_POSITION'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('LONG_POSITION');
-            }}
+            onClick={() => selectDrawingTool('LONG_POSITION')}
             title="Long position risk/reward plan"
             type="button"
           >
@@ -1177,10 +1282,7 @@ export function TerminalChart({
           <button
             aria-label="Draw short position plan"
             aria-pressed={tool === 'SHORT_POSITION'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('SHORT_POSITION');
-            }}
+            onClick={() => selectDrawingTool('SHORT_POSITION')}
             title="Short position risk/reward plan"
             type="button"
           >
@@ -1190,10 +1292,7 @@ export function TerminalChart({
           <button
             aria-label="Measure price and time range"
             aria-pressed={tool === 'MEASURE'}
-            onClick={() => {
-              setSelectedDrawingId(null);
-              setTool('MEASURE');
-            }}
+            onClick={() => selectDrawingTool('MEASURE')}
             title="Measure price range"
             type="button"
           >
@@ -1204,12 +1303,7 @@ export function TerminalChart({
           <button
             aria-label="Delete selected drawing"
             disabled={selectedDrawingId === null}
-            onClick={() => {
-              setDrawings((current) =>
-                current.filter((drawing) => drawing.id !== selectedDrawingId),
-              );
-              setSelectedDrawingId(null);
-            }}
+            onClick={removeSelectedDrawing}
             title="Delete selected drawing (Delete)"
             type="button"
           >
@@ -1217,6 +1311,37 @@ export function TerminalChart({
             <small>Delete</small>
           </button>
         </aside>
+        {contextMenu === null ? null : (
+          <TerminalChartContextMenu
+            activeTool={tool}
+            drawingsHidden={!drawingsVisible}
+            gridVisible={gridVisible}
+            keepDrawing={keepDrawing}
+            lastPriceVisible={lastPriceVisible}
+            onAddHorizontalRay={() => addHorizontalRay(contextMenu.point)}
+            onClearDrawings={clearDrawings}
+            onClose={() => setContextMenu(null)}
+            onDeleteSelectedDrawing={removeSelectedDrawing}
+            onFocusLatest={() =>
+              chartRef.current?.timeScale().scrollToRealTime()
+            }
+            onResetView={() => chartRef.current?.timeScale().fitContent()}
+            onSelectTool={selectDrawingTool}
+            onToggleDrawings={() => setDrawingsVisible((current) => !current)}
+            onToggleGrid={() => setGridVisible((current) => !current)}
+            onToggleKeepDrawing={() => setKeepDrawing((current) => !current)}
+            onToggleLastPrice={() => setLastPriceVisible((current) => !current)}
+            onTogglePositionLevels={() =>
+              setPositionLevelsVisible((current) => !current)
+            }
+            point={contextMenu.point}
+            position={contextMenu.position}
+            positionLevelsHidden={!positionLevelsVisible}
+            selectedDrawing={selectedDrawingId !== null}
+            symbol={symbol}
+            timeframe={timeframe}
+          />
+        )}
         <div className="chart-overlay">
           {stageSize.width > 0 && stageSize.height > 0 ? (
             <svg
@@ -1226,65 +1351,71 @@ export function TerminalChart({
               viewBox={`0 0 ${stageSize.width} ${stageSize.height}`}
               width={stageSize.width}
             >
-              {drawings.map((drawing) => renderDrawing(drawing))}
+              {drawingsVisible
+                ? drawings.map((drawing) => renderDrawing(drawing))
+                : null}
               {draftPreview === null ? null : renderDrawing(draftPreview, true)}
             </svg>
           ) : null}
-          {activePositions.flatMap((position) => {
-            const entryTop = overlayTop(position.averageEntryPrice);
-            const entry =
-              entryTop === null ? null : (
-                <span
-                  className="chart-position-line is-entry"
-                  key={`${position.id}:entry`}
-                  style={{ top: `${entryTop}px` }}
-                >
-                  Entry {position.averageEntryPrice}
-                </span>
-              );
-            const protection = (
-              ['STOP_LOSS', 'TAKE_PROFIT'] as ProtectionKind[]
-            ).flatMap((kind) => {
-              const existing =
-                kind === 'STOP_LOSS'
-                  ? position.stopLossPrice
-                  : position.takeProfitPrice;
-              const displayPrice =
-                drag?.position.id === position.id && drag.kind === kind
-                  ? drag.price
-                  : (existing ?? position.markPrice);
-              if (displayPrice === null) return [];
-              const top = overlayTop(displayPrice);
-              if (top === null) return [];
-              return [
-                <button
-                  className={`chart-protection-line is-${kind.toLowerCase()} ${
-                    existing === null ? 'is-unset' : ''
-                  }`}
-                  disabled={!canEditProtection}
-                  key={`${position.id}:${kind}`}
-                  onPointerDown={(event) =>
-                    handleProtectionPointerDown(
-                      event,
-                      position,
-                      kind,
-                      displayPrice,
-                    )
-                  }
-                  onPointerMove={handleProtectionPointerMove}
-                  onPointerUp={handleProtectionPointerUp}
-                  style={{ top: `${top}px` }}
-                  title={`Drag to set ${protectionLabel(kind)} for ${position.symbol}`}
-                  type="button"
-                >
-                  <span>{protectionLabel(kind)}</span>
-                  <b>{displayPrice}</b>
-                  <i>{existing === null ? 'Drag to set' : 'Drag to modify'}</i>
-                </button>,
-              ];
-            });
-            return [entry, ...protection];
-          })}
+          {positionLevelsVisible
+            ? activePositions.flatMap((position) => {
+                const entryTop = overlayTop(position.averageEntryPrice);
+                const entry =
+                  entryTop === null ? null : (
+                    <span
+                      className="chart-position-line is-entry"
+                      key={`${position.id}:entry`}
+                      style={{ top: `${entryTop}px` }}
+                    >
+                      Entry {position.averageEntryPrice}
+                    </span>
+                  );
+                const protection = (
+                  ['STOP_LOSS', 'TAKE_PROFIT'] as ProtectionKind[]
+                ).flatMap((kind) => {
+                  const existing =
+                    kind === 'STOP_LOSS'
+                      ? position.stopLossPrice
+                      : position.takeProfitPrice;
+                  const displayPrice =
+                    drag?.position.id === position.id && drag.kind === kind
+                      ? drag.price
+                      : (existing ?? position.markPrice);
+                  if (displayPrice === null) return [];
+                  const top = overlayTop(displayPrice);
+                  if (top === null) return [];
+                  return [
+                    <button
+                      className={`chart-protection-line is-${kind.toLowerCase()} ${
+                        existing === null ? 'is-unset' : ''
+                      }`}
+                      disabled={!canEditProtection}
+                      key={`${position.id}:${kind}`}
+                      onPointerDown={(event) =>
+                        handleProtectionPointerDown(
+                          event,
+                          position,
+                          kind,
+                          displayPrice,
+                        )
+                      }
+                      onPointerMove={handleProtectionPointerMove}
+                      onPointerUp={handleProtectionPointerUp}
+                      style={{ top: `${top}px` }}
+                      title={`Drag to set ${protectionLabel(kind)} for ${position.symbol}`}
+                      type="button"
+                    >
+                      <span>{protectionLabel(kind)}</span>
+                      <b>{displayPrice}</b>
+                      <i>
+                        {existing === null ? 'Drag to set' : 'Drag to modify'}
+                      </i>
+                    </button>,
+                  ];
+                });
+                return [entry, ...protection];
+              })
+            : null}
           {measure !== null && measureStyle !== undefined ? (
             <div className="chart-measurement" style={measureStyle}>
               <span>
@@ -1331,7 +1462,8 @@ export function TerminalChart({
                 : 'Drag line or handles · Delete removes'
               : `${tool === 'MEASURE' ? 'Measure' : drawingLabel(tool)} active`}
           </span>{' '}
-          · {protectionMessage || 'Mock data · UTC'}
+          · Right-click for chart tools ·{' '}
+          {protectionMessage || 'Mock data · UTC'}
         </span>
       </footer>
     </section>
