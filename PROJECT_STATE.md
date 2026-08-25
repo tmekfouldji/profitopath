@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-012 — TradingView-inspired chart command menu and workstation display controls.
+M-013 — Compact TradingView-style chart command menu refinement.
 
 ## Next task
 
@@ -217,6 +217,11 @@ integrate an API.
   grid/last-price/visibility/repeat-drawing/view management; and preserves the browser-only drawing
   boundary. The five focused menu tests, formatter, typecheck, lint, full test run, production build,
   production Docker rebuild/readiness, and browser right-click/horizontal-ray smoke check passed.
+- compact chart command menu: the right-click menu is now a narrow, dark, single-line command surface
+  that preserves chart context. Drawing tools and chart settings open in small nested panels, with
+  contextual tooltips, keyboard back/Escape behavior, and the existing browser-only authority boundary.
+  Formatter, web typecheck, lint, six focused component/integration tests, production Docker rebuild and
+  readiness, and real-browser visual checks of the main and drawing panels passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

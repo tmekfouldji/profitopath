@@ -644,8 +644,8 @@ export function TerminalChart({
     if (stage === null) return;
     const bounds = stage.getBoundingClientRect();
     const horizontalMargin = 8;
-    const menuWidth = 296;
-    const menuHeight = 420;
+    const menuWidth = 220;
+    const menuHeight = 320;
     setContextMenu({
       point,
       position: {

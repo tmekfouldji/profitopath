@@ -1387,17 +1387,15 @@ a {
 .chart-context-menu {
   position: absolute;
   z-index: 12;
-  width: min(18.5rem, calc(100% - 1rem));
+  width: min(13.75rem, calc(100% - 1rem));
   max-height: calc(100% - 1rem);
   overflow: auto;
-  border: 1px solid rgb(86 214 201 / 50%);
+  border: 1px solid #363c4b;
   outline: 0;
-  background:
-    linear-gradient(135deg, rgb(86 214 201 / 11%), transparent 42%),
-    rgb(5 20 29 / 98%);
-  box-shadow: 0 1.15rem 3rem rgb(0 0 0 / 48%);
-  color: var(--fog);
-  font-family: var(--data);
+  background: #131722;
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 46%);
+  color: #d1d4dc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .chart-context-menu:focus-visible {
@@ -1406,120 +1404,124 @@ a {
 }
 
 .chart-context-menu-heading {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.22rem 0.5rem;
-  padding: 0.7rem 0.75rem 0.62rem;
-  border-bottom: 1px solid rgb(86 214 201 / 28%);
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.3rem 0.45rem 0.3rem 0.65rem;
+  border-bottom: 1px solid #2a2e39;
 }
 
-.chart-context-menu-heading > span,
-.chart-context-menu-label {
-  color: var(--aqua);
-  font-size: 0.48rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+.chart-context-menu-heading > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.35rem;
 }
 
 .chart-context-menu-heading > strong {
-  color: var(--fog);
-  font-size: 0.93rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  color: #d1d4dc;
+  font-size: 0.66rem;
+  font-weight: 600;
 }
 
 .chart-context-menu-heading > small {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 0.48rem;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
+  overflow: hidden;
+  color: #787b86;
+  font: 0.57rem var(--data);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chart-context-menu-heading > button {
   display: grid;
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.35rem;
+  height: 1.35rem;
   place-items: center;
-  border: 1px solid var(--line);
+  border: 0;
   background: transparent;
-  color: var(--muted);
+  color: #787b86;
   cursor: pointer;
-  font: 0.95rem/1 var(--data);
+  font: 0.95rem/1 sans-serif;
 }
 
 .chart-context-menu-heading > button:hover,
 .chart-context-menu-heading > button:focus-visible {
-  border-color: var(--aqua);
-  color: var(--aqua);
+  background: #2a2e39;
+  color: #d1d4dc;
 }
 
-.chart-context-menu-section {
+.chart-context-menu-list {
   display: grid;
-  padding: 0.44rem 0;
-  border-bottom: 1px solid var(--line-soft);
 }
 
-.chart-context-menu-section:last-child {
-  border-bottom: 0;
-}
-
-.chart-context-menu-label {
-  padding: 0 0.75rem 0.32rem;
-}
-
-.chart-context-menu-section > button {
-  display: grid;
-  grid-template-columns: 1.3rem 1fr;
-  column-gap: 0.42rem;
-  padding: 0.37rem 0.75rem;
+.chart-context-menu-list > button {
+  display: flex;
+  min-height: 1.85rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.3rem 0.7rem;
   border: 0;
   background: transparent;
-  color: var(--fog);
+  color: #d1d4dc;
   cursor: pointer;
+  font:
+    0.68rem/1 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   text-align: left;
 }
 
-.chart-context-menu-section > button > span {
-  grid-row: 1 / span 2;
-  align-self: center;
-  color: var(--aqua);
-  font-size: 0.78rem;
+.chart-context-menu-list > button > b {
+  min-width: 0.75rem;
+  color: #787b86;
+  font-size: 0.9rem;
+  font-weight: 400;
   text-align: center;
 }
 
-.chart-context-menu-section > button > b {
-  font-size: 0.59rem;
-  font-weight: 500;
-  letter-spacing: 0.035em;
-}
-
-.chart-context-menu-section > button > small {
-  margin-top: 0.08rem;
-  color: var(--muted);
-  font-size: 0.46rem;
-  letter-spacing: 0.025em;
-}
-
-.chart-context-menu-section > button:hover,
-.chart-context-menu-section > button:focus-visible,
-.chart-context-menu-section > button[aria-pressed='true'] {
-  background: rgb(86 214 201 / 11%);
-  color: var(--aqua);
+.chart-context-menu-list > button:hover,
+.chart-context-menu-list > button:focus-visible,
+.chart-context-menu-list > button[aria-pressed='true'] {
+  background: #2962ff;
+  color: #fff;
   outline: 0;
 }
 
-.chart-context-menu-section > button:focus-visible {
-  box-shadow: inset 0 0 0 1px var(--aqua);
+.chart-context-menu-list > button:hover > b,
+.chart-context-menu-list > button:focus-visible > b,
+.chart-context-menu-list > button[aria-pressed='true'] > b {
+  color: #fff;
 }
 
-.chart-context-menu-section > button:disabled {
-  color: #4d666d;
+.chart-context-menu-list > button:disabled {
+  color: #5d606b;
   cursor: not-allowed;
 }
 
-.chart-context-menu-section > button:disabled > span {
-  color: #4d666d;
+.chart-context-menu-list > button:disabled:hover {
+  background: transparent;
+  color: #5d606b;
+}
+
+.chart-context-menu-divider {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: #2a2e39;
+}
+
+.chart-context-menu-back {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.chart-context-menu-back > span {
+  margin-right: 0.3rem;
+  color: #787b86;
+  font-size: 1.05rem;
 }
 
 .chart-drawing-overlay {
@@ -3348,11 +3350,11 @@ a {
   }
 
   .chart-context-menu {
-    width: min(18rem, calc(100% - 0.9rem));
+    width: min(13.75rem, calc(100% - 0.9rem));
     max-height: calc(100% - 0.9rem);
   }
 
-  .chart-context-menu-section > button {
+  .chart-context-menu-list > button {
     padding-right: 0.6rem;
     padding-left: 0.6rem;
   }

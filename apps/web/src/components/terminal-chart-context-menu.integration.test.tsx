@@ -95,10 +95,14 @@ describe('terminal chart context-menu integration', () => {
     const menu = screen.getByLabelText('Chart command menu');
 
     expect(menu).toBeTruthy();
-    expect(screen.getByText('1.08432')).toBeTruthy();
+    expect(screen.getByText(/1\.08432/)).toBeTruthy();
 
     fireEvent.click(
-      within(menu).getByRole('button', { name: /horizontal ray/i }),
+      within(menu).getByRole('button', { name: 'Open drawing tools' }),
+    );
+
+    fireEvent.click(
+      within(menu).getByRole('button', { name: 'Horizontal ray' }),
     );
 
     expect(screen.queryByLabelText('Chart command menu')).toBeNull();

@@ -51,6 +51,10 @@
   horizontal ray at the selected chart price, and provides safe local view/visibility/drawing
   controls. It is a first-party Lightweight Charts feature; no TradingView Charting Library or
   client-authoritative trading action was added.
+- Refined that command menu into a narrow, dark, TradingView-style surface with grouped single-line
+  commands and nested Drawing tools and Chart settings panels. Tool explanations are available as
+  tooltips instead of obscuring the chart; keyboard back/Escape and the browser-only authority boundary
+  remain intact.
 
 ### Database and domain
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { TerminalChartDrawingKind } from './terminal-chart-drawings';
 
@@ -11,6 +11,8 @@ export interface TerminalChartMenuPoint {
   price: number;
   time: number;
 }
+
+type ChartMenuPanel = 'DISPLAY' | 'DRAWINGS' | 'MAIN';
 
 function pointTime(value: number): string {
   return new Intl.DateTimeFormat('en-GB', {
@@ -73,17 +75,25 @@ export function TerminalChartContextMenu({
   timeframe: string;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [panel, setPanel] = useState<ChartMenuPanel>('MAIN');
+  const price = point.price.toFixed(5);
 
   useEffect(() => {
     menuRef.current?.focus();
-  }, []);
+  }, [panel]);
 
   function command(action: () => void) {
     action();
     onClose();
   }
 
-  const price = point.price.toFixed(5);
+  function selectTool(tool: TerminalChartCommandTool) {
+    command(() => onSelectTool(tool));
+  }
+
+  function back() {
+    setPanel('MAIN');
+  }
 
   return (
     <div
@@ -93,7 +103,12 @@ export function TerminalChartContextMenu({
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault();
-          onClose();
+          if (panel === 'MAIN') onClose();
+          else back();
+        }
+        if (event.key === 'ArrowLeft' && panel !== 'MAIN') {
+          event.preventDefault();
+          back();
         }
       }}
       onPointerDown={(event) => event.stopPropagation()}
@@ -103,9 +118,12 @@ export function TerminalChartContextMenu({
       tabIndex={-1}
     >
       <header className="chart-context-menu-heading">
-        <span>
-          {symbol} / {timeframe}
-        </span>
+        <div>
+          <strong>{symbol}</strong>
+          <small title={pointTime(point.time)}>
+            {timeframe} · {price}
+          </small>
+        </div>
         <button
           aria-label="Close chart command menu"
           onClick={onClose}
@@ -113,146 +131,152 @@ export function TerminalChartContextMenu({
         >
           ×
         </button>
-        <strong>{price}</strong>
-        <small>{pointTime(point.time)}</small>
       </header>
 
-      <section
-        aria-label="Drawing commands"
-        className="chart-context-menu-section"
-      >
-        <span className="chart-context-menu-label">Draw</span>
-        <button
-          aria-pressed={activeTool === 'CURSOR'}
-          onClick={() => command(() => onSelectTool('CURSOR'))}
-          type="button"
-        >
-          <span>⌖</span>
-          <b>Select and edit</b>
-          <small>Move or adjust annotations</small>
-        </button>
-        <button
-          aria-pressed={activeTool === 'TRENDLINE'}
-          onClick={() => command(() => onSelectTool('TRENDLINE'))}
-          type="button"
-        >
-          <span>↗</span>
-          <b>Trend line</b>
-          <small>Mark direction between two points</small>
-        </button>
-        <button onClick={() => command(onAddHorizontalRay)} type="button">
-          <span>—›</span>
-          <b>Horizontal ray</b>
-          <small>Place at {price}</small>
-        </button>
-        <button
-          aria-pressed={activeTool === 'RECTANGLE'}
-          onClick={() => command(() => onSelectTool('RECTANGLE'))}
-          type="button"
-        >
-          <span>□</span>
-          <b>Rectangle zone</b>
-          <small>Highlight a price range</small>
-        </button>
-        <button
-          aria-pressed={activeTool === 'LONG_POSITION'}
-          onClick={() => command(() => onSelectTool('LONG_POSITION'))}
-          type="button"
-        >
-          <span>L</span>
-          <b>Long position plan</b>
-          <small>Visual risk and reward only</small>
-        </button>
-        <button
-          aria-pressed={activeTool === 'SHORT_POSITION'}
-          onClick={() => command(() => onSelectTool('SHORT_POSITION'))}
-          type="button"
-        >
-          <span>S</span>
-          <b>Short position plan</b>
-          <small>Visual risk and reward only</small>
-        </button>
-        <button
-          aria-pressed={activeTool === 'MEASURE'}
-          onClick={() => command(() => onSelectTool('MEASURE'))}
-          type="button"
-        >
-          <span>↕</span>
-          <b>Measure range</b>
-          <small>Compare price and pip distance</small>
-        </button>
-      </section>
+      {panel === 'MAIN' ? (
+        <div className="chart-context-menu-list" aria-label="Chart commands">
+          <button
+            aria-label="Open drawing tools"
+            className="chart-context-menu-submenu"
+            onClick={() => setPanel('DRAWINGS')}
+            type="button"
+          >
+            <span>Drawing tools</span>
+            <b aria-hidden="true">›</b>
+          </button>
+          <button
+            aria-pressed={activeTool === 'MEASURE'}
+            onClick={() => selectTool('MEASURE')}
+            title="Compare price and pip distance"
+            type="button"
+          >
+            Measure
+          </button>
+          <button
+            aria-label="Open chart settings"
+            className="chart-context-menu-submenu"
+            onClick={() => setPanel('DISPLAY')}
+            type="button"
+          >
+            <span>Chart settings</span>
+            <b aria-hidden="true">›</b>
+          </button>
+          <span className="chart-context-menu-divider" />
+          <button
+            aria-pressed={keepDrawing}
+            onClick={onToggleKeepDrawing}
+            title="Remain in the active drawing tool after placement"
+            type="button"
+          >
+            Keep drawing
+            <b aria-hidden="true">{keepDrawing ? '✓' : ''}</b>
+          </button>
+          <button onClick={onToggleDrawings} type="button">
+            {drawingsHidden ? 'Show drawings' : 'Hide drawings'}
+          </button>
+          <button onClick={() => command(onFocusLatest)} type="button">
+            Go to latest bar
+          </button>
+          <button onClick={() => command(onResetView)} type="button">
+            Reset chart view
+          </button>
+          <span className="chart-context-menu-divider" />
+          <button
+            disabled={!selectedDrawing}
+            onClick={() => command(onDeleteSelectedDrawing)}
+            type="button"
+          >
+            Remove selected drawing
+          </button>
+          <button onClick={() => command(onClearDrawings)} type="button">
+            Remove drawings
+          </button>
+        </div>
+      ) : null}
 
-      <section
-        aria-label="Chart view commands"
-        className="chart-context-menu-section"
-      >
-        <span className="chart-context-menu-label">Chart</span>
-        <button onClick={() => command(onFocusLatest)} type="button">
-          <span>↻</span>
-          <b>Go to latest quote</b>
-          <small>Return to the live edge</small>
-        </button>
-        <button onClick={() => command(onResetView)} type="button">
-          <span>⌗</span>
-          <b>Reset chart view</b>
-          <small>Fit loaded server history</small>
-        </button>
-        <button onClick={onToggleGrid} type="button">
-          <span>▦</span>
-          <b>{gridVisible ? 'Hide grid' : 'Show grid'}</b>
-          <small>Chart canvas preference</small>
-        </button>
-        <button onClick={onToggleLastPrice} type="button">
-          <span>⌁</span>
-          <b>{lastPriceVisible ? 'Hide last price' : 'Show last price'}</b>
-          <small>Price-scale display preference</small>
-        </button>
-      </section>
+      {panel === 'DRAWINGS' ? (
+        <div className="chart-context-menu-list" aria-label="Drawing tools">
+          <button
+            className="chart-context-menu-back"
+            onClick={back}
+            type="button"
+          >
+            <span aria-hidden="true">‹</span> Drawing tools
+          </button>
+          <span className="chart-context-menu-divider" />
+          <button
+            aria-pressed={activeTool === 'CURSOR'}
+            onClick={() => selectTool('CURSOR')}
+            title="Move or adjust annotations"
+            type="button"
+          >
+            Select and edit
+          </button>
+          <button
+            aria-pressed={activeTool === 'TRENDLINE'}
+            onClick={() => selectTool('TRENDLINE')}
+            title="Mark direction between two points"
+            type="button"
+          >
+            Trend line
+          </button>
+          <button
+            onClick={() => command(onAddHorizontalRay)}
+            title={`Place a ray at ${price}`}
+            type="button"
+          >
+            Horizontal ray
+          </button>
+          <button
+            aria-pressed={activeTool === 'RECTANGLE'}
+            onClick={() => selectTool('RECTANGLE')}
+            title="Highlight a price range"
+            type="button"
+          >
+            Rectangle
+          </button>
+          <button
+            aria-pressed={activeTool === 'LONG_POSITION'}
+            onClick={() => selectTool('LONG_POSITION')}
+            title="Visual risk and reward plan only"
+            type="button"
+          >
+            Long position
+          </button>
+          <button
+            aria-pressed={activeTool === 'SHORT_POSITION'}
+            onClick={() => selectTool('SHORT_POSITION')}
+            title="Visual risk and reward plan only"
+            type="button"
+          >
+            Short position
+          </button>
+        </div>
+      ) : null}
 
-      <section
-        aria-label="Drawing management commands"
-        className="chart-context-menu-section"
-      >
-        <span className="chart-context-menu-label">Manage</span>
-        <button onClick={onToggleKeepDrawing} type="button">
-          <span>∞</span>
-          <b>{keepDrawing ? 'Keep drawing: on' : 'Keep drawing: off'}</b>
-          <small>Stay in the active drawing tool</small>
-        </button>
-        <button onClick={onToggleDrawings} type="button">
-          <span>◌</span>
-          <b>{drawingsHidden ? 'Show drawings' : 'Hide drawings'}</b>
-          <small>Browser-only annotations</small>
-        </button>
-        <button onClick={onTogglePositionLevels} type="button">
-          <span>≡</span>
-          <b>
+      {panel === 'DISPLAY' ? (
+        <div className="chart-context-menu-list" aria-label="Chart settings">
+          <button
+            className="chart-context-menu-back"
+            onClick={back}
+            type="button"
+          >
+            <span aria-hidden="true">‹</span> Chart settings
+          </button>
+          <span className="chart-context-menu-divider" />
+          <button onClick={onToggleGrid} type="button">
+            {gridVisible ? 'Hide grid lines' : 'Show grid lines'}
+          </button>
+          <button onClick={onToggleLastPrice} type="button">
+            {lastPriceVisible ? 'Hide last price line' : 'Show last price line'}
+          </button>
+          <button onClick={onTogglePositionLevels} type="button">
             {positionLevelsHidden
-              ? 'Show position levels'
-              : 'Hide position levels'}
-          </b>
-          <small>Entry, stop, and target lines</small>
-        </button>
-        <button
-          disabled={!selectedDrawing}
-          onClick={() => command(onDeleteSelectedDrawing)}
-          type="button"
-        >
-          <span>×</span>
-          <b>Remove selected drawing</b>
-          <small>
-            {selectedDrawing
-              ? 'Delete the active annotation'
-              : 'Select a drawing first'}
-          </small>
-        </button>
-        <button onClick={() => command(onClearDrawings)} type="button">
-          <span>⌫</span>
-          <b>Clear all drawings</b>
-          <small>Remove local annotations only</small>
-        </button>
-      </section>
+              ? 'Show position lines'
+              : 'Hide position lines'}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

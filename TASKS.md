@@ -492,6 +492,18 @@ Rules:
     guidance informed the vocabulary, while the implementation remains first-party Lightweight
     Charts. Focused component/integration coverage, production Docker rebuild, readiness check, and
     browser right-click/action smoke checks passed.
+- [x] M-013 Refine the chart command menu into a compact TradingView-style interaction.
+  - Acceptance: the right-click menu no longer obscures the chart with explanatory text; it is a
+    compact dark tool menu with clear grouping, nested drawing/settings panels, tooltips, keyboard
+    return/escape behavior, and viewport containment. All existing first-party command behaviour and
+    non-authoritative browser boundaries are preserved, with focused regression and browser visual
+    checks.
+  - Replaced the explanatory right-click panel with a compact, dark command menu sized for the chart.
+    Drawing tools and display preferences now open focused nested panels; concise single-line commands,
+    dividers, active-state checks, hover tooltips, back navigation, and Escape behavior keep the chart
+    visible while retaining every supported browser-only command. Focused component/integration coverage,
+    formatter, web typecheck, lint, production Docker rebuild/readiness, and real browser right-click
+    visual checks passed.
 
 ## Blocked — Phase 9
 

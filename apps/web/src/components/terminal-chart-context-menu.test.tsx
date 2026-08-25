@@ -51,6 +51,7 @@ describe('terminal chart context menu', () => {
   it('starts supported drawing tools and places a horizontal ray at the clicked price', () => {
     const handlers = renderMenu();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Open drawing tools' }));
     fireEvent.click(screen.getByRole('button', { name: /trend line/i }));
 
     expect(handlers.onSelectTool).toHaveBeenCalledWith('TRENDLINE');
@@ -65,12 +66,18 @@ describe('terminal chart context menu', () => {
   it('exposes display and visibility preferences without treating them as trading actions', () => {
     const handlers = renderMenu();
 
-    fireEvent.click(screen.getByRole('button', { name: /hide grid/i }));
-    fireEvent.click(screen.getByRole('button', { name: /hide last price/i }));
-    fireEvent.click(screen.getByRole('button', { name: /hide drawings/i }));
     fireEvent.click(
-      screen.getByRole('button', { name: /hide position levels/i }),
+      screen.getByRole('button', { name: 'Open chart settings' }),
     );
+    fireEvent.click(screen.getByRole('button', { name: /hide grid lines/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /hide last price line/i }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: /hide position lines/i }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /chart settings/i }));
+    fireEvent.click(screen.getByRole('button', { name: /hide drawings/i }));
 
     expect(handlers.onToggleGrid).toHaveBeenCalledOnce();
     expect(handlers.onToggleLastPrice).toHaveBeenCalledOnce();
@@ -86,11 +93,18 @@ describe('terminal chart context menu', () => {
       screen.getByRole('button', { name: /remove selected drawing/i }),
     ).toHaveProperty('disabled', true);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /clear all drawings/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /remove drawings/i }));
 
     expect(handlers.onClearDrawings).toHaveBeenCalledOnce();
+    expect(handlers.onClose).toHaveBeenCalledOnce();
+  });
+
+  it('runs viewport commands and then closes the menu', () => {
+    const handlers = renderMenu();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to latest bar' }));
+
+    expect(handlers.onFocusLatest).toHaveBeenCalledOnce();
     expect(handlers.onClose).toHaveBeenCalledOnce();
   });
 });
