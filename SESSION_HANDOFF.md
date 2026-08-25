@@ -6,8 +6,9 @@ Codex must rewrite this file at the end of every substantial work session.
 
 Phase 0 through Phase 8 are complete. The production-shaped environment and advanced trading terminal
 are integrated with the M-009 control-room visual refresh and the M-010 hydration-boundary fix. M-011
-hardened authentication and session handling. M-012 added a first-party chart command menu, and M-013
-refined it into a compact TradingView-style command surface. Phase 9 remains blocked at P9-001: TraderMade's trial
+hardened authentication and session handling. M-012 added a first-party chart command menu, M-013
+refined it into a compact TradingView-style command surface, and M-014 added usable future chart space
+for browser annotations. Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -20,7 +21,9 @@ pricing is not documentation or written commercial authorization for customer-fa
   controls. The M-013 menu opens via right-click or `Shift+F10` at the current chart price/time as a
   compact command panel. Drawing tools and display preferences use small nested panels with tooltips,
   keyboard back/Escape behavior, and the same local horizontal-ray, view, visibility, repeat-drawing,
-  and drawing-management controls; it cannot create orders or change server-authoritative state. The M-009 visual system applies across public, authentication, competition, dashboard,
+  and drawing-management controls. The time scale reserves a 16-bar right margin and maps annotation
+  points in that empty space to interval-aligned future timestamps, so future drawings persist and
+  render past the newest candle; none can create orders or change server-authoritative state. The M-009 visual system applies across public, authentication, competition, dashboard,
   leaderboard, administrative, and terminal surfaces without changing server authority.
 - M-011 fixed callback continuation: login and registration retain only one validated root-relative
   protected destination. Repeated or unsafe callbacks cannot crash the form or redirect externally.
@@ -51,6 +54,9 @@ pricing is not documentation or written commercial authorization for customer-fa
   production-shaped Docker web service rebuilt and is healthy; real-browser visual checks confirmed the
   compact main command surface and its nested Drawing tools panel no longer use the obstructive
   explanatory layout.
+- M-014 passed formatter, web typecheck, lint, and focused future-space/drawing/menu integration tests.
+  The production-shaped Docker web service rebuilt and is healthy; a real-browser visual check confirmed
+  the right-side future margin is present in the served terminal.
 
 ### Local runtime
 
@@ -65,7 +71,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

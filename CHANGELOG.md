@@ -55,6 +55,9 @@
   commands and nested Drawing tools and Chart settings panels. Tool explanations are available as
   tooltips instead of obscuring the chart; keyboard back/Escape and the browser-only authority boundary
   remain intact.
+- Added a 16-bar right-side chart margin and future-time coordinate mapping, so browser annotations can
+  be placed and edited past the latest loaded candle. Those future drawing points persist locally and
+  transition naturally to normal chart coordinates when matching candle data arrives.
 
 ### Database and domain
 

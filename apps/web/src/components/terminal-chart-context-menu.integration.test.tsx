@@ -8,7 +8,7 @@ import {
   within,
 } from '@testing-library/react';
 import { createElement } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const chartApi = {
   addSeries: vi.fn(),
@@ -20,7 +20,7 @@ const chartApi = {
 const candleSeries = {
   applyOptions: vi.fn(),
   coordinateToPrice: vi.fn(() => 1.08432),
-  priceToCoordinate: vi.fn(() => null),
+  priceToCoordinate: vi.fn((): number | null => null),
   setData: vi.fn(),
 };
 
@@ -46,13 +46,22 @@ afterEach(() => {
   candleSeries.setData.mockReset();
 });
 
-function renderChart() {
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
+function renderChart({ futureSpace = false }: { futureSpace?: boolean } = {}) {
   chartApi.addSeries.mockImplementation(() => candleSeries);
+  candleSeries.priceToCoordinate.mockReturnValue(futureSpace ? 120 : null);
   chartApi.timeScale.mockImplementation(() => ({
-    coordinateToTime: () => 1_723_967_200,
+    coordinateToLogical: () => (futureSpace ? 4 : 0),
+    coordinateToTime: () => (futureSpace ? null : 1_723_967_200),
     fitContent: vi.fn(),
+    logicalToCoordinate: (logical: number) =>
+      futureSpace ? logical * 40 : null,
     scrollToRealTime: vi.fn(),
     subscribeVisibleLogicalRangeChange: vi.fn(),
+    timeToIndex: () => 0,
     timeToCoordinate: () => null,
     unsubscribeVisibleLogicalRangeChange: vi.fn(),
   }));
@@ -121,5 +130,24 @@ describe('terminal chart context-menu integration', () => {
     );
 
     expect(screen.getByLabelText('Chart command menu')).toBeTruthy();
+  });
+
+  it('permits a drawing in future chart space beyond the latest candle', () => {
+    renderChart({ futureSpace: true });
+
+    fireEvent.contextMenu(
+      screen.getByLabelText('EURUSD interactive chart canvas'),
+      { clientX: 160, clientY: 180 },
+    );
+
+    const menu = screen.getByLabelText('Chart command menu');
+    fireEvent.click(
+      within(menu).getByRole('button', { name: 'Open drawing tools' }),
+    );
+    fireEvent.click(
+      within(menu).getByRole('button', { name: 'Horizontal ray' }),
+    );
+
+    expect(screen.getByText('1 browser drawing · select to edit')).toBeTruthy();
   });
 });

@@ -9,6 +9,7 @@ import {
   type Coordinate,
   type IChartApi,
   type ISeriesApi,
+  type Logical,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
@@ -44,6 +45,10 @@ import {
   type TerminalChartDrawingKind,
   type TerminalChartDrawingPoint,
 } from './terminal-chart-drawings';
+import {
+  futureDrawingLogicalPosition,
+  futureDrawingTimeAtLogicalPosition,
+} from './terminal-chart-future-space';
 import {
   TerminalChartContextMenu,
   type TerminalChartCommandTool,
@@ -92,6 +97,7 @@ type ChartTool = 'CURSOR' | 'MEASURE' | TerminalChartDrawingKind;
 type ProtectionKind = 'STOP_LOSS' | 'TAKE_PROFIT';
 
 const indicatorOrder: readonly Indicator[] = ['SMA_20', 'EMA_50', 'BOLLINGER'];
+const futureChartMarginBars = 16;
 
 interface ProtectionDrag {
   kind: ProtectionKind;
@@ -402,7 +408,7 @@ export function TerminalChart({
       rightPriceScale: { borderColor: '#2a3c59' },
       timeScale: {
         borderColor: '#2a3c59',
-        rightOffset: 5,
+        rightOffset: futureChartMarginBars,
         timeVisible: true,
       },
     });
@@ -605,9 +611,38 @@ export function TerminalChart({
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
     const price = series.coordinateToPrice(y as Coordinate);
-    const time = chart.timeScale().coordinateToTime(x as Coordinate);
-    if (price === null || typeof time !== 'number') return null;
+    const timeScale = chart.timeScale();
+    const chartTimeAtCoordinate = timeScale.coordinateToTime(x as Coordinate);
+    const futureTime = futureTimeAtCoordinate(
+      timeScale.coordinateToLogical(x as Coordinate),
+    );
+    const time =
+      futureTime ??
+      (typeof chartTimeAtCoordinate === 'number'
+        ? chartTimeAtCoordinate
+        : null);
+    if (price === null || time === null) return null;
     return { price, time, x, y };
+  }
+
+  function latestLogicalAnchor() {
+    const latest = candlesRef.current.at(-1);
+    const chart = chartRef.current;
+    if (latest === undefined || chart === null) return null;
+    const lastTime = chartTime(latest.openTime);
+    const lastLogical = chart.timeScale().timeToIndex(lastTime);
+    if (lastLogical === null) return null;
+    return { lastLogical, lastTime };
+  }
+
+  function futureTimeAtCoordinate(logical: number | null): number | null {
+    const anchor = latestLogicalAnchor();
+    if (anchor === null) return null;
+    return futureDrawingTimeAtLogicalPosition({
+      ...anchor,
+      logical,
+      secondsPerBar: timeframeSeconds[timeframeRef.current],
+    });
   }
 
   function selectDrawingTool(next: TerminalChartCommandTool) {
@@ -917,9 +952,23 @@ export function TerminalChart({
     point: TerminalChartDrawingPoint,
   ): { x: number; y: number } | null {
     void overlayRevision;
-    const x = chartRef.current
-      ?.timeScale()
-      .timeToCoordinate(point.time as Time);
+    const chart = chartRef.current;
+    const timeScale = chart?.timeScale();
+    const directX = timeScale?.timeToCoordinate(point.time as Time);
+    const anchor = latestLogicalAnchor();
+    const futureLogical =
+      anchor === null
+        ? null
+        : futureDrawingLogicalPosition({
+            ...anchor,
+            secondsPerBar: timeframeSeconds[timeframeRef.current],
+            time: point.time,
+          });
+    const x =
+      directX ??
+      (futureLogical === null || timeScale === undefined
+        ? null
+        : timeScale.logicalToCoordinate(futureLogical as Logical));
     const y = seriesRef.current?.priceToCoordinate(point.price);
     return x === null || x === undefined || y === null || y === undefined
       ? null

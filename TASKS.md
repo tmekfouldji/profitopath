@@ -504,6 +504,16 @@ Rules:
     visible while retaining every supported browser-only command. Focused component/integration coverage,
     formatter, web typecheck, lint, production Docker rebuild/readiness, and real browser right-click
     visual checks passed.
+- [x] M-014 Allow chart drawings to extend beyond the latest loaded bar.
+  - Acceptance: the terminal maintains intentional right-side future space after the latest candle;
+    trend lines, zones, and risk/reward plans can be placed and edited there without clamping to the
+    final market-data timestamp. Existing viewport/history behaviour and the browser-only drawing
+    authority boundary remain intact, with focused regression and real-browser checks.
+  - Added a 16-bar right-side future margin and logical-index extrapolation for browser drawings. A
+    pointer in the empty future area now receives an interval-aligned future timestamp; saved future
+    annotation times map back to the same logical coordinate and become normal chart timestamps when
+    data reaches them. Focused unit/component regressions, formatter, web typecheck, lint, production
+    Docker rebuild/readiness, and a real-browser future-margin visual check passed.
 
 ## Blocked — Phase 9
 

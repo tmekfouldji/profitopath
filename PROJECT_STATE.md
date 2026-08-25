@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-013 — Compact TradingView-style chart command menu refinement.
+M-014 — Future chart space for browser drawing annotations.
 
 ## Next task
 
@@ -222,6 +222,11 @@ integrate an API.
   contextual tooltips, keyboard back/Escape behavior, and the existing browser-only authority boundary.
   Formatter, web typecheck, lint, six focused component/integration tests, production Docker rebuild and
   readiness, and real-browser visual checks of the main and drawing panels passed.
+- future chart drawing space: the terminal reserves a 16-bar right margin and maps empty right-side
+  logical coordinates to interval-aligned future timestamps. Trend lines, zones, and risk/reward plans
+  can now be created or edited past the latest candle; saved future annotations map back to that space
+  and remain browser-only. Formatter, web typecheck, lint, focused unit/component coverage, production
+  Docker rebuild/readiness, and a real-browser future-margin visual check passed.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live
