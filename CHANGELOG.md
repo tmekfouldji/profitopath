@@ -71,6 +71,9 @@
 - Replaced the fixed one-per-type study controls with up to 12 independently configurable SMA, EMA, and
   Bollinger Band instances, including distinct default colors, per-instance removal, and separate legend
   entries.
+- Kept browser-only drawing overlays locked to their time/price anchors while the chart is panned or
+  zoomed. Logical-range changes and drag/wheel viewport interactions now reproject SVG coordinates once
+  per animation frame without changing stored drawing anchors or simulated trading state.
 
 ### Database and domain
 

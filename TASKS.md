@@ -571,6 +571,15 @@ Rules:
     lint, 22 focused tests, and the production web build passed; Docker Desktop remains unavailable for
     rebuilt-image QA.
 
+- [x] M-020 Keep chart drawings fixed to their time and price anchors while panning and zooming.
+  - Acceptance: browser-only drawings recalculate their SVG coordinates whenever the chart viewport
+    moves or scales, so they track their anchored candle/time and price positions—including future-space
+    anchors—without changing drawing data or server-authoritative trading state; focused regression
+    coverage verifies the redraw path.
+  - Reprojected overlay coordinates on every Lightweight Charts logical-range update and on captured
+    drag/wheel viewport interactions, coalesced to one animation frame. The focused regression confirms
+    that a saved ray follows both its time and price coordinates without mutating its saved anchor data.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

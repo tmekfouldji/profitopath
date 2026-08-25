@@ -10,7 +10,8 @@ hardened authentication and session handling. M-012 added a first-party chart co
 refined it into a compact TradingView-style command surface, and M-014 added usable future chart space
 for browser annotations. M-015 added chart-only fullscreen, M-016 added optional chart Buy/Sell quote
 selectors, M-017 added a TradingView-style studies legend, M-018 made those studies selectable, and M-019
-added multiple independent study instances. Phase 9 remains blocked at P9-001: TraderMade's trial
+added multiple independent study instances. M-020 keeps browser drawings synchronized to their chart
+time/price anchors while the viewport moves or scales. Phase 9 remains blocked at P9-001: TraderMade's trial
 pricing is not documentation or written commercial authorization for customer-facing market data.
 
 ### Integrated work
@@ -27,6 +28,10 @@ pricing is not documentation or written commercial authorization for customer-fa
   points in that empty space to interval-aligned future timestamps, so future drawings persist and
   render past the newest candle; none can create orders or change server-authoritative state. The M-009 visual system applies across public, authentication, competition, dashboard,
   leaderboard, administrative, and terminal surfaces without changing server authority.
+- The drawing overlay requests one animation-frame reprojection whenever Lightweight Charts reports a
+  visible logical-range change, and during captured drag/wheel viewport interactions. Stored drawing
+  points remain immutable time/price anchors; their SVG x/y values are recalculated from the live chart
+  scales, including the existing future-space mapping.
 - The chart toolbar provides a separate full-screen control for the chart panel. It expands only the
   chart (including timeframes, studies, drawing tools, annotations, protected position levels, context
   menu, and chart controls), while the terminal-level full-screen control remains independent.
@@ -88,6 +93,9 @@ pricing is not documentation or written commercial authorization for customer-fa
   web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
 - M-019 passed formatter, web typecheck, lint, 22 focused chart/ticket/workspace tests, and a production
   web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
+- M-020 passed formatter, full typecheck, lint, 14 focused drawing/menu/chart tests, and a production web
+  build. Its regression verifies a saved ray follows both time and price-scale movement without changing
+  the persisted anchor; Docker Desktop remains unavailable for a rebuilt-image visual check.
 
 ### Local runtime
 
@@ -103,7 +111,7 @@ pricing is not documentation or written commercial authorization for customer-fa
    `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
 2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
    completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018/M-019 terminal behavior when extending a
+3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018/M-019/M-020 terminal behavior when extending a
    route. Keep authentication fail-closed and browser operations non-authoritative.
 4. Do not begin real provider work unless P9-001 receives official documentation and written approval
    for customer display, cache/fanout, retention, and simulated execution.

@@ -248,6 +248,7 @@ export function TerminalChart({
     Array<{ id: string; series: ISeriesApi<'Line'> }>
   >([]);
   const chartPanelRef = useRef<HTMLElement>(null);
+  const overlayRefreshFrameRef = useRef<number | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const timeframeRef = useRef<ChartTimeframe>('1m');
@@ -284,6 +285,14 @@ export function TerminalChart({
   const [stageSize, setStageSize] = useState({ height: 0, width: 0 });
   const [timeframe, setTimeframe] = useState<ChartTimeframe>('1m');
   const [tool, setTool] = useState<ChartTool>('CURSOR');
+
+  const requestOverlayRefresh = useCallback(() => {
+    if (overlayRefreshFrameRef.current !== null) return;
+    overlayRefreshFrameRef.current = requestAnimationFrame(() => {
+      overlayRefreshFrameRef.current = null;
+      setOverlayRevision((value) => value + 1);
+    });
+  }, []);
 
   const activePositions = useMemo(
     () => positions.filter((position) => position.symbol === symbol),
@@ -380,11 +389,25 @@ export function TerminalChart({
   }, [timeframe]);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setOverlayRevision((value) => value + 1);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [activePositions, candles, chartGeneration, drag, drawings, drawingDraft]);
+    requestOverlayRefresh();
+  }, [
+    activePositions,
+    candles,
+    chartGeneration,
+    drag,
+    drawings,
+    drawingDraft,
+    requestOverlayRefresh,
+  ]);
+
+  useEffect(
+    () => () => {
+      if (overlayRefreshFrameRef.current !== null) {
+        cancelAnimationFrame(overlayRefreshFrameRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -547,6 +570,7 @@ export function TerminalChart({
     chart.timeScale().fitContent();
     setChartGeneration((value) => value + 1);
     const onRange = async (range: { from: number; to: number } | null) => {
+      requestOverlayRefresh();
       if (
         range === null ||
         range.from > 8 ||
@@ -585,7 +609,7 @@ export function TerminalChart({
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [loadRange, markers]);
+  }, [loadRange, markers, requestOverlayRefresh]);
 
   useEffect(() => {
     seriesRef.current?.setData(chartData(candles));
@@ -1396,10 +1420,14 @@ export function TerminalChart({
         }}
         onKeyDown={handleStageKeyDown}
         onPointerDown={handleStagePointerDown}
+        onPointerMoveCapture={(event) => {
+          if (event.buttons !== 0) requestOverlayRefresh();
+        }}
         onPointerMove={handleStagePointerMove}
         onPointerUp={handleStagePointerUp}
         ref={stageRef}
         tabIndex={0}
+        onWheelCapture={requestOverlayRefresh}
       >
         <div className="chart-canvas" ref={containerRef} />
         {studyLegend.length === 0 ? null : (

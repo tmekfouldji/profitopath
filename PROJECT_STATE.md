@@ -160,7 +160,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 
 ## Last completed task
 
-M-019 — Multiple independent chart-study instances.
+M-020 — Chart drawing scale synchronization.
 
 ## Next task
 
@@ -253,6 +253,11 @@ integrate an API.
   configuration, provides distinct default colors for duplicates, and displays ordinal labels plus values
   in the selectable chart legend. Formatter, web typecheck, lint, 22 focused tests, and the web production
   build passed; Docker Desktop remains unavailable for live visual QA.
+- chart drawing scale synchronization: browser-only SVG annotations now recompute their anchored time and
+  price coordinates on every logical viewport-range update and during captured drag/wheel scaling, with
+  one refresh per animation frame. The focused regression proves a saved ray moves with both axes while
+  preserving its stored anchors. Formatter, full typecheck, lint, 14 focused chart tests, and the web
+  production build passed; Docker Desktop remains unavailable for rebuilt-image visual QA.
 - GitHub Actions CI run `32554756501`: passed migration deploy, seed, Compose validation, all 127
   tests, and production build
 - local browser visual QA passed for the home, competition discovery/detail, dashboard, and live

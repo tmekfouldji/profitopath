@@ -46,6 +46,8 @@ import { TerminalChart } from './terminal-chart';
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   chartApi.addSeries.mockReset();
   chartApi.applyOptions.mockReset();
   chartApi.remove.mockReset();
@@ -71,9 +73,11 @@ beforeEach(() => {
 function renderChart({
   candleCount = 1,
   futureSpace = false,
+  overlayCoordinates = false,
 }: {
   candleCount?: number;
   futureSpace?: boolean;
+  overlayCoordinates?: boolean;
 } = {}) {
   lineSeries.length = 0;
   chartApi.addSeries.mockImplementation((seriesType) => {
@@ -82,8 +86,10 @@ function renderChart({
     lineSeries.push(series);
     return series;
   });
-  candleSeries.priceToCoordinate.mockReturnValue(futureSpace ? 120 : null);
-  chartApi.timeScale.mockImplementation(() => ({
+  candleSeries.priceToCoordinate.mockReturnValue(
+    futureSpace || overlayCoordinates ? 120 : null,
+  );
+  const timeScale = {
     coordinateToLogical: () => (futureSpace ? 4 : 0),
     coordinateToTime: () => (futureSpace ? null : 1_723_967_200),
     fitContent: vi.fn(),
@@ -92,9 +98,12 @@ function renderChart({
     scrollToRealTime: vi.fn(),
     subscribeVisibleLogicalRangeChange: vi.fn(),
     timeToIndex: () => 0,
-    timeToCoordinate: () => null,
+    timeToCoordinate: vi.fn((_time: unknown): number | null =>
+      overlayCoordinates ? 30 : null,
+    ),
     unsubscribeVisibleLogicalRangeChange: vi.fn(),
-  }));
+  };
+  chartApi.timeScale.mockReturnValue(timeScale);
 
   render(
     createElement(TerminalChart, {
@@ -126,6 +135,8 @@ function renderChart({
       symbol: 'EURUSD',
     }),
   );
+
+  return { timeScale };
 }
 
 describe('terminal chart context-menu integration', () => {
@@ -185,6 +196,84 @@ describe('terminal chart context-menu integration', () => {
     );
 
     expect(screen.getByText('1 browser drawing · select to edit')).toBeTruthy();
+  });
+
+  it('reprojects saved drawings whenever the chart viewport moves', async () => {
+    class TestResizeObserver {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+
+      disconnect() {}
+
+      observe() {
+        this.callback([], this as unknown as ResizeObserver);
+      }
+    }
+
+    vi.stubGlobal('ResizeObserver', TestResizeObserver);
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrame = 0;
+    const flushAnimationFrames = () => {
+      const pending = [...frames.values()];
+      frames.clear();
+      for (const callback of pending) callback(0);
+    };
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      nextFrame += 1;
+      frames.set(nextFrame, callback);
+      return nextFrame;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (frame: number) => {
+      frames.delete(frame);
+    });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(0, 0, 600, 320),
+    );
+    window.localStorage.setItem(
+      'profitopath:terminal-drawings:v1:account-1:EURUSD',
+      JSON.stringify([
+        {
+          first: { price: 1.08432, time: 1_723_636_800 },
+          id: 'saved-ray',
+          kind: 'HORIZONTAL_RAY',
+          version: 1,
+        },
+      ]),
+    );
+
+    const { timeScale } = renderChart({ overlayCoordinates: true });
+    const overlay = await screen.findByLabelText('Chart drawing annotations');
+    const ray = overlay.querySelector('.chart-drawing-line');
+
+    expect(ray?.getAttribute('x1')).toBe('30');
+    expect(ray?.getAttribute('y1')).toBe('120');
+
+    await act(async () => {
+      flushAnimationFrames();
+    });
+
+    timeScale.timeToCoordinate.mockReturnValue(170);
+    const onVisibleRangeChange =
+      timeScale.subscribeVisibleLogicalRangeChange.mock.calls[0]?.[0];
+    expect(onVisibleRangeChange).toBeTypeOf('function');
+
+    await act(async () => {
+      await onVisibleRangeChange({ from: 20, to: 80 });
+      flushAnimationFrames();
+    });
+
+    expect(ray?.getAttribute('x1')).toBe('170');
+
+    candleSeries.priceToCoordinate.mockReturnValue(210);
+    fireEvent.pointerMove(
+      screen.getByLabelText('EURUSD interactive chart canvas'),
+      { buttons: 1, clientX: 180, clientY: 140 },
+    );
+
+    await act(async () => {
+      flushAnimationFrames();
+    });
+
+    expect(ray?.getAttribute('y1')).toBe('210');
   });
 
   it('requests browser fullscreen for the chart panel only', () => {
