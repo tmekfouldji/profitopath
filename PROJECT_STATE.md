@@ -15,7 +15,7 @@ This file is the authoritative high-level state for Codex.
   and owner operations (public stack and email delivery active; controlled payment test/schedule pending)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
-  through `20260830190000_email_verification` are applied.
+  through `20260830211500_password_reset_recovery` are applied.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
@@ -215,10 +215,11 @@ and launch composition have since been implemented and verified as part of P10-0
 P10-006 — complete the controlled live-checkout test and approve the first preorder competition schedule.
 The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, private PostgreSQL/Valkey, and
 `https://profitopath.com` are healthy. Protected SMTP and NOWPayments credentials are loaded, runtime modes
-are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. The owner control-center
-implementation is verified locally and awaiting the same launch-host deployment. Run the documented exact-amount
-invoice/signed-IPN smoke test before promoting checkout, then use its Competition and Challenge pricing sections
-to approve the first `SCHEDULED` competition.
+are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. The deployed owner control center
+at `/superadmin` can create versioned active tiers, draft/publish future UTC competitions, manage eligible user
+roles/statuses, review revenue/payments, and enter the dual-review payout workflow. Run the documented
+exact-amount invoice/signed-IPN smoke test before promoting checkout, then use its Competition and Challenge
+sections to approve the first `SCHEDULED` competition.
 `www.profitopath.com` canonically redirects to the root domain.
 P10-010 password recovery is deployed at `/reset-password`; migration
 `20260830211500_password_reset_recovery` applied successfully and its public reset page/API health smoke
@@ -241,6 +242,10 @@ documentation and infrastructure are delivered.
 - Current Phase 10 checkpoint: migrations `20260830180000_superadmin_observability` and
   `20260830190000_email_verification` applied locally; `pnpm typecheck`, `pnpm lint`, a production-mode
   `pnpm build`, and `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed (136 files / 200 tests).
+- Owner control center release: focused PostgreSQL integration coverage passed; full default test suite passed
+  (206 tests across 71 files, with 52 environment-dependent tests skipped), followed by `pnpm typecheck`,
+  `pnpm lint`, and a clean production `pnpm build`. Revision `008b102` was deployed successfully and public
+  home/competition/readiness HTTPS smoke checks returned HTTP 200; protected owner routes redirect to login.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

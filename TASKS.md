@@ -679,7 +679,7 @@ Rules:
     retries are idempotent, capacity/rule mismatch remains pending and auditable, and the terminal remains
     unavailable until the competition actually starts. Pricing, expiry/refund, and cancellation policy must
     be explicitly approved before production enablement.
-- [~] P10-012 Build a separate functional superadmin control center.
+- [x] P10-012 Build a separate functional superadmin control center.
   - Acceptance: an active `SUPERADMIN` has a sidebar-separated control center for platform overview,
     versioned challenge pricing, future UTC competition drafts/publishing, member role/status review,
     payment/revenue review, payout operations, and deployment readiness. A draft can be published for
@@ -687,3 +687,6 @@ Rules:
     server-authorized and audited; paid tier configuration is immutable, payout evidence remains in
     the existing dual-review flow, and raw deployment secrets are neither accepted nor displayed in
     the browser.
+  - Deployment evidence: revision `008b102` is live on the launch host. Public home, competition, and
+    readiness routes return HTTP 200 over HTTPS; unauthenticated owner routes redirect to the protected
+    login flow; Caddy, web, realtime, worker, PostgreSQL, and Valkey report healthy.

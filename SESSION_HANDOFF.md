@@ -36,6 +36,15 @@ launch.
 - Deployed secure password recovery with its own `PasswordResetToken` migration,
   hashed opaque single-use token, 60-minute default expiry, generic Valkey-rate-limited request path,
   password replacement, audit records, and invalidation of earlier credential JWTs through `credentialVersion`.
+- Expanded the deployed `/superadmin` area into a separate, responsive sidebar control center. It provides
+  overview metrics; versioned challenge-price controls; future UTC competition draft, edit, publish, and
+  cancellation controls; constrained user role/status operations; payment/revenue visibility; the existing
+  dual-review payout operations; and deployment readiness. All mutations are server-authorized and audited.
+- Challenge-tier availability/checkout creation share a PostgreSQL advisory lock. A tier that has entries is
+  immutable, so pricing or rules require a new tier code; a competition can publish only with valid future UTC
+  times and an active tier. Public competition discovery hides drafts and cancelled competitions.
+- Customer-facing discovery now reads active tier pricing from the authoritative store, and the customer
+  dashboard has a direct purchase CTA and repeat-customer purchase strip.
 
 ## Launch-host configuration state
 
@@ -53,18 +62,21 @@ switched to port 587). The first signed real payment callback is still untested.
 2. Run the controlled exact-amount NOWPayments invoice/signed-IPN smoke test at
    `https://profitopath.com/api/payments/nowpayments/ipn`.
 3. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
-4. Bootstrap one owner after that account confirms its email: promote it through a controlled PostgreSQL
-   command to `SUPERADMIN`, then use `/superadmin`. Do not promote from a browser/config-variable form.
+4. The product owner account is already `SUPERADMIN`. Sign out and back in after a role change, then use
+   `/superadmin`: create/activate a tier first, create a DRAFT competition with `signup close < start < end`
+   in UTC, then publish it for preorder.
 
 ## Verification in this session
 
 - Local migrations applied successfully to PostgreSQL 17.
 - `pnpm db:generate`, `pnpm db:validate`, `pnpm typecheck`, and `pnpm lint` passed.
 - Production-mode `pnpm build` completed successfully.
-- `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed: 136 files, 200 tests.
-- Compose config and Caddy validation for the self-hosted launch composition passed. The host applied both
-  new migrations successfully, started every launch service, and externally returned
-  HTTP 200 for the homepage and healthy JSON for `/api/health/ready` over HTTPS.
+- The focused superadmin PostgreSQL test passed; the default full suite passed 206 tests across 71 files
+  (52 environment-dependent tests skipped).
+- Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
+  migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
+  readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
+  to the protected login flow.
 
 ## Next work
 
