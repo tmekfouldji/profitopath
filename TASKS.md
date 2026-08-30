@@ -626,7 +626,7 @@ Rules:
     documentation, changelog, project state, and handoff are current. Production enablement remains
     blocked until the business/legal merchant-acceptance evidence and a publicly reachable IPN endpoint
     are separately verified.
-- [!] P10-006 Complete the preorder checkout operational activation gate.
+- [~] P10-006 Complete the preorder checkout operational activation gate.
   - Product owner reports NOWPayments approval and receipt of the API key on 30 August 2026. Record the
     approval artefact outside Git; never paste the key into this repository or chat.
   - Implementation evidence: preorder UI/test coverage, the single-host Docker/Caddy launch composition,
@@ -635,13 +635,14 @@ Rules:
   - Host preparation: connected to `root@72.62.90.38`; installed Docker Engine 29.7.2 and Docker Compose
     5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; cloned launch revision `4621bbe` to
     `/opt/profitopath`. No application, database, or payment service was started.
-  - Blocker: `profitopath.com` and `www.profitopath.com` have no public A record, managed PostgreSQL/Valkey
-    values and deployment-secret injection are absent, and the first competition schedule is unapproved.
-    A single-host Docker database would violate the no-irreplaceable-ledger-disk production rule unless the
-    owner explicitly accepts a redesigned, externally backed-up recovery plan.
-  - Remaining operational work: add the Namecheap DNS records; provision managed database/Valkey and the
-    API/IPN/auth secrets through the deployment secret manager; configure the final public HTTPS origin and
-    raw-body IPN path; run the documented controlled invoice/IPN smoke test; then enable
+  - Temporary infrastructure decision: the product owner explicitly authorized private PostgreSQL and Valkey
+    Docker containers on the launch VM without an off-host backup destination. The configuration keeps both
+    ports private and records the required later managed-service migration; it is not highly available.
+  - Blocker: `profitopath.com` and `www.profitopath.com` have no public A record, NOWPayments API/IPN
+    secrets and deployment-secret injection are absent, and the first competition schedule is unapproved.
+  - Remaining operational work: deploy the private data containers; add the Namecheap DNS records; generate
+    local auth/data secrets; configure the final public HTTPS origin and raw-body IPN path; securely place
+    NOWPayments credentials; run the documented controlled invoice/IPN smoke test; then enable
     `PAYMENT_PROVIDER=nowpayments` only in that deployed environment.
   - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
     a terminal before their competition activates, and the deployment team has a secret-safe activation

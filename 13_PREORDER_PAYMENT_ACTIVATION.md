@@ -88,6 +88,30 @@ origin. Caddy routes the storefront, raw NOWPayments IPN, and `/realtime` WebSoc
 origin. Keeping the WebSocket at the storefront origin preserves the host-only authentication cookie; its
 certificate data is the only Docker volume retained on the VM.
 
+## Temporary self-hosted data services
+
+The product owner explicitly authorized a temporary single-host PostgreSQL and Valkey deployment on
+30 August 2026. This is a pre-launch compromise, not the target architecture: a loss of the launch VM
+can lose the authoritative ledger because no off-host backup destination exists yet. Do not represent
+this as managed or highly available infrastructure, and migrate before the market-data/trading launch.
+
+To enable these private containers on the launch VM, materialize .env.launch from
+ops/self-hosted-launch.env.example, then use the override:
+
+    docker compose --env-file .env.launch \
+      -f docker-compose.launch.yml \
+      -f docker-compose.self-hosted.yml \
+      up --build --detach
+
+PostgreSQL and Valkey expose no host ports; only Caddy exposes 80/443. The initial compose deployment
+runs migrations but deliberately does not run the development seed, because public tier/rule values and
+the first competition window require separate approval.
+
+For migration later, pause public writes, take a consistent pg_dump from the PostgreSQL container,
+restore it to the managed target, update DATABASE_URL and VALKEY_URL, deploy, validate
+readiness/authentication, and resume writes. Valkey is rebuildable and must not be treated as the
+authoritative migration source.
+
 ## Controlled checkout smoke test
 
 Run this in a non-production environment first. If NOWPayments does not provide an isolated merchant

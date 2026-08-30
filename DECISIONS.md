@@ -240,6 +240,20 @@ been processed. This does not change entry fees, competition dates, prize econom
 amounts, or market-data requirements. `PAYMENT_PROVIDER=nowpayments` is enabled only in the deployed
 environment after the secret-manager, public-HTTPS, and smoke-test checks in the preorder runbook.
 
+## D-025 — Temporary single-host PostgreSQL and Valkey for preorder infrastructure
+
+Status: Accepted by product owner for pre-launch only
+
+On 30 August 2026, the product owner explicitly approved running PostgreSQL 17 and Valkey 8 as private
+Docker containers on the current launch VM before an off-host backup destination or managed service is
+available. PostgreSQL is still the authoritative ledger, while Valkey remains rebuildable. The containers
+publish no database/cache ports and use persistent Docker volumes, but this setup is not highly available:
+loss of the VM can lose ledger data. This is a temporary pre-launch exception to the target managed-service
+architecture. Before the market-data/trading launch, migrate PostgreSQL through a controlled consistent
+dump/restore or replication cutover to a managed or separate server, change the connection URLs, validate
+readiness/authentication, and preserve the audit/ledger history. No development seed or unapproved
+competition economics may be used as public launch data.
+
 ## Pending decisions
 
 - starting balance per tier
