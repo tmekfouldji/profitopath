@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added a protected `SUPERADMIN` control plane with registered-member, privacy-preserving daily visitor,
+  active-member, confirmed USD revenue, simulated-account, and configuration-readiness reporting.
+- Added hashed, expiring, single-use email confirmation tokens; Zoho SMTP delivery, generic rate-limited
+  resends, auditable confirmation events, and a credential sign-in gate that rejects unverified accounts.
+- Added forward-only superadmin-observability and email-verification database migrations plus temporary
+  launch-host SMTP environment templates. Raw secrets remain server-only.
+
 ### Project direction
 
 - Weekly competitions only.

@@ -13,6 +13,7 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 import { authLoginRateLimiter, loginAuditIdentifier } from './login-rate-limit';
+import { canSignIn } from './authorization';
 
 const env = parseRuntimeEnv();
 const logger = createLogger({ service: 'web-auth', version: '0.1.0' });
@@ -22,6 +23,7 @@ async function recordFailedSignIn(
   reason:
     | 'ACCOUNT_INACTIVE'
     | 'AUTH_RATE_LIMIT_UNAVAILABLE'
+    | 'EMAIL_UNVERIFIED'
     | 'INVALID_CREDENTIALS'
     | 'RATE_LIMITED',
 ): Promise<void> {
@@ -143,6 +145,10 @@ export const authOptions: NextAuthOptions = {
             request.headers ?? {},
           );
           await recordFailedSignIn(parsed.data.email, 'INVALID_CREDENTIALS');
+          return null;
+        }
+        if (!canSignIn(user)) {
+          await recordFailedSignIn(parsed.data.email, 'EMAIL_UNVERIFIED');
           return null;
         }
 

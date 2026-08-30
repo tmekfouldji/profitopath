@@ -3,6 +3,11 @@ import 'server-only';
 import { database } from '@profitopath/database';
 import { getOwnedMockPayment as findOwnedMockPayment } from '@profitopath/payments';
 
+import {
+  getActiveMemberCount,
+  getConfigurationHealth,
+} from './site-observability';
+
 export function listCompetitions() {
   return database.competition.findMany({
     include: { _count: { select: { entries: true } } },
@@ -170,5 +175,51 @@ export async function getAdminOverview() {
     recentAudit,
     recentPayments,
     users,
+  };
+}
+
+function utcDaysAgo(days: number): Date {
+  const now = new Date();
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - days),
+  );
+}
+
+export async function getSuperadminOverview() {
+  const thirtyDaysAgo = utcDaysAgo(29);
+  const [
+    activeAccounts,
+    confirmedPaymentAggregate,
+    connectedMembers,
+    members,
+    newMembersLast30Days,
+    totalAccounts,
+    uniqueVisitorsLast30Days,
+  ] = await Promise.all([
+    database.tradingAccount.count({ where: { status: 'ACTIVE' } }),
+    database.payment.aggregate({
+      _count: true,
+      _sum: { amountMinor: true },
+      where: { currency: 'USD', status: 'CONFIRMED' },
+    }),
+    getActiveMemberCount(),
+    database.user.count(),
+    database.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    database.tradingAccount.count(),
+    database.websiteVisit.count({
+      where: { visitDay: { gte: thirtyDaysAgo } },
+    }),
+  ]);
+
+  return {
+    activeAccounts,
+    configuration: getConfigurationHealth(),
+    confirmedPayments: confirmedPaymentAggregate._count,
+    connectedMembers,
+    confirmedRevenueMinor: confirmedPaymentAggregate._sum.amountMinor ?? 0,
+    members,
+    newMembersLast30Days,
+    totalAccounts,
+    uniqueVisitorsLast30Days,
   };
 }

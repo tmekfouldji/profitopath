@@ -53,4 +53,18 @@ describe('login callback handling', () => {
       }),
     ).rejects.toThrow('redirect:/terminal/account-1');
   });
+
+  it('confirms that a verified email may sign in', async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    render(
+      await LoginPage({
+        searchParams: Promise.resolve({ notice: 'email-verified' }),
+      }),
+    );
+
+    expect(
+      screen.getByText('Email confirmed. You can now sign in.'),
+    ).toBeTruthy();
+  });
 });

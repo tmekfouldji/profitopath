@@ -55,7 +55,7 @@ importers:
         version: 17.3.1
       next-auth:
         specifier: 4.24.15
-        version: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       ws:
         specifier: 8.18.3
         version: 8.18.3
@@ -86,7 +86,7 @@ importers:
         version: 5.3.0
       '@next-auth/prisma-adapter':
         specifier: 1.0.7
-        version: 1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
+        version: 1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
       '@profitopath/competition':
         specifier: workspace:*
         version: link:../../packages/competition
@@ -122,7 +122,10 @@ importers:
         version: 15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       next-auth:
         specifier: 4.24.15
-        version: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      nodemailer:
+        specifier: ^9.0.6
+        version: 9.0.6
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -133,6 +136,9 @@ importers:
       '@types/node':
         specifier: 24.10.13
         version: 24.10.13
+      '@types/nodemailer':
+        specifier: ^8.0.1
+        version: 8.0.1
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
@@ -1012,6 +1018,9 @@ packages:
   '@types/node@25.9.5':
     resolution: {integrity: sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg==}
 
+  '@types/nodemailer@8.0.1':
+    resolution: {integrity: sha512-PxpaInm8V1JQDd4j0ds5HfvWQk8JupS1C0Picb96QJsrrRDjBH+DlK7L4ZdNSqNULhiZRQHc40nLVShaGxXAMw==}
+
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -1653,6 +1662,10 @@ packages:
 
   node-fetch-native@1.6.7:
     resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
+
+  nodemailer@9.0.6:
+    resolution: {integrity: sha512-IQUGFdhdGwI9+AWX+FpUt4DLmvFaOjTMEoneTIWX/RXxuy1TdenPwWrvFMSfLkPKl+HQEXWuSAxEMMbPYXtBmg==}
+    engines: {node: '>=6.0.0'}
 
   nypm@0.6.9:
     resolution: {integrity: sha512-zxlE2yvSWZWmHcNdT3+5zV2lrCogeE9YOklHrR3dFjqutq5wO7GFDYLFDRXLsYnJzwvy/im9fYoxePvS0VTW0w==}
@@ -2449,10 +2462,10 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@next-auth/prisma-adapter@1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
+  '@next-auth/prisma-adapter@1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))':
     dependencies:
       '@prisma/client': 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
-      next-auth: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      next-auth: 4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
 
   '@next/env@15.5.23': {}
 
@@ -2633,6 +2646,10 @@ snapshots:
   '@types/node@25.9.5':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/nodemailer@8.0.1':
+    dependencies:
+      '@types/node': 25.9.5
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
@@ -3269,7 +3286,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  next-auth@4.24.15(next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(nodemailer@9.0.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       '@panva/hkdf': 1.2.1
@@ -3283,6 +3300,8 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       uuid: 11.1.1
+    optionalDependencies:
+      nodemailer: 9.0.6
 
   next@15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -3308,6 +3327,8 @@ snapshots:
       - babel-plugin-macros
 
   node-fetch-native@1.6.7: {}
+
+  nodemailer@9.0.6: {}
 
   nypm@0.6.9:
     dependencies:

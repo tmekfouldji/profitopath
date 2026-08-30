@@ -11,9 +11,11 @@ This file is the authoritative high-level state for Codex.
 - Payment target: NOWPayments hosted invoices, preorder implementation and launch composition complete;
   repository/local default remains mock
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 10 — preorder checkout activation (deployment blocked on external host/secrets)**
-- Production deployment: launch host prepared with Docker/Compose, firewall, and revision `4621bbe`;
-  application services are not started
+- Current implementation phase: **Phase 10 — preorder checkout activation, mandatory email confirmation,
+  and owner observability (deployment blocked on DNS/secrets/schedule)**
+- Production deployment: launch host has Docker/Compose, default-deny firewall, private PostgreSQL 17 and
+  Valkey 8 containers, and applied migrations through `20260830190000_email_verification`; public
+  application services remain intentionally stopped
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
@@ -32,7 +34,10 @@ active; no real market-data provider is authorized. The NOWPayments implementati
 hosted-invoice and IPN flow, but production activation remains blocked on merchant acceptance, SVG legal
 approval evidence retention, secret-manager provisioning, final public origin/DNS, a public HTTPS IPN
 endpoint test, an explicit launch competition schedule, and managed PostgreSQL/Valkey endpoints. The
-designated Ubuntu launch host is prepared but intentionally has no authoritative database.
+designated Ubuntu launch host now has the temporary, private single-host PostgreSQL/Valkey exception
+approved by the product owner; it has no off-host backup and must migrate before the market-data/trading
+launch. Public credential registration now also requires working Zoho SMTP delivery because unverified
+accounts cannot sign in.
 
 ## Phase 0–1 completion evidence
 
@@ -188,6 +193,12 @@ All items above are complete, including the service-backed GitHub Actions run.
   inventory and smoke/rollback procedure live in `13_PREORDER_PAYMENT_ACTIVATION.md`
 - local PostgreSQL migration applied successfully; `pnpm db:validate`, `pnpm db:generate`, formatter,
   typecheck, lint, production build, and all 191 database-backed tests passed
+- `SUPERADMIN` is distinct from operational `ADMIN`: `/superadmin` provides authoritative member, daily
+  anonymous-visitor, active-member, confirmed-revenue, account, and configuration-readiness reporting.
+  It never displays, stores, or accepts raw API keys in the browser.
+- registration creates a hashed, single-use, 60-minute email-verification token and sends it only through
+  configured SMTP. A credential password cannot sign in until confirmation; resends are generic,
+  rate-limited, and audited. Zoho SMTP is not configured on the launch host yet.
 
 ## Last completed task
 
@@ -196,13 +207,14 @@ and launch composition have since been implemented and verified as part of P10-0
 
 ## Next task
 
-P10-006 — deploy the prepared launch composition. The host is now reachable as `root@72.62.90.38` and
-contains Docker Engine 29.7.2, Docker Compose 5.5.0, UFW rules for SSH/HTTP/HTTPS, and the checked-out
-launch revision at `/opt/profitopath`. The remaining external blockers are no public DNS (as of 30 August
-2026, `profitopath.com` has no A record), no managed PostgreSQL/Valkey connection values, no deployment
-secret injection, and no approved first competition schedule. After these arrive, materialize the ignored
-`.env.launch` from the secret manager, deploy, and run the controlled invoice/IPN smoke test. P9-001
-remains intentionally deferred until the approved vendor documentation and infrastructure are delivered.
+P10-006 — complete live checkout deployment after DNS, email, payment secrets, and the first approved
+competition schedule arrive. The host is reachable as `root@72.62.90.38`; private PostgreSQL/Valkey are
+healthy and `/opt/profitopath` contains the launch composition. The remaining external blockers are no
+public DNS (as of 30 August 2026, `profitopath.com` has no A record), no NOWPayments API/IPN values, no
+Zoho SMTP app password, and no approved first competition schedule. After these arrive, materialize the
+ignored `.env.launch`, deploy, and run the controlled email-confirmation and invoice/IPN smoke tests.
+P10-008 is the remaining superadmin-quality/documentation task. P9-001 remains intentionally deferred
+until the approved provider documentation and infrastructure are delivered.
 
 ## Quality status
 
@@ -216,6 +228,9 @@ remains intentionally deferred until the approved vendor documentation and infra
 - `RUN_DATABASE_TESTS=true pnpm test`: all 146 tests passed locally across 54 test files
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
+- Current Phase 10 checkpoint: migrations `20260830180000_superadmin_observability` and
+  `20260830190000_email_verification` applied locally; `pnpm typecheck`, `pnpm lint`, a production-mode
+  `pnpm build`, and `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed (136 files / 200 tests).
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

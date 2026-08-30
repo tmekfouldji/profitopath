@@ -647,3 +647,15 @@ Rules:
   - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
     a terminal before their competition activates, and the deployment team has a secret-safe activation
     and rollback runbook. `PAYMENT_PROVIDER=mock` remains the repository and local-development default.
+- [x] P10-007 Build the protected superadmin operations console.
+  - Acceptance: only active `SUPERADMIN` users can access the server-rendered console; it reports
+    registered members, privacy-preserving daily unique visitors, active signed-in members, confirmed
+    USD payment revenue, and simulated-account counts from authoritative stores; it exposes configuration
+    readiness and provider modes without rendering, persisting, or accepting raw API keys in the browser.
+- [x] P10-008 Add superadmin metric, authorization, and configuration-health coverage and complete the
+      associated quality/documentation gate.
+- [x] P10-009 Require Zoho SMTP email confirmation before credential sign-in.
+  - Acceptance: registration only succeeds when a single-use, expiring confirmation link can be issued;
+    plaintext tokens and SMTP credentials are never persisted; an unverified account cannot authenticate;
+    confirmation and resend activity is audited; production SMTP configuration is environment-only; and
+    the public interface never reveals whether a resend email belongs to an account.

@@ -1,6 +1,16 @@
 import { Prisma, database } from '@profitopath/database';
 import { hashPassword, registrationInputSchema } from '@profitopath/shared';
 
+import {
+  isSmtpEmailDeliveryConfigured,
+  sendEmailVerification,
+} from '@/server/email-delivery';
+import {
+  createEmailVerificationToken,
+  emailVerificationExpiry,
+  hashEmailVerificationToken,
+} from '@/server/email-verification';
+
 export async function POST(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   const parsed = registrationInputSchema.safeParse(body);
@@ -14,7 +24,17 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  if (!isSmtpEmailDeliveryConfigured()) {
+    return Response.json(
+      { error: 'email_delivery_unavailable' },
+      { status: 503 },
+    );
+  }
+
   const passwordHash = await hashPassword(parsed.data.password);
+  const verificationToken = createEmailVerificationToken();
+  const verificationTokenHash = hashEmailVerificationToken(verificationToken);
+  const verificationExpiresAt = emailVerificationExpiry();
 
   try {
     const user = await database.$transaction(async (transaction) => {
@@ -28,11 +48,26 @@ export async function POST(request: Request): Promise<Response> {
         },
         select: { email: true, id: true },
       });
+      await transaction.verificationToken.create({
+        data: {
+          expires: verificationExpiresAt,
+          identifier: created.email,
+          token: verificationTokenHash,
+        },
+      });
       await transaction.auditEvent.create({
         data: {
           action: 'REGISTERED',
           actorUserId: created.id,
-          after: { status: 'ACTIVE' },
+          after: { emailVerified: false, status: 'ACTIVE' },
+          entityId: created.id,
+          entityType: 'User',
+        },
+      });
+      await transaction.auditEvent.create({
+        data: {
+          action: 'EMAIL_VERIFICATION_ISSUED',
+          actorUserId: created.id,
           entityId: created.id,
           entityType: 'User',
         },
@@ -40,7 +75,19 @@ export async function POST(request: Request): Promise<Response> {
       return created;
     });
 
-    return Response.json({ id: user.id }, { status: 201 });
+    try {
+      await sendEmailVerification({
+        recipient: user.email,
+        token: verificationToken,
+      });
+    } catch {
+      return Response.json(
+        { error: 'email_delivery_unavailable' },
+        { status: 503 },
+      );
+    }
+
+    return Response.json({ status: 'verification_required' }, { status: 201 });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

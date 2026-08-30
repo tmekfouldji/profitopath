@@ -4,7 +4,7 @@ import { LogoutButton } from './logout-button';
 
 export interface HeaderUser {
   name: string | null | undefined;
-  role: 'TRADER' | 'ADMIN';
+  role: 'TRADER' | 'ADMIN' | 'SUPERADMIN';
 }
 
 export function SiteHeader({ user }: { user: HeaderUser | undefined }) {
@@ -36,8 +36,11 @@ export function SiteHeader({ user }: { user: HeaderUser | undefined }) {
             ) : (
               <>
                 <Link href="/dashboard">My desk</Link>
-                {user.role === 'ADMIN' ? (
+                {user.role === 'ADMIN' || user.role === 'SUPERADMIN' ? (
                   <Link href="/admin">Admin</Link>
+                ) : null}
+                {user.role === 'SUPERADMIN' ? (
+                  <Link href="/superadmin">Control plane</Link>
                 ) : null}
                 <span className="user-chip">{user.name ?? 'Trader'}</span>
                 <LogoutButton />

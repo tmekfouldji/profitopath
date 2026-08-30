@@ -28,15 +28,20 @@ Inject these values from the production secret manager into every service that l
 configuration. Do not add any value to `.env.example`, `.env.container.example`, Docker image layers,
 CI logs, browser code, or chat.
 
-| Variable                   | Required value                                                         |
-| -------------------------- | ---------------------------------------------------------------------- |
-| `PAYMENT_PROVIDER`         | `nowpayments`                                                          |
-| `NOWPAYMENTS_API_KEY`      | Merchant API key from the restricted secret store                      |
-| `NOWPAYMENTS_IPN_SECRET`   | Newly generated NOWPayments IPN secret from the same restricted store  |
-| `NEXTAUTH_URL`             | Final public `https://` storefront origin, without a trailing path     |
-| `NEXTAUTH_SECRET`          | One stable, high-entropy shared value across web and realtime replicas |
-| `MARKET_DATA_SOURCE`       | `mock` until Phase 9 activation                                        |
-| `MOCK_MARKET_DATA_ENABLED` | `false` in the public preorder environment                             |
+| Variable                               | Required value                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| `PAYMENT_PROVIDER`                     | `nowpayments`                                                          |
+| `NOWPAYMENTS_API_KEY`                  | Merchant API key from the restricted secret store                      |
+| `NOWPAYMENTS_IPN_SECRET`               | Newly generated NOWPayments IPN secret from the same restricted store  |
+| `NEXTAUTH_URL`                         | Final public `https://` storefront origin, without a trailing path     |
+| `NEXTAUTH_SECRET`                      | One stable, high-entropy shared value across web and realtime replicas |
+| `EMAIL_PROVIDER`                       | `smtp`                                                                 |
+| `EMAIL_FROM` / `SMTP_USER`             | `contact@profitopath.com`                                              |
+| `SMTP_HOST` / `SMTP_PORT`              | Exact Zoho account/datacenter SMTP values; 465 SSL or 587 TLS          |
+| `SMTP_PASSWORD`                        | Zoho app-specific password, held only in the restricted secret store   |
+| `EMAIL_VERIFICATION_TOKEN_TTL_MINUTES` | `60` unless a separately approved security policy changes it           |
+| `MARKET_DATA_SOURCE`                   | `mock` until Phase 9 activation                                        |
+| `MOCK_MARKET_DATA_ENABLED`             | `false` in the public preorder environment                             |
 
 The deployed application derives all hosted-invoice URLs from `NEXTAUTH_URL`. The NOWPayments IPN
 setting must therefore be exactly:
@@ -52,18 +57,20 @@ is not owned by the company, or a browser redirect as the IPN endpoint.
 
 ## Pre-deployment checks
 
-1. Deploy from the tracked [`docker-compose.launch.yml`](docker-compose.launch.yml) composition. It runs
-   only stateless application containers and Caddy on the launch VM; PostgreSQL and Valkey URLs must
-   point to the managed services prepared by infrastructure. Do not use the development seed to create
-   public launch data.
+1. Deploy from the tracked [`docker-compose.launch.yml`](docker-compose.launch.yml) composition with the
+   temporary self-hosted override below. It runs private PostgreSQL/Valkey plus stateless application
+   containers and Caddy on the launch VM. Do not use the development seed to create public launch data.
 2. Configure an approved future five-session competition and its signup-close time in the production
    database. The exact competition start date is a separate operations/rules decision from the
    storefront launch date.
 3. Confirm the competition is `SCHEDULED`, the intended tiers are active, and all entry fees are the
    approved USD-cent values.
-4. Deploy web, worker, and realtime with the same `NEXTAUTH_URL` and `NEXTAUTH_SECRET`; check their
+4. Send a confirmation link to a company-controlled mailbox. Confirm it in the browser and verify that a
+   password cannot sign in before confirmation but can sign in after. Do not log the SMTP password or raw
+   token.
+5. Deploy web, worker, and realtime with the same `NEXTAUTH_URL` and `NEXTAUTH_SECRET`; check their
    readiness endpoints through the public deployment.
-5. Confirm `POST /api/payments/nowpayments/ipn` is reachable over public HTTPS and returns a non-5xx
+6. Confirm `POST /api/payments/nowpayments/ipn` is reachable over public HTTPS and returns a non-5xx
    response for an intentionally invalid signed-callback test. Never use this test to expose a real
    signature or secret in logs.
 
@@ -95,8 +102,8 @@ The product owner explicitly authorized a temporary single-host PostgreSQL and V
 can lose the authoritative ledger because no off-host backup destination exists yet. Do not represent
 this as managed or highly available infrastructure, and migrate before the market-data/trading launch.
 
-To enable these private containers on the launch VM, materialize .env.launch from
-ops/self-hosted-launch.env.example, then use the override:
+To enable these private containers on the launch VM, materialize `.env.launch` from
+[`ops/self-hosted-launch.env.example`](ops/self-hosted-launch.env.example), then use the override:
 
     docker compose --env-file .env.launch \
       -f docker-compose.launch.yml \
@@ -106,6 +113,11 @@ ops/self-hosted-launch.env.example, then use the override:
 PostgreSQL and Valkey expose no host ports; only Caddy exposes 80/443. The initial compose deployment
 runs migrations but deliberately does not run the development seed, because public tier/rule values and
 the first competition window require separate approval.
+
+Public registration must remain unavailable until Zoho SMTP is configured. For a paid Zoho domain mailbox,
+the usual baseline is `smtppro.zoho.com` with port 465/SSL or 587/TLS, but operators must copy the exact
+host for their Zoho account/datacenter, use the complete `contact@profitopath.com` username, and create an
+app-specific password. The app intentionally refuses to register a profile when SMTP is not configured.
 
 For migration later, pause public writes, take a consistent pg_dump from the PostgreSQL container,
 restore it to the managed target, update DATABASE_URL and VALKEY_URL, deploy, validate

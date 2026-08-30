@@ -3048,6 +3048,86 @@ a {
   margin: 0;
 }
 
+.superadmin-metrics {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.superadmin-metrics article {
+  min-height: 11rem;
+}
+
+.superadmin-metrics small {
+  color: var(--muted);
+  font: 0.62rem/1.45 var(--data);
+}
+
+.superadmin-config,
+.superadmin-definitions {
+  margin-top: 4rem;
+}
+
+.superadmin-config-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--line);
+}
+
+.superadmin-config-grid > div {
+  min-height: 10rem;
+  padding: 1.25rem;
+  background: var(--panel);
+}
+
+.superadmin-config-grid dt,
+.superadmin-definitions dt {
+  color: var(--muted);
+  font: 0.58rem var(--data);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.superadmin-config-grid dd {
+  margin: 2rem 0 0;
+  color: var(--aqua);
+  font: 0.73rem/1.45 var(--data);
+  overflow-wrap: anywhere;
+}
+
+.superadmin-definitions {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.65fr) 1.35fr;
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--aqua);
+  border-radius: var(--radius-md);
+  background: rgb(86 214 201 / 4%);
+}
+
+.superadmin-definitions h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.superadmin-definitions dl {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.superadmin-definitions dd {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .admin-competition-board {
   margin-top: 4rem;
 }
@@ -5012,6 +5092,24 @@ body::before {
   .auth-card h1,
   .empty-state h1 {
     font-size: clamp(3.2rem, 18vw, 5rem);
+  }
+}
+
+@media (max-width: 1080px) {
+  .superadmin-metrics,
+  .superadmin-config-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .superadmin-definitions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .superadmin-metrics,
+  .superadmin-config-grid {
+    grid-template-columns: 1fr;
   }
 }
 

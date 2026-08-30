@@ -6,6 +6,7 @@ import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/ibm-plex-mono/400.css';
 
 import { SiteHeader } from '@/components/site-header';
+import { SiteActivityTracker } from '@/components/site-activity-tracker';
 import { getSession } from '@/server/auth/session';
 
 import './globals.css';
@@ -28,6 +29,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SiteActivityTracker />
         <div className="app-frame">
           <SiteHeader
             user={

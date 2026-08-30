@@ -254,6 +254,20 @@ dump/restore or replication cutover to a managed or separate server, change the 
 readiness/authentication, and preserve the audit/ledger history. No development seed or unapproved
 competition economics may be used as public launch data.
 
+## D-026 — Superadmin visibility and secrets remain separate control planes
+
+Status: Accepted for implementation
+
+`SUPERADMIN` is a distinct role for platform ownership and may access the server-rendered control plane;
+an operational `ADMIN` may continue competition/prize work but cannot access owner telemetry or deployment
+health. The control plane derives registered-member, daily anonymous-visitor, active signed-in-member,
+confirmed-payment revenue, and simulated-account metrics from PostgreSQL/Valkey. It records no IP address,
+user-agent, or raw visitor identifier. It may report whether a provider configuration is ready, but it must
+never render, accept, store, or mutate raw API keys, SMTP passwords, database URLs, or other deployment
+secrets. Those values remain in the protected launch-host environment (and later a secret manager), with
+an explicit rolling deployment required after rotation. Zoho SMTP verification is mandatory for public
+credential registration; unverified accounts cannot sign in.
+
 ## Pending decisions
 
 - starting balance per tier

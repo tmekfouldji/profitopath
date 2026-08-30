@@ -2,92 +2,85 @@
 
 ## Current handoff
 
-Phase 10 is now a preorder activation package. The NOWPayments hosted-invoice/IPN implementation was
-already present and remains the only checkout boundary: no customer deposits, fiat, custody, stored
-balances, live brokerage execution, payouts, or browser-authoritative payment action exists. On 30 August
-2026, the product owner reported NOWPayments approval and receipt of the merchant API key, requested
-preorders before real market data, set a target storefront launch of 15 September 2026, and authorized
-installation on the designated `profitopath` SSH launch machine.
+Phase 10 is a preorder launch package with mandatory email confirmation and a protected owner control
+plane. Product scope remains weekly simulated trading competitions only: no customer deposits, custody,
+fiat, payout provider, funded accounts, or real-market/broker execution. NOWPayments hosted invoices and
+signed raw IPNs remain the sole checkout boundary. Real market data remains blocked under P9-001 until the
+selected provider supplies official documentation and commercial customer-display/simulation rights.
 
-The application is launch-ready but has **not** been started. The host is reachable as
-`root@72.62.90.38`: Docker Engine 29.7.2 and Docker Compose 5.5.0 are installed and enabled, UFW is
-default-deny with SSH/HTTP/HTTPS allowed, and launch revision `4621bbe` is checked out at
-`/opt/profitopath`. This session has no NOWPayments/API/IPN or infrastructure secrets; no application,
-database, or payment container has been started.
+The product owner requested a 15 September 2026 preorder storefront and authorized deployment to
+`root@72.62.90.38`. The public app is deliberately not started yet. The launch host has Docker Engine
+29.7.2, Docker Compose 5.5.0, a default-deny UFW permitting SSH/HTTP/HTTPS, and `/opt/profitopath` at
+revision `010705c`. Private PostgreSQL 17 and Valkey 8 Docker containers are healthy; no DB/cache ports
+are published. Their Docker volumes have no off-host backup destination, so this is a temporary explicit
+pre-launch exception (D-025), not HA or a managed database solution. Migrate before market-data/trading
+launch.
 
-## Integrated work
+## This session’s implementation
 
-- The existing provider-neutral payment service stores NOWPayments invoice and eventual payment IDs
-  separately, creates server-owned hosted invoices, verifies raw signed IPNs with recursively sorted
-  HMAC-SHA-512, and provisions only exact-amount USD `finished` confirmations. It is replay safe and
-  keeps provider events/audits in the same authoritative PostgreSQL transaction.
-- Paid entries for a future `SCHEDULED` competition now render as **Preorder confirmed** after the signed
-  IPN. The dashboard does not link to the terminal until the competition is active and its trading window
-  has started; payment success redirects remain explicitly pending because browser success is not a
-  payment confirmation. `D-024` records this non-economic product decision.
-- Added `13_PREORDER_PAYMENT_ACTIVATION.md`: secret contract, public raw-IPN requirements, controlled
-  invoice/IPN smoke procedure, launch/rollback sequence, and the explicit separation from market-data
-  authorization.
-- Added `docker-compose.launch.yml`, `ops/Caddyfile.launch`, and `ops/launch.env.example`. They define a
-  launch VM with Caddy TLS and private web, realtime, worker, and migration containers. Caddy proxies the
-  WebSocket at the same storefront `/realtime` origin so the host-only login cookie is preserved.
-  PostgreSQL and Valkey are deliberately external managed services; no authoritative database runs on the
-  VM. The web Docker image now accepts the build-time `NEXT_PUBLIC_REALTIME_URL` required by the browser.
-- The repository/local default remains `PAYMENT_PROVIDER=mock`. Only the ignored `.env.launch` created on
-  the production host from the secret manager sets `PAYMENT_PROVIDER=nowpayments`.
-- `profitopath.com` and `www.profitopath.com` currently have no public A record. The required Namecheap
-  setup is `A @ → 72.62.90.38` and `CNAME www → profitopath.com`, with no URL forwarding or AAAA record.
-  The cloud/provider firewall must also permit inbound TCP 80 and 443 for Caddy's certificate issuance.
+- Added `SUPERADMIN` (above operational `ADMIN`) and migrations
+  `20260830180000_superadmin_observability` / `20260830190000_email_verification`.
+- Added `/superadmin`: registered-member totals, daily anonymous browser visits, signed-in member presence
+  in the last five minutes, confirmed USD revenue, simulated account totals, and provider/config readiness.
+  Daily visits store only a SHA-256 browser identifier—not IP, user agent, or raw cookie value. Secret
+  values are neither rendered nor accepted in the browser (D-026).
+- Added mandatory verification for password credentials. Registration creates an opaque 32-byte token but
+  persists only its SHA-256 hash, with a configurable 60-minute expiry. The email link opens a confirmation
+  form rather than consuming on GET (mail-scanner safe); confirmation, issuing, and reissuing are audited.
+  Unverified users cannot authenticate even with a correct password. Resends return a generic response and
+  are Valkey rate-limited to one per address per minute.
+- Added Zoho SMTP delivery through Nodemailer. `EMAIL_PROVIDER=smtp` requires `EMAIL_FROM`, `SMTP_HOST`,
+  `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` in the runtime environment. Registration returns no success
+  until SMTP is configured and the email send succeeds.
 
-## Verification
+## Launch-host configuration state
 
-- Focused dashboard/preorder, NOWPayments provider, and raw-IPN route tests: 8 passed.
-- `RUN_DATABASE_TESTS=true pnpm test`: 65 files / 191 tests passed with local PostgreSQL 17 and Valkey.
-- `pnpm typecheck`: passed.
-- `pnpm lint`: passed.
-- `pnpm build`: passed; the Next production build includes `/api/payments/nowpayments/ipn`.
-- `pnpm exec prettier --check` for all changed parseable files: passed.
-- `git diff --check`: passed.
-- `docker compose --env-file ops/launch.env.example -f docker-compose.launch.yml config --quiet`:
-  passed. Docker Desktop was restarted by the user during verification; local database services are healthy.
+`/opt/profitopath/.env.launch` is mode 0600 and has generated database/Valkey/auth/mock-payment secrets.
+It contains **commented-only** template lines for live providers; no real provider values were entered:
 
-## Launch-host deployment blocker
+```dotenv
+# NOWPAYMENTS_API_KEY=
+# NOWPAYMENTS_IPN_SECRET=
+# EMAIL_PROVIDER=smtp
+# EMAIL_FROM=contact@profitopath.com
+# SMTP_HOST=smtppro.zoho.com
+# SMTP_PORT=465
+# SMTP_USER=contact@profitopath.com
+# SMTP_PASSWORD=
+EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=60
+```
 
-To continue the user-authorized installation, obtain one of the following through the secure infrastructure
-channel:
+When the product owner has generated a Zoho app-specific password, edit that protected remote file over
+SSH—never chat/Git/browser—and uncomment/set every SMTP value. Use the exact SMTP host shown in the Zoho
+account’s server configuration for its datacenter (typically `smtppro.zoho.com` for a paid custom-domain
+mailbox) and port 465 SSL or 587 TLS. Then, after DNS resolves, deploy the updated tracked code, confirm a
+test email, and only then enable public registration. For NOWPayments, set both secrets, change
+`PAYMENT_PROVIDER=nowpayments`, and run the controlled hosted-invoice/IPN smoke test.
 
-1. The Namecheap `A` and `www` CNAME records, propagated to the prepared launch VM.
-2. Managed PostgreSQL and Valkey URLs, injected via the deployment secret manager together with
-   `NEXTAUTH_SECRET`, `MOCK_PAYMENT_SIGNING_SECRET`, `NOWPAYMENTS_API_KEY`, and
-   `NOWPAYMENTS_IPN_SECRET`. Never paste any of these in chat or Git.
-3. The approved first five-session competition date, signup close, tiers/rules version, and the written
-   merchant approval artefact retained in restricted operations storage.
+## Required external work before public deployment
 
-When those are available, pull `main` on the host, materialize protected `.env.launch` from
-`ops/launch.env.example`, run the three Compose commands in `13_PREORDER_PAYMENT_ACTIVATION.md`, verify
-the public health/IPN route, and execute the controlled company-wallet NOWPayments smoke test before
-opening customer sales. Do not place the production PostgreSQL ledger in a single Docker volume on this VM:
-it would violate the no-irreplaceable-disk production rule unless the owner explicitly accepts a separately
-designed off-host backup/recovery architecture.
+1. In Namecheap add `A` host `@` → `72.62.90.38` and `CNAME` host `www` → `profitopath.com`; remove any
+   conflicting `@`/`www` records and forwarding. No AAAA record. Wait for public resolution before Caddy.
+2. Securely populate/enable Zoho SMTP as above; confirm the domain’s existing SPF/DKIM records remain valid
+   in Zoho. Then test confirmation/blocked-before-verification/allowed-after-verification.
+3. Securely populate `NOWPAYMENTS_API_KEY` and `NOWPAYMENTS_IPN_SECRET`; set the merchant IPN endpoint to
+   `https://profitopath.com/api/payments/nowpayments/ipn`; run the controlled exact-amount invoice/IPN
+   smoke test.
+4. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
+5. Bootstrap one owner after that account confirms its email: promote it through a controlled PostgreSQL
+   command to `SUPERADMIN`, then use `/superadmin`. Do not promote from a browser/config-variable form.
 
-## Deferred market data
+## Verification in this session
 
-The product owner wants market-data implementation after the preorder launch. Keep
-`MARKET_DATA_SOURCE=mock` and `MOCK_MARKET_DATA_ENABLED=false` on the public preorder stack. Phase 9
-remains deferred until the provider gives its official API/streaming documentation, written display,
-fanout, cache/retention, and simulated-execution rights, credential/rate-limit model, and infrastructure
-details. Do not infer a provider API from approval correspondence.
+- Local migrations applied successfully to PostgreSQL 17.
+- `pnpm db:generate`, `pnpm db:validate`, `pnpm typecheck`, and `pnpm lint` passed.
+- Production-mode `pnpm build` completed successfully.
+- `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed: 136 files, 200 tests.
+- Compose config and Caddy validation for the self-hosted launch composition passed before this code revision.
+  Re-run them and deploy migrations on the host after the next commit/pull.
 
-## Worktree
+## Next work
 
-- Do not touch the user-owned untracked `marketing/` directory or `package-lock.json`.
-- Phase 10/preorder work was committed and pushed to `main` as `4621bbe` (`feat: prepare NOWPayments
-preorder launch`); that revision is checked out on the launch host.
-
-## Exact next task
-
-P10-006 — after DNS propagates and the managed data-service/secrets are provisioned, materialize protected
-`.env.launch` on `/opt/profitopath`, deploy the prepared Docker/Caddy composition, provision the approved
-scheduled competition, then run and record the controlled NOWPayments invoice/IPN smoke test. Keep public
-sales closed until that test succeeds. Start Phase 9 only after the deferred provider documents and
-commercial-use limits are supplied.
+Finish P10-008 by running the full quality/docs gate after the latest documentation format check, commit and
+push the superadmin/email work, pull it on the launch host, run `migrate`, and keep web/realtime/worker/Caddy
+stopped until the DNS, SMTP, NOWPayments, and first-competition gates are satisfied. P9-001 is still blocked.

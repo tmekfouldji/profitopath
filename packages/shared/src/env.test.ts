@@ -24,6 +24,7 @@ describe('parseRuntimeEnv', () => {
     expect(parsed.MARKET_DATA_SOURCE).toBe('mock');
     expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
     expect(parsed.PAYMENT_PROVIDER).toBe('mock');
+    expect(parsed.EMAIL_PROVIDER).toBe('console');
   });
 
   it('accepts bounded credential-throttling configuration', () => {
@@ -80,6 +81,20 @@ describe('parseRuntimeEnv', () => {
         NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
         NEXTAUTH_URL: 'https://payments.example.test',
         PAYMENT_PROVIDER: 'nowpayments',
+        VALKEY_URL: 'redis://localhost:6379',
+      }),
+    ).toThrow();
+  });
+
+  it('requires a complete SMTP configuration when SMTP delivery is selected', () => {
+    expect(() =>
+      parseRuntimeEnv({
+        DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+        EMAIL_PROVIDER: 'smtp',
+        MOCK_PAYMENT_SIGNING_SECRET:
+          'test-mock-payment-secret-with-thirty-two-characters',
+        NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+        NEXTAUTH_URL: 'https://profitopath.com',
         VALKEY_URL: 'redis://localhost:6379',
       }),
     ).toThrow();

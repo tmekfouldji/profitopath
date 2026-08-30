@@ -25,11 +25,13 @@
     "lightweight-charts": "5.2.1",
     "next": "15.5.23",
     "next-auth": "4.24.15",
+    "nodemailer": "^9.0.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@types/node": "24.10.13",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "typescript": "5.9.3"

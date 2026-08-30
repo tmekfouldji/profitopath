@@ -160,6 +160,9 @@ The seed is idempotent. It creates the three development tiers and schedules the
 competition. Starting balances come from the `DEV_*_STARTING_BALANCE_MINOR` environment variables
 and are explicitly development defaults, not approved production rules. Authentication requires
 the local-only `NEXTAUTH_URL` and `NEXTAUTH_SECRET` values copied from `.env.example`.
+Production credential registration also requires Zoho SMTP (`EMAIL_PROVIDER=smtp`) and an email
+confirmation link; an unverified account cannot sign in. Keep SMTP passwords in the deployment secret
+store, never in this repository or browser configuration.
 
 Phase 3 uses only the local `MockPaymentProvider`. Its callback signatures use the separate
 `MOCK_PAYMENT_SIGNING_SECRET` from `.env.example`; the in-app confirmation screen never charges a

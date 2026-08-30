@@ -10,6 +10,7 @@ datasource db {
 enum UserRole {
   TRADER
   ADMIN
+  SUPERADMIN
 }
 
 enum UserStatus {
@@ -177,6 +178,17 @@ model User {
   freeEntryCredits FreeEntryCredit[]
 }
 
+model WebsiteVisit {
+  id          String   @id @default(uuid()) @db.Uuid
+  visitorHash String   @db.Char(64)
+  visitDay    DateTime @db.Date
+  entryPath   String   @db.VarChar(255)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([visitorHash, visitDay])
+  @@index([visitDay])
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String  @db.Uuid
@@ -212,6 +224,7 @@ model VerificationToken {
   expires    DateTime @db.Timestamptz(3)
 
   @@unique([identifier, token])
+  @@index([identifier, expires])
 }
 
 model PasswordCredential {

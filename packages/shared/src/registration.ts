@@ -11,6 +11,8 @@ const email = z
   .max(320)
   .transform((value) => normalizeEmail(value));
 
+export const verificationEmailInputSchema = z.object({ email });
+
 export const loginInputSchema = z.object({
   email,
   password: z.string().min(1).max(128),

@@ -37,6 +37,14 @@ export const runtimeEnvSchema = z
       .default(15_000),
     COMPETITION_JOBS_ENABLED: booleanString.default(true),
     DATABASE_URL: z.string().url().startsWith('postgresql://'),
+    EMAIL_FROM: z.string().email().optional(),
+    EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
+    EMAIL_VERIFICATION_TOKEN_TTL_MINUTES: z.coerce
+      .number()
+      .int()
+      .min(15)
+      .max(1_440)
+      .default(60),
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
@@ -51,6 +59,10 @@ export const runtimeEnvSchema = z
     NOWPAYMENTS_API_KEY: z.string().min(1).optional(),
     NOWPAYMENTS_IPN_SECRET: z.string().min(1).optional(),
     PAYMENT_PROVIDER: z.enum(['mock', 'nowpayments']).default('mock'),
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_PORT: integerPort.optional(),
+    SMTP_USER: z.string().email().optional(),
     VALKEY_URL: z.string().url().startsWith('redis://'),
   })
   .superRefine((value, context) => {
@@ -64,6 +76,21 @@ export const runtimeEnvSchema = z
         message:
           'NOWPAYMENTS_API_KEY and NOWPAYMENTS_IPN_SECRET are required when PAYMENT_PROVIDER=nowpayments',
         path: ['PAYMENT_PROVIDER'],
+      });
+    }
+    if (
+      value.EMAIL_PROVIDER === 'smtp' &&
+      (value.EMAIL_FROM === undefined ||
+        value.SMTP_HOST === undefined ||
+        value.SMTP_PASSWORD === undefined ||
+        value.SMTP_PORT === undefined ||
+        value.SMTP_USER === undefined)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'EMAIL_FROM, SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD are required when EMAIL_PROVIDER=smtp',
+        path: ['EMAIL_PROVIDER'],
       });
     }
   });

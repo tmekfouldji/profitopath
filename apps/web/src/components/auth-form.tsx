@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
@@ -14,6 +15,7 @@ export function AuthForm({
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState<string>();
 
   async function authenticate(
     email: string,
@@ -63,6 +65,8 @@ export function AuthForm({
           );
           return;
         }
+        setVerificationEmail(email);
+        return;
       }
       await authenticate(email, password);
     } catch {
@@ -104,15 +108,29 @@ export function AuthForm({
           {error}
         </p>
       )}
+      {verificationEmail === undefined ? null : (
+        <p aria-live="polite" className="form-success" role="status">
+          Check {verificationEmail} for your confirmation link. You must confirm
+          the address before signing in.
+        </p>
+      )}
+      {mode === 'login' ? (
+        <p className="field-help">
+          Need to confirm your address?{' '}
+          <Link href="/verify-email">Send a new confirmation link</Link>
+        </p>
+      ) : null}
       <button
         className="button button-primary"
-        disabled={pending}
+        disabled={pending || verificationEmail !== undefined}
         type="submit"
       >
         {pending
           ? 'Working…'
           : mode === 'register'
-            ? 'Create trading profile'
+            ? verificationEmail === undefined
+              ? 'Create trading profile'
+              : 'Confirmation sent'
             : 'Open dashboard'}
       </button>
     </form>
