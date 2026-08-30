@@ -213,6 +213,33 @@ credits are not money, customer custody, or a stored-value balance, and checkout
 out of scope until separately designed and tested. Final prize formula, legal wording, KYC timing,
 and production payout procedures remain pending decisions.
 
+## D-023 — NOWPayments uses server-owned hosted invoices and signed IPN only
+
+Status: Accepted for implementation; production activation pending
+
+The application uses NOWPayments' documented `POST /v1/invoice` hosted checkout directly from the
+server rather than routing customer checkout through the agent-facing MCP wrapper. Each invoice sends the
+immutable local `Payment.id` as `order_id`; the provider invoice ID and eventual payment ID are retained
+separately, and only a raw-body IPN with a valid recursively sorted HMAC-SHA-512
+`x-nowpayments-sig` can update state. NOWPayments `finished` is the sole status mapped to confirmed entry
+provisioning after exact USD-cent validation; waiting, confirming, sending, and partially-paid states do
+not activate fictitious capital. API and IPN secrets are server-only, `PAYMENT_PROVIDER=mock` remains the
+default, and no payouts, custody, customer balance, fiat, or browser-authoritative payment action is
+introduced. This code decision does not establish merchant acceptance, legal approval, or permission to
+enable real checkout.
+
+## D-024 — Paid scheduled entries are preorders, not early trading access
+
+Status: Accepted for the September 2026 preorder launch
+
+A completed NOWPayments payment for a scheduled competition reserves that tier and provisions its
+simulated account through the existing audited payment flow, but it does not grant trading-terminal
+access before the competition is active and its trading window has begun. The dashboard labels this
+state as a confirmed preorder; payment submission remains pending until the signed provider IPN has
+been processed. This does not change entry fees, competition dates, prize economics, simulated-capital
+amounts, or market-data requirements. `PAYMENT_PROVIDER=nowpayments` is enabled only in the deployed
+environment after the secret-manager, public-HTTPS, and smoke-test checks in the preorder runbook.
+
 ## Pending decisions
 
 - starting balance per tier

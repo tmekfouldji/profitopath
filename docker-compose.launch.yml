@@ -1,0 +1,97 @@
+name: profitopath-launch
+
+x-application-environment: &application-environment
+  env_file:
+    - ${LAUNCH_ENV_FILE:-.env.launch}
+  restart: unless-stopped
+
+services:
+  migrate:
+    <<: *application-environment
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ['pnpm', 'db:migrate:deploy']
+    restart: 'no'
+
+  web:
+    <<: *application-environment
+    build:
+      args:
+        NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL:?Set NEXT_PUBLIC_REALTIME_URL in .env.launch and pass it with --env-file.}
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://127.0.0.1:3000/api/health/ready\").then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 25s
+
+  realtime:
+    <<: *application-environment
+    build:
+      context: .
+      dockerfile: apps/realtime/Dockerfile
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://127.0.0.1:3001/health/ready\").then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  worker:
+    <<: *application-environment
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://127.0.0.1:3002/health/ready\").then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  caddy:
+    image: caddy:2.10-alpine
+    depends_on:
+      realtime:
+        condition: service_started
+      web:
+        condition: service_started
+    env_file:
+      - ${LAUNCH_ENV_FILE:-.env.launch}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    restart: unless-stopped
+    volumes:
+      - ./ops/Caddyfile.launch:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

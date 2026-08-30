@@ -23,6 +23,7 @@ describe('parseRuntimeEnv', () => {
     expect(parsed.AUTO_FINALIZE_FROZEN_COMPETITIONS).toBe(false);
     expect(parsed.MARKET_DATA_SOURCE).toBe('mock');
     expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
+    expect(parsed.PAYMENT_PROVIDER).toBe('mock');
   });
 
   it('accepts bounded credential-throttling configuration', () => {
@@ -65,6 +66,20 @@ describe('parseRuntimeEnv', () => {
           'test-mock-payment-secret-with-thirty-two-characters',
         NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
         NEXTAUTH_URL: 'http://localhost:3000',
+        VALKEY_URL: 'redis://localhost:6379',
+      }),
+    ).toThrow();
+  });
+
+  it('requires NOWPayments credentials when that provider is selected', () => {
+    expect(() =>
+      parseRuntimeEnv({
+        DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+        MOCK_PAYMENT_SIGNING_SECRET:
+          'test-mock-payment-secret-with-thirty-two-characters',
+        NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+        NEXTAUTH_URL: 'https://payments.example.test',
+        PAYMENT_PROVIDER: 'nowpayments',
         VALKEY_URL: 'redis://localhost:6379',
       }),
     ).toThrow();

@@ -71,4 +71,41 @@ describe('trader prize browser view', () => {
     expect(screen.getByText(/no customer trading deposit/i)).toBeTruthy();
     expect(screen.queryByText(/transaction reference/i)).toBeNull();
   });
+
+  it('keeps a paid scheduled entry in preorder until its competition begins', async () => {
+    mocks.requireUser.mockResolvedValue({ id: 'trader-1' });
+    mocks.getTraderDashboard.mockResolvedValue([
+      {
+        competition: {
+          name: 'Weekly Competition · 21 Sep',
+          status: 'SCHEDULED',
+          tradingEndsAt: new Date('2026-09-25T23:59:59.999Z'),
+          tradingStartsAt: new Date('2026-09-21T00:00:00.000Z'),
+        },
+        id: 'entry-1',
+        status: 'ACTIVE',
+        tier: { code: 'ROOKIE' },
+        tradingAccount: {
+          balanceMinor: 1_000_000n,
+          id: 'account-1',
+          status: 'ACTIVE',
+        },
+      },
+    ]);
+    mocks.getTraderLeaderboardSummaries.mockResolvedValue(new Map());
+    mocks.getTraderPrizeOverview.mockResolvedValue([]);
+
+    render(
+      await DashboardPage({
+        searchParams: Promise.resolve({ notice: 'payment-submitted' }),
+      }),
+    );
+
+    expect(screen.getByText('Preorder confirmed')).toBeTruthy();
+    expect(screen.getByText(/payment submitted/i)).toBeTruthy();
+    expect(screen.queryByText('Open trading terminal')).toBeNull();
+    expect(
+      screen.getByText('Active terminals').parentElement?.textContent,
+    ).toContain('0');
+  });
 });

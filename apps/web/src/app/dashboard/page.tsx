@@ -30,8 +30,12 @@ export default async function DashboardPage({
     getTraderPrizeOverview(user.id),
     searchParams,
   ]);
+  const now = new Date();
   const activeAccounts = entries.filter(
-    (entry) => entry.tradingAccount?.status === 'ACTIVE',
+    (entry) =>
+      entry.tradingAccount?.status === 'ACTIVE' &&
+      entry.competition.status === 'ACTIVE' &&
+      entry.competition.tradingStartsAt <= now,
   ).length;
   const rankedEntries = [...leaderboardSummaries.values()].filter(
     (summary) => summary.rank !== null,
@@ -75,12 +79,20 @@ export default async function DashboardPage({
         </p>
       ) : null}
 
+      {params.notice === 'payment-submitted' ? (
+        <p className="notice-banner" role="status">
+          Payment submitted. Your preorder is confirmed after NOWPayments
+          verifies the payment on-chain.
+        </p>
+      ) : null}
+
       {entries.length === 0 ? (
         <section className="empty-state dashboard-empty">
           <span className="data-label">No active ledger</span>
           <h2>Your first competition account starts with a valid entry.</h2>
           <p>
-            Select a tier and complete the local mock checkout to provision one.
+            Select a tier and complete checkout to reserve your competition
+            entry.
           </p>
           <Link className="button button-primary" href="/competitions">
             View competition board
@@ -90,6 +102,12 @@ export default async function DashboardPage({
         <section className="account-grid">
           {entries.map((entry) => {
             const leaderboard = leaderboardSummaries.get(entry.id);
+            const isPreorder =
+              entry.competition.status === 'SCHEDULED' &&
+              entry.competition.tradingStartsAt > now;
+            const canOpenTerminal =
+              entry.competition.status === 'ACTIVE' &&
+              entry.competition.tradingStartsAt <= now;
             return (
               <article className="account-card" key={entry.id}>
                 <div className="card-topline">
@@ -109,7 +127,19 @@ export default async function DashboardPage({
                 </p>
                 {entry.tradingAccount === null ? (
                   <div className="account-pending">
-                    Account provisioning pending
+                    Payment confirmation pending
+                  </div>
+                ) : isPreorder ? (
+                  <div className="account-pending">
+                    <strong>Preorder confirmed</strong>
+                    <span>
+                      Your simulated trading terminal opens when this
+                      competition begins.
+                    </span>
+                  </div>
+                ) : !canOpenTerminal ? (
+                  <div className="account-pending">
+                    Competition access is not currently open
                   </div>
                 ) : (
                   <>

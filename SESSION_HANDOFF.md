@@ -1,141 +1,89 @@
 # Session Handoff
 
-Codex must rewrite this file at the end of every substantial work session.
-
 ## Current handoff
 
-Phase 0 through Phase 8 are complete. The production-shaped environment and advanced trading terminal
-are integrated with the M-009 control-room visual refresh and the M-010 hydration-boundary fix. M-011
-hardened authentication and session handling. M-012 added a first-party chart command menu, M-013
-refined it into a compact TradingView-style command surface, and M-014 added usable future chart space
-for browser annotations. M-015 added chart-only fullscreen, M-016 added optional chart Buy/Sell quote
-selectors, M-017 added a TradingView-style studies legend, M-018 made those studies selectable, and M-019
-added multiple independent study instances. M-020 keeps browser drawings synchronized to their chart
-time/price anchors while the viewport moves or scales. M-021 adds Shift/Ctrl drawing constraints and
-click-to-lock measurements. Phase 9 remains blocked at P9-001: TraderMade's trial
-pricing is not documentation or written commercial authorization for customer-facing market data.
+Phase 10 is now a preorder activation package. The NOWPayments hosted-invoice/IPN implementation was
+already present and remains the only checkout boundary: no customer deposits, fiat, custody, stored
+balances, live brokerage execution, payouts, or browser-authoritative payment action exists. On 30 August
+2026, the product owner reported NOWPayments approval and receipt of the merchant API key, requested
+preorders before real market data, set a target storefront launch of 15 September 2026, and authorized
+installation on the designated `profitopath` SSH launch machine.
 
-### Integrated work
+The application is launch-ready but has **not** been deployed. This session has no NOWPayments API/IPN
+secrets and no saved SSH alias or resolvable hostname named `profitopath`; the attempted read-only SSH
+preflight used the effective default `profitopath` / local user and failed hostname resolution. No remote
+machine was accessed or modified.
 
-- Production-shaped Docker Compose runs migration/seed, PostgreSQL, Valkey, web, realtime, and worker
-  services with mock-only market data and service-DNS dependencies. Images use OpenSSL, Next
-  standalone serving, static assets, Prisma's engine, and the shared root-environment session secret.
-- The browser terminal includes full-screen mode, server-computed position metrics, studies, drawings,
-  measurement tools, persisted browser-only annotations, and server-validated draggable SL/TP
-  controls. The M-013 menu opens via right-click or `Shift+F10` at the current chart price/time as a
-  compact command panel. Drawing tools and display preferences use small nested panels with tooltips,
-  keyboard back/Escape behavior, and the same local horizontal-ray, view, visibility, repeat-drawing,
-  and drawing-management controls. The time scale reserves a 16-bar right margin and maps annotation
-  points in that empty space to interval-aligned future timestamps, so future drawings persist and
-  render past the newest candle; none can create orders or change server-authoritative state. The M-009 visual system applies across public, authentication, competition, dashboard,
-  leaderboard, administrative, and terminal surfaces without changing server authority.
-- The drawing overlay requests one animation-frame reprojection whenever Lightweight Charts reports a
-  visible logical-range change, and during captured drag/wheel viewport interactions. Stored drawing
-  points remain immutable time/price anchors; their SVG x/y values are recalculated from the live chart
-  scales, including the existing future-space mapping.
-- New trend lines lock to the dominant horizontal or vertical chart axis while Shift is held. Ctrl snaps
-  new drawing and measurement price points to the closest open, high, low, or close of their exact chart
-  candle; points in future space remain unsnapped. Measure is now a first-click anchor and live preview,
-  then locks as a chart-bound visual on its second click. These tools stay browser-only and cannot affect
-  an order, position, simulator, or market-data state.
-- The chart toolbar provides a separate full-screen control for the chart panel. It expands only the
-  chart (including timeframes, studies, drawing tools, annotations, protected position levels, context
-  menu, and chart controls), while the terminal-level full-screen control remains independent.
-- Chart settings now offers a default-off Buy/Sell selector overlay. It displays only live server quotes,
-  shares the selected side with the order ticket, and keeps the existing explicit ticket submission as the
-  sole route to the server-authoritative simulated-order action. It is therefore present in chart-only
-  fullscreen without creating an unsafe implicit one-click trade.
-- Applied studies render inside the chart pane as a compact top-left legend: the configured label, line
-  color, and latest computed value are shown for each moving average or Bollinger Band. The toolbar now
-  retains one `ƒx Studies` settings entry rather than duplicating active-study chips.
-- Each chart-study legend row is interactive and exposes a focused selected state plus a per-study gear
-  button. Clicking a plotted study line uses Lightweight Charts' hit information to select its owner and
-  strengthen that visual line; these interactions affect no simulator command or market-data state.
-- The `ƒx Studies` window adds, removes, validates, and resets up to 12 independent SMA, EMA, or
-  Bollinger Band instances. Duplicate kinds receive distinct default colors and ordinal legend labels;
-  every instance owns its calculated series, selection, and configuration while remaining browser-only.
-- M-011 fixed callback continuation: login and registration retain only one validated root-relative
-  protected destination. Repeated or unsafe callbacks cannot crash the form or redirect externally.
-  Successful credential navigation requires a confirmed Auth.js result.
-- Failed credentials are limited by hashed email/network Valkey keys (five and 25 failures in 15
-  minutes by default), create privacy-safe `SIGN_IN_FAILED` audits, and fail closed if Valkey is down.
-- Realtime upgrades and 60-second batch revalidation require current active-user ownership rather than
-  trusting a stale JWT claim. The Docker web image now copies Prisma's engine into the actual
-  standalone lookup path used by database-backed route bundles.
-- `11_TRADERMADE_TRIAL_ACTIVATION.md` remains the real-provider gate. `12_AUTH_SESSION_HARDENING.md`
-  records the remaining public-production authentication setup and lifecycle work.
+## Integrated work
 
-### Verification status
+- The existing provider-neutral payment service stores NOWPayments invoice and eventual payment IDs
+  separately, creates server-owned hosted invoices, verifies raw signed IPNs with recursively sorted
+  HMAC-SHA-512, and provisions only exact-amount USD `finished` confirmations. It is replay safe and
+  keeps provider events/audits in the same authoritative PostgreSQL transaction.
+- Paid entries for a future `SCHEDULED` competition now render as **Preorder confirmed** after the signed
+  IPN. The dashboard does not link to the terminal until the competition is active and its trading window
+  has started; payment success redirects remain explicitly pending because browser success is not a
+  payment confirmation. `D-024` records this non-economic product decision.
+- Added `13_PREORDER_PAYMENT_ACTIVATION.md`: secret contract, public raw-IPN requirements, controlled
+  invoice/IPN smoke procedure, launch/rollback sequence, and the explicit separation from market-data
+  authorization.
+- Added `docker-compose.launch.yml`, `ops/Caddyfile.launch`, and `ops/launch.env.example`. They define a
+  launch VM with Caddy TLS and private web, realtime, worker, and migration containers. Caddy proxies the
+  WebSocket at the same storefront `/realtime` origin so the host-only login cookie is preserved.
+  PostgreSQL and Valkey are deliberately external managed services; no authoritative database runs on the
+  VM. The web Docker image now accepts the build-time `NEXT_PUBLIC_REALTIME_URL` required by the browser.
+- The repository/local default remains `PAYMENT_PROVIDER=mock`. Only the ignored `.env.launch` created on
+  the production host from the secret manager sets `PAYMENT_PROVIDER=nowpayments`.
 
-- The remote M-009/M-010 integration passed browser visual QA at 1440px and 390px, formatter,
-  Prisma validation/generation, typecheck, lint, all 146 database-backed tests, and production build.
-- The combined M-009/M-010/M-011 branch passed formatter, typecheck, lint, `pnpm build`, and 126
-  runnable tests in 47 files. Twelve database integration files (36 tests) remain skipped because
-  the production-shaped local stack deliberately keeps PostgreSQL network-only.
-- The M-011 Docker web image built successfully. Its engine is present in both standalone lookup
-  paths; readiness and database-backed `/competitions` return 200; the repeated-callback login URL
-  returns 200; and a disposable registration/login/session smoke test returned 201/200/active.
-- M-012 passed formatter, web typecheck, lint, five focused menu/component integration tests, a full
-  test run, and production build. The rebuilt production-shaped Docker web service is healthy; the
-  browser smoke opened the menu through a real right-click and verified its horizontal-ray command
-  creates only one browser-local drawing.
-- M-013 passed formatter, web typecheck, lint, and six focused menu/component integration tests. The
-  production-shaped Docker web service rebuilt and is healthy; real-browser visual checks confirmed the
-  compact main command surface and its nested Drawing tools panel no longer use the obstructive
-  explanatory layout.
-- M-014 passed formatter, web typecheck, lint, and focused future-space/drawing/menu integration tests.
-  The production-shaped Docker web service rebuilt and is healthy; a real-browser visual check confirmed
-  the right-side future margin is present in the served terminal.
-- M-015 passed formatter, web typecheck, lint, and nine focused tests. The production-shaped Docker web
-  service rebuilt and is healthy; live browser checks confirmed the chart alone expands to the viewport
-  and its exit control returns to the normal terminal.
-- M-016 passed formatter, web typecheck, lint, 14 focused chart/ticket/workspace tests, and a production
-  web build. Docker Desktop was unavailable in this session, so the running local container is the prior
-  image and needs a normal Compose rebuild before visual verification of this change.
-- M-017 passed formatter, web typecheck, lint, 17 focused chart/ticket/workspace tests, and a production
-  web build. Docker Desktop remains unavailable, so the container needs its normal Compose rebuild before
-  a live visual verification of the legend.
-- M-018 passed formatter, web typecheck, lint, 18 focused chart/ticket/workspace tests, and a production
-  web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
-- M-019 passed formatter, web typecheck, lint, 22 focused chart/ticket/workspace tests, and a production
-  web build. Docker Desktop remains unavailable, so it likewise requires an image rebuild for visual QA.
-- M-020 passed formatter, full typecheck, lint, 14 focused drawing/menu/chart tests, and a production web
-  build. Its regression verifies a saved ray follows both time and price-scale movement without changing
-  the persisted anchor. Docker Desktop returned for this verification: a no-cache rebuild of every
-  deployable image and force-recreated Compose stack passed all service readiness checks; live browser QA
-  confirmed the ray reprojects as the chart is panned.
-- M-021 passed formatter, full typecheck, lint, 18 focused drawing/menu/chart tests, and a production
-  Docker web build. The rebuilt web container is healthy and live browser QA confirmed the measurement
-  locks and remains visible after its second chart click.
+## Verification
 
-### Local runtime
+- Focused dashboard/preorder, NOWPayments provider, and raw-IPN route tests: 8 passed.
+- `RUN_DATABASE_TESTS=true pnpm test`: 65 files / 191 tests passed with local PostgreSQL 17 and Valkey.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- `pnpm build`: passed; the Next production build includes `/api/payments/nowpayments/ipn`.
+- `pnpm exec prettier --check` for all changed parseable files: passed.
+- `git diff --check`: passed.
+- `docker compose --env-file ops/launch.env.example -f docker-compose.launch.yml config --quiet`:
+  passed. Docker Desktop was restarted by the user during verification; local database services are healthy.
 
-- The production-shaped Compose stack was rebuilt without cache and force-recreated on 25 August 2026.
-  PostgreSQL, Valkey, web, realtime, and worker health checks pass; the web app is reachable at
-  `http://localhost:3000` and realtime health at `http://localhost:3001/health/ready`.
-- The root `.env` is the local source for `NEXTAUTH_SECRET`; do not commit local secrets or vendor
-  credentials. The base `docker-compose.yml` is a separate host-run development option.
+## Launch-host deployment blocker
 
-### Start next session by
+To continue the user-authorized installation, obtain one of the following through the secure infrastructure
+channel:
 
-1. Read `AGENTS.md`, README, project-state files, architecture/deployment/candle docs,
-   `11_TRADERMADE_TRIAL_ACTIVATION.md`, and `12_AUTH_SESSION_HARDENING.md`.
-2. Inspect Git status and the Docker stack, then rerun the complete quality gate if it was not
-   completed after the M-010/M-011 rebase.
-3. Preserve the M-009 visual system and the M-005/M-007/M-008/M-012/M-013/M-014/M-015/M-016/M-017/M-018/M-019/M-020/M-021 terminal behavior when extending a
-   route. Keep authentication fail-closed and browser operations non-authoritative.
-4. Do not begin real provider work unless P9-001 receives official documentation and written approval
-   for customer display, cache/fanout, retention, and simulated execution.
+1. A saved SSH target named `profitopath` that is visible to this session, or the exact `user@hostname`
+   plus verified host-key fingerprint and the authorized SSH identity.
+2. The final storefront and realtime hostnames with DNS already pointed at the launch VM.
+3. Managed PostgreSQL and Valkey URLs, injected via the deployment secret manager together with
+   `NEXTAUTH_SECRET`, `MOCK_PAYMENT_SIGNING_SECRET`, `NOWPAYMENTS_API_KEY`, and
+   `NOWPAYMENTS_IPN_SECRET`. Never paste any of these in chat or Git.
+4. The approved first five-session competition date, signup close, tiers/rules version, and the written
+   merchant approval artefact retained in restricted operations storage.
 
-### Exact next task
+When those are available, clone/pull this branch on the host, materialize protected `.env.launch` from
+`ops/launch.env.example`, run the three Compose commands in `13_PREORDER_PAYMENT_ACTIVATION.md`, verify
+the public health/IPN route, and execute the controlled company-wallet NOWPayments smoke test before
+opening customer sales.
 
-P9-001 — obtain TraderMade's official streaming/historical documentation and written commercial
-approval for customer-facing display, caching/fanout, retention, and simulated execution. Do not
-implement an adapter until every required item is supplied and recorded.
+## Deferred market data
 
-### Do not start yet
+The product owner wants market-data implementation after the preorder launch. Keep
+`MARKET_DATA_SOURCE=mock` and `MOCK_MARKET_DATA_ENABLED=false` on the public preorder stack. Phase 9
+remains deferred until the provider gives its official API/streaming documentation, written display,
+fanout, cache/retention, and simulated-execution rights, credential/rate-limit model, and infrastructure
+details. Do not infer a provider API from approval correspondence.
 
-- real market-data adapter work or upstream-provider requests
-- NOWPayments production integration
-- DigitalOcean production deployment
-- funded accounts, brokerage execution, profit splits, or customer trading deposits
+## Worktree
+
+- Do not touch the user-owned untracked `marketing/` directory or `package-lock.json`.
+- All Phase 10 files are still uncommitted. The pre-existing NOWPayments implementation, this preorder
+  work, docs, Prisma migration, and launch composition need a review/commit before remote deployment.
+
+## Exact next task
+
+P10-006 — receive a valid SSH target and host identity, deploy the prepared Docker/Caddy composition to
+the launch VM with secret-manager values and managed services, provision the approved scheduled
+competition, then run and record the controlled NOWPayments invoice/IPN smoke test. Keep public sales
+closed until that test succeeds. Start Phase 9 only after the deferred provider documents and
+commercial-use limits are supplied.

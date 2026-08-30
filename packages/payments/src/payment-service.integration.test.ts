@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { InvalidStateTransitionError } from '@profitopath/competition';
 
 import { MockPaymentProvider } from './mock-provider';
+import type { PaymentProvider } from './index';
 import {
   createCompetitionCheckout,
   getOwnedMockPayment,
@@ -30,6 +31,25 @@ function createProvider(): MockPaymentProvider {
     clock: () => new Date('2026-08-22T12:00:00.000Z'),
     signingSecret: 'integration-test-mock-signing-secret',
   });
+}
+
+function createNowPaymentsProvider(): PaymentProvider {
+  return {
+    provider: 'NOWPAYMENTS',
+    async createCheckout() {
+      return {
+        providerInvoiceId: 'invoice-123',
+        providerPaymentId: 'invoice-123',
+        redirectUrl: 'https://nowpayments.io/payment/?iid=invoice-123',
+      };
+    },
+    async getPayment() {
+      throw new Error('Not used by this integration test');
+    },
+    async verifyCallback() {
+      throw new Error('Not used by this integration test');
+    },
+  };
 }
 
 async function createFixture(): Promise<Fixture> {
@@ -199,6 +219,42 @@ integrationTest('mock checkout and provisioning', () => {
     ).resolves.toBeNull();
   });
 
+  it('correlates a hosted invoice IPN to our immutable order ID before activation', async () => {
+    const fixture = await createFixture();
+    const checkout = await createCompetitionCheckout(
+      { ...fixture, now: new Date('2026-08-22T12:00:00.000Z') },
+      createNowPaymentsProvider(),
+    );
+    const event = {
+      amountMinor: 500,
+      currency: 'USD' as const,
+      orderReferenceId: checkout.paymentId,
+      provider: 'NOWPAYMENTS' as const,
+      providerEventId: 'nowpayments:payment-456:finished',
+      providerInvoiceId: 'invoice-123',
+      providerPaymentId: 'payment-456',
+      status: 'CONFIRMED' as const,
+    };
+
+    await expect(
+      processVerifiedPaymentEvent({
+        event,
+        payloadHash: hashPaymentEvent(event),
+      }),
+    ).resolves.toMatchObject({
+      competitionEntryId: checkout.competitionEntryId,
+      status: 'CONFIRMED',
+    });
+    await expect(
+      database.payment.findUniqueOrThrow({ where: { id: checkout.paymentId } }),
+    ).resolves.toMatchObject({
+      provider: 'NOWPAYMENTS',
+      providerInvoiceId: 'invoice-123',
+      providerPaymentId: 'payment-456',
+      status: 'CONFIRMED',
+    });
+  });
+
   it('provisions one exact account and ledger for duplicate confirmed delivery', async () => {
     const fixture = await createFixture();
     const provider = createProvider();
@@ -299,6 +355,7 @@ integrationTest('mock checkout and provisioning', () => {
       amountMinor: 499,
       currency: 'USD' as const,
       providerEventId: 'mock_evt_mismatched_amount',
+      provider: 'MOCK' as const,
       providerPaymentId: checkout.checkout.providerPaymentId,
       status: 'CONFIRMED' as const,
     };

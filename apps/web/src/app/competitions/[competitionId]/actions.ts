@@ -8,9 +8,9 @@ import {
 import { redirect } from 'next/navigation';
 
 import { requireUser } from '@/server/auth/session';
-import { mockPaymentProvider } from '@/server/payments';
+import { paymentProvider } from '@/server/payments';
 
-export async function startMockCheckout(formData: FormData): Promise<never> {
+export async function startCheckout(formData: FormData): Promise<never> {
   const competitionId = String(formData.get('competitionId') ?? '');
   const tierId = String(formData.get('tierId') ?? '');
   const callbackUrl = `/competitions/${encodeURIComponent(competitionId)}`;
@@ -19,7 +19,7 @@ export async function startMockCheckout(formData: FormData): Promise<never> {
   try {
     const result = await createCompetitionCheckout(
       { competitionId, tierId, userId: user.id },
-      mockPaymentProvider,
+      paymentProvider,
     );
     redirect(result.checkout.redirectUrl);
   } catch (error) {

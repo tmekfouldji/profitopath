@@ -1,8 +1,11 @@
 FROM node:22-bookworm-slim
 
+ARG NEXT_PUBLIC_REALTIME_URL
+
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_REALTIME_URL=$NEXT_PUBLIC_REALTIME_URL
 WORKDIR /app
 
 RUN corepack enable
@@ -14,6 +17,7 @@ RUN pnpm install --frozen-lockfile
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm db:generate
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
     MOCK_PAYMENT_SIGNING_SECRET=build-only-mock-payment-signing-secret \
+    PAYMENT_PROVIDER=mock \
     NEXTAUTH_SECRET=build-only-nextauth-secret-at-least-thirty-two-characters \
     NEXTAUTH_URL=http://localhost:3000 \
     VALKEY_URL=redis://localhost:6379 \

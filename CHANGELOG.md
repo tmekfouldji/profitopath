@@ -8,6 +8,14 @@
 - First-party browser simulator.
 - DigitalOcean deployment target.
 - NOWPayments planned for later production checkout.
+- Added a disabled-by-default server-side NOWPayments hosted-invoice adapter with exact USD-cent checkout,
+  signed HMAC-SHA-512 IPN verification, durable invoice/payment correlation, and replay-safe provisioning.
+  It does not enable production checkout, payouts, custody, fiat, or customer balances.
+- Added preorder-safe NOWPayments launch behavior: scheduled paid entries are clearly labeled as preorders,
+  payment submission remains pending until the signed IPN, and the trading terminal stays unavailable until
+  the competition begins. Added the single-host Docker/Caddy launch composition, secret-variable inventory,
+  controlled checkout/IPN smoke test, and rollback handoff; it uses externally managed PostgreSQL/Valkey
+  and is ready for a configured launch host.
 - Persistent Codex project-memory workflow added.
 
 ### Repository foundation

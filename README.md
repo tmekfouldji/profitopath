@@ -75,6 +75,7 @@ Codex must treat the project-tracking files in the repository as persistent memo
 - `10_MARKET_DATA_CACHING_AND_CANDLES.md` for market-data/charting work
 - `11_TRADERMADE_TRIAL_ACTIVATION.md` for the provider-trial approval and activation gate
 - `12_AUTH_SESSION_HARDENING.md` for authentication controls and production follow-up work
+- `13_PREORDER_PAYMENT_ACTIVATION.md` for the NOWPayments preorder deployment handoff
 
 Read them at the start of every session and update them before ending any substantial session.
 
@@ -163,6 +164,13 @@ the local-only `NEXTAUTH_URL` and `NEXTAUTH_SECRET` values copied from `.env.exa
 Phase 3 uses only the local `MockPaymentProvider`. Its callback signatures use the separate
 `MOCK_PAYMENT_SIGNING_SECRET` from `.env.example`; the in-app confirmation screen never charges a
 real payment method and provisions fictitious competition capital only.
+
+The Phase 10 `NowPaymentsProvider` is implemented but disabled by default with
+`PAYMENT_PROVIDER=mock`. When explicitly enabled in a secure HTTPS environment, it creates a
+server-owned hosted invoice and accepts only signed IPN callbacks; API and IPN secrets must come from
+the deployment secret manager, never this repository. `finished` is the only NOWPayments state that can
+activate an entry. This code does not authorize production use: merchant acceptance, SVG legal approval,
+and a publicly reachable tested IPN endpoint remain required.
 
 Phase 4 adds an opt-in deterministic worker feed. Set `MOCK_MARKET_DATA_ENABLED=true` only for the
 development mock cycle; browsers still never call a provider, historical bars remain deferred, and

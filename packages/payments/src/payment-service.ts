@@ -11,7 +11,12 @@ import {
 } from '@profitopath/competition';
 import { database, type Prisma } from '@profitopath/database';
 
-import type { CheckoutSession, PaymentEvent, PaymentProvider } from './index';
+import type {
+  CheckoutSession,
+  PaymentEvent,
+  PaymentProvider,
+  PaymentProviderName,
+} from './index';
 
 export class CheckoutUnavailableError extends Error {
   constructor(message: string) {
@@ -54,8 +59,11 @@ export interface ProcessPaymentEventResult {
   tradingAccountId?: string;
 }
 
-function checkoutIdempotencyKey(entryId: string): string {
-  return `mock-checkout:${entryId}`;
+function checkoutIdempotencyKey(
+  provider: PaymentProviderName,
+  entryId: string,
+): string {
+  return `${provider.toLowerCase()}-checkout:${entryId}`;
 }
 
 function initialBalanceIdempotencyKey(entryId: string): string {
@@ -79,7 +87,10 @@ export function hashPaymentEvent(event: PaymentEvent): string {
       JSON.stringify({
         amountMinor: event.amountMinor,
         currency: event.currency,
+        orderReferenceId: event.orderReferenceId,
         providerEventId: event.providerEventId,
+        provider: event.provider,
+        providerInvoiceId: event.providerInvoiceId,
         providerPaymentId: event.providerPaymentId,
         status: event.status,
       }),
@@ -96,6 +107,28 @@ export function getOwnedMockPayment(providerPaymentId: string, userId: string) {
     },
     where: { provider: 'MOCK', providerPaymentId, userId },
   });
+}
+
+function persistedCheckout(payment: {
+  checkoutUrl: string | null;
+  expiresAt: Date | null;
+  providerInvoiceId: string | null;
+  providerPaymentId: string | null;
+}): CheckoutSession | undefined {
+  if (
+    payment.checkoutUrl === null ||
+    (payment.providerInvoiceId === null && payment.providerPaymentId === null)
+  ) {
+    return undefined;
+  }
+  return {
+    ...(payment.expiresAt === null ? {} : { expiresAt: payment.expiresAt }),
+    ...(payment.providerInvoiceId === null
+      ? {}
+      : { providerInvoiceId: payment.providerInvoiceId }),
+    providerPaymentId: payment.providerPaymentId ?? payment.providerInvoiceId!,
+    redirectUrl: payment.checkoutUrl,
+  };
 }
 
 export async function createCompetitionCheckout(
@@ -147,7 +180,7 @@ export async function createCompetitionCheckout(
       );
     }
 
-    const idempotencyKey = checkoutIdempotencyKey(entry.id);
+    const idempotencyKey = checkoutIdempotencyKey(provider.provider, entry.id);
     const payment = await transaction.payment.upsert({
       create: {
         amountMinor: tier.entryFeeMinor,
@@ -161,7 +194,7 @@ export async function createCompetitionCheckout(
           tierId: tier.id,
           tierRulesVersion: tier.rulesVersion,
         },
-        provider: 'MOCK',
+        provider: provider.provider,
         userId: user.id,
       },
       update: {},
@@ -173,7 +206,7 @@ export async function createCompetitionCheckout(
       payment.competitionEntryId !== entry.id ||
       payment.amountMinor !== tier.entryFeeMinor ||
       payment.currency !== tier.currency ||
-      payment.provider !== 'MOCK'
+      payment.provider !== provider.provider
     ) {
       throw new PaymentEventConflictError(
         'Persisted checkout does not match the requested entry',
@@ -200,23 +233,36 @@ export async function createCompetitionCheckout(
     return { entryId: entry.id, payment };
   });
 
-  const checkout = await provider.createCheckout({
-    amountMinor: reservation.payment.amountMinor,
-    currency: 'USD',
-    idempotencyKey: reservation.payment.idempotencyKey,
-    referenceId: reservation.payment.id,
-  });
+  const existingCheckout = persistedCheckout(reservation.payment);
+  const checkout =
+    existingCheckout ??
+    (await provider.createCheckout({
+      amountMinor: reservation.payment.amountMinor,
+      currency: 'USD',
+      idempotencyKey: reservation.payment.idempotencyKey,
+      referenceId: reservation.payment.id,
+    }));
 
   await database.$transaction(async (transaction) => {
     const current = await transaction.payment.findUniqueOrThrow({
       where: { id: reservation.payment.id },
     });
     if (
+      checkout.providerInvoiceId === undefined &&
       current.providerPaymentId !== null &&
       current.providerPaymentId !== checkout.providerPaymentId
     ) {
       throw new PaymentEventConflictError(
         'Provider returned a different payment for an existing checkout',
+      );
+    }
+    if (
+      checkout.providerInvoiceId !== undefined &&
+      current.providerInvoiceId !== null &&
+      current.providerInvoiceId !== checkout.providerInvoiceId
+    ) {
+      throw new PaymentEventConflictError(
+        'Provider returned a different invoice for an existing checkout',
       );
     }
 
@@ -230,8 +276,13 @@ export async function createCompetitionCheckout(
       await transaction.payment.update({
         data: {
           checkoutUrl: checkout.redirectUrl,
-          expiresAt: checkout.expiresAt,
-          providerPaymentId: checkout.providerPaymentId,
+          expiresAt: checkout.expiresAt ?? null,
+          ...(checkout.providerInvoiceId === undefined
+            ? {}
+            : { providerInvoiceId: checkout.providerInvoiceId }),
+          ...(checkout.providerInvoiceId === undefined
+            ? { providerPaymentId: checkout.providerPaymentId }
+            : {}),
           status: 'PENDING',
         },
         where: { id: current.id },
@@ -240,8 +291,13 @@ export async function createCompetitionCheckout(
       await transaction.payment.update({
         data: {
           checkoutUrl: checkout.redirectUrl,
-          expiresAt: checkout.expiresAt,
-          providerPaymentId: checkout.providerPaymentId,
+          expiresAt: checkout.expiresAt ?? null,
+          ...(checkout.providerInvoiceId === undefined
+            ? {}
+            : { providerInvoiceId: checkout.providerInvoiceId }),
+          ...(checkout.providerInvoiceId === undefined
+            ? { providerPaymentId: checkout.providerPaymentId }
+            : {}),
         },
         where: { id: current.id },
       });
@@ -253,7 +309,8 @@ export async function createCompetitionCheckout(
       action: 'CHECKOUT_CREATED',
       actorUserId: input.userId,
       after: {
-        expiresAt: checkout.expiresAt.toISOString(),
+        expiresAt: checkout.expiresAt?.toISOString(),
+        providerInvoiceId: checkout.providerInvoiceId,
         providerPaymentId: checkout.providerPaymentId,
         status: 'PENDING',
       },
@@ -286,7 +343,10 @@ export async function processVerifiedPaymentEvent(
       SELECT 1 AS "locked"
       FROM (
         SELECT pg_advisory_xact_lock(
-          hashtextextended(${`MOCK:${input.event.providerEventId}`}, 0)
+          hashtextextended(
+            ${`${input.event.provider}:${input.event.providerEventId}`},
+            0
+          )
         )
       ) AS payment_event_lock
     `;
@@ -300,7 +360,7 @@ export async function processVerifiedPaymentEvent(
       },
       where: {
         provider_providerEventId: {
-          provider: 'MOCK',
+          provider: input.event.provider,
           providerEventId: input.event.providerEventId,
         },
       },
@@ -330,16 +390,48 @@ export async function processVerifiedPaymentEvent(
       };
     }
 
-    const payment = await transaction.payment.findUnique({
+    const payment = await transaction.payment.findFirst({
       include: {
         competitionEntry: {
           include: { tier: true, tradingAccount: true },
         },
       },
-      where: { providerPaymentId: input.event.providerPaymentId },
+      where: {
+        provider: input.event.provider,
+        OR: [
+          { providerPaymentId: input.event.providerPaymentId },
+          ...(input.event.orderReferenceId === undefined
+            ? []
+            : [{ id: input.event.orderReferenceId }]),
+        ],
+      },
     });
     if (payment === null || payment.competitionEntry === null) {
       throw new PaymentEventConflictError('Payment was not found');
+    }
+    if (
+      input.event.orderReferenceId !== undefined &&
+      payment.id !== input.event.orderReferenceId
+    ) {
+      throw new PaymentEventConflictError(
+        'Provider order reference does not match',
+      );
+    }
+    if (
+      input.event.providerInvoiceId !== undefined &&
+      payment.providerInvoiceId !== input.event.providerInvoiceId
+    ) {
+      throw new PaymentEventConflictError(
+        'Provider invoice reference does not match',
+      );
+    }
+    if (
+      payment.providerPaymentId !== null &&
+      payment.providerPaymentId !== input.event.providerPaymentId
+    ) {
+      throw new PaymentEventConflictError(
+        'Provider payment reference does not match',
+      );
     }
     await transaction.$executeRaw`
       SELECT pg_advisory_xact_lock(
@@ -386,7 +478,7 @@ export async function processVerifiedPaymentEvent(
       data: {
         payloadHash: input.payloadHash,
         paymentId: payment.id,
-        provider: 'MOCK',
+        provider: input.event.provider,
         providerEventId: input.event.providerEventId,
         providerPaymentId: input.event.providerPaymentId,
         receivedAt,
@@ -394,24 +486,27 @@ export async function processVerifiedPaymentEvent(
       },
     });
 
-    if (payment.status !== nextStatus) {
+    if (payment.status !== nextStatus || payment.providerPaymentId === null) {
       await transaction.payment.update({
         data: {
           ...(nextStatus === 'CONFIRMED' ? { confirmedAt: receivedAt } : {}),
+          providerPaymentId: input.event.providerPaymentId,
           status: nextStatus,
         },
         where: { id: payment.id },
       });
-      await upsertAudit(transaction, {
-        action: 'PAYMENT_STATUS_CHANGED',
-        actorUserId: payment.userId,
-        after: { status: nextStatus },
-        before: { status: payment.status },
-        correlationId: input.event.providerEventId,
-        entityId: payment.id,
-        entityType: 'Payment',
-        idempotencyKey: `audit:payment-event:${input.event.providerEventId}`,
-      });
+      if (payment.status !== nextStatus) {
+        await upsertAudit(transaction, {
+          action: 'PAYMENT_STATUS_CHANGED',
+          actorUserId: payment.userId,
+          after: { status: nextStatus },
+          before: { status: payment.status },
+          correlationId: input.event.providerEventId,
+          entityId: payment.id,
+          entityType: 'Payment',
+          idempotencyKey: `audit:payment-event:${input.event.providerEventId}`,
+        });
+      }
     }
 
     const entry = payment.competitionEntry;

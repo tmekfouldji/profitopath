@@ -8,21 +8,29 @@ This file is the authoritative high-level state for Codex.
 - Trading platform: first-party browser simulator
 - Repository: single GitHub monorepo
 - Cloud target: DigitalOcean
-- Payment target: NOWPayments, later phase
+- Payment target: NOWPayments hosted invoices, preorder implementation and launch composition complete;
+  repository/local default remains mock
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 9 — Real market-data provider (blocked on provider approval)**
-- Production deployment: not started
+- Current implementation phase: **Phase 10 — preorder checkout activation (deployment blocked on external host/secrets)**
+- Production deployment: launch composition prepared; no remote machine changed
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
-- Real payment integration: not started
+- Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
+  are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. No real credential is
+  configured in this environment.
 
 ## Active milestone
 
-Phase 0 through Phase 8 are complete. On 24 August 2026, TraderMade offered pricing and a paid,
+Phase 0 through Phase 8 and the Phase 10 backend integration are complete. On 30 August 2026, the product
+owner reported NOWPayments approval and receipt of the merchant API key, and requested a preorder launch
+before the market-data rollout. That key is not present in the repository or this runtime. On 24 August 2026, TraderMade offered pricing and a paid,
 seven-day refundable trial, but stated that commercial terms can be discussed after testing. The reply
 does not supply official API documentation or confirm rights for customer-facing chart display,
 caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Mock market data remains
-active; no real provider is authorized.
+active; no real market-data provider is authorized. The NOWPayments implementation follows its documented
+hosted-invoice and IPN flow, but production activation remains blocked on merchant acceptance, SVG legal
+approval evidence retention, secret-manager provisioning, final public origin/DNS, a public HTTPS IPN
+endpoint test, an explicit launch competition schedule, and access to the designated launch host.
 
 ## Phase 0–1 completion evidence
 
@@ -158,19 +166,48 @@ All items above are complete, including the service-backed GitHub Actions run.
 - GitHub Actions run `32554756501` applied all eight migrations and passed Compose validation,
   formatter, typecheck, lint, all 127 tests, and production build
 
+## Phase 10 preorder activation evidence — deployment pending
+
+- versioned provider-neutral payment contract and Prisma migration retain provider invoice and actual
+  payment IDs separately, preserving invoice-to-IPN/order correlation and provider-scoped replay safety
+- server-only NOWPayments `POST /v1/invoice` hosted checkout sends exact integer-derived USD cents and an
+  immutable local payment ID as `order_id`; browser clients never receive API/IPN credentials or wallet UI
+- `/api/payments/nowpayments/ipn` receives raw IPN bodies, checks the recursively sorted HMAC-SHA-512
+  `x-nowpayments-sig`, and rejects invalid, mismatched, regressive, or duplicate-conflicting events
+- only NOWPayments `finished` maps to the existing exact-amount `CONFIRMED` activation path; waiting,
+  confirming, partially paid, and sending states remain non-provisioning
+- `PAYMENT_PROVIDER=mock` remains the default. `PAYMENT_PROVIDER=nowpayments` requires both
+  server-only NOWPayments secrets and an HTTPS non-localhost callback origin
+- scheduled entries now render as preorders after a confirmed payment; the dashboard withholds the trading
+  terminal until the competition is active and its scheduled window has begun
+- `docker-compose.launch.yml` and `ops/Caddyfile.launch` define a single-host launch deployment with
+  Caddy TLS, a same-origin `/realtime` WebSocket proxy that preserves host-only auth cookies, private
+  web/realtime/worker services, and externally managed PostgreSQL/Valkey; the secret-safe variable
+  inventory and smoke/rollback procedure live in `13_PREORDER_PAYMENT_ACTIVATION.md`
+- local PostgreSQL migration applied successfully; `pnpm db:validate`, `pnpm db:generate`, formatter,
+  typecheck, lint, production build, and all 191 database-backed tests passed
+
 ## Last completed task
 
-M-021 — Chart drawing constraints and click-to-lock measurement.
+P10-005 — NOWPayments hosted-invoice, IPN, persistence, and verification quality gate. The preorder UX
+and launch composition have since been implemented and verified as part of P10-006.
 
 ## Next task
 
-P9-001 — obtain TraderMade's official streaming/historical API documentation and documentary
-confirmation of commercial customer-facing display, caching/fanout, retention, and simulated-
-execution rights. The 24 August pricing/trial email alone does not meet this gate; do not invent or
-integrate an API.
+P10-006 — deploy the prepared launch composition. The current blocker is external: this session has no
+saved `profitopath` SSH target (the default hostname did not resolve), no launch-host user/host-key
+identity, no final public hostname/DNS, no managed PostgreSQL/Valkey connection values, no deployment
+secret injection, and no approved first competition schedule. Once supplied, install Docker/Compose on
+that machine, materialize its ignored `.env.launch` from the secret manager, deploy, and run the controlled
+invoice/IPN smoke test. P9-001 remains intentionally deferred until the approved vendor documentation and
+infrastructure are delivered.
 
 ## Quality status
 
+- NOWPayments/preorder integration: focused checkout/IPN/dashboard tests, `pnpm typecheck`, `pnpm lint`,
+  `pnpm build`, `docker compose --env-file ops/launch.env.example -f docker-compose.launch.yml config
+--quiet`, and `RUN_DATABASE_TESTS=true pnpm test` passed locally (65 files / 191 tests); migration
+  `20260829223500_nowpayments_checkout` applied to local PostgreSQL 17
 - `pnpm format`: passed
 - `pnpm typecheck`: passed
 - `pnpm lint`: passed
@@ -293,10 +330,11 @@ integrate an API.
 - TraderMade offered pricing/a paid trial, but commercial terms, official documentation, and required
   client-display/redistribution/simulated-execution rights are not approved or integrated
 - official provider API documentation and commercial-use/redistribution approval not supplied
-- NOWPayments merchant acceptance not completed
+- NOWPayments merchant acceptance, production credential provisioning, and public HTTPS IPN verification
+  are not completed; real checkout remains disabled
 - SVG legal opinion not completed
 
 The market-data selection/documentation/rights blocker prevents Phase 9 implementation under the
 repository provider rules. Do not infer an API, scrape a provider, or present unapproved data as
-commercially usable. Phase 10 NOWPayments and Phase 11 DigitalOcean production work also remain
-explicitly deferred.
+commercially usable. The Phase 10 code path is complete but its real-checkout activation and Phase 11
+DigitalOcean production work remain explicitly deferred.

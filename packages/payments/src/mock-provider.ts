@@ -57,6 +57,7 @@ function isPaymentStatus(value: unknown): value is PaymentProviderStatus {
 }
 
 export class MockPaymentProvider implements PaymentProvider {
+  readonly provider = 'MOCK' as const;
   readonly #baseUrl: string;
   readonly #clock: () => Date;
   readonly #payments = new Map<string, StoredMockPayment>();
@@ -110,6 +111,7 @@ export class MockPaymentProvider implements PaymentProvider {
       amountMinor: payment.amountMinor,
       currency: payment.currency,
       providerEventId: `mock_lookup_${digest(providerPaymentId).slice(0, 24)}`,
+      provider: this.provider,
       providerPaymentId,
       status: payment.status,
     };
@@ -176,6 +178,7 @@ export class MockPaymentProvider implements PaymentProvider {
       amountMinor: payload.amountMinor,
       currency: payload.currency,
       providerEventId: payload.providerEventId,
+      provider: this.provider,
       providerPaymentId: payload.providerPaymentId,
       status: payload.status,
     };

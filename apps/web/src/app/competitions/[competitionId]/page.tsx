@@ -5,7 +5,7 @@ import { WeekTape } from '@/components/week-tape';
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { getCompetition } from '@/server/queries';
 
-import { startMockCheckout } from './actions';
+import { startCheckout } from './actions';
 
 const tierDescriptions: Record<string, string> = {
   ELITE:
@@ -54,6 +54,13 @@ export default async function CompetitionPage({
         <p className="notice-banner notice-error" role="alert">
           This checkout is no longer available. Refresh the competition state or
           choose another open tier.
+        </p>
+      ) : null}
+
+      {competition.status === 'SCHEDULED' ? (
+        <p className="notice-banner" role="status">
+          Preorder is open. A completed checkout reserves your tier; simulated
+          trading opens with the scheduled competition window.
         </p>
       ) : null}
 
@@ -107,7 +114,7 @@ export default async function CompetitionPage({
                   <dd>{formatUsdMinor(tier.startingBalanceMinor)}</dd>
                 </div>
               </dl>
-              <form action={startMockCheckout}>
+              <form action={startCheckout}>
                 <input
                   name="competitionId"
                   type="hidden"
@@ -123,7 +130,7 @@ export default async function CompetitionPage({
                   type="submit"
                 >
                   {competition.status === 'SCHEDULED'
-                    ? `Choose ${tier.name}`
+                    ? `Preorder ${tier.name}`
                     : 'Entry unavailable'}
                 </button>
               </form>

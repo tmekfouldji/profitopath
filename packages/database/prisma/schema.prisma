@@ -97,6 +97,7 @@ enum RuleBreachType {
 
 enum PaymentProvider {
   MOCK
+  NOWPAYMENTS
 }
 
 enum PaymentStatus {
@@ -545,6 +546,7 @@ model Payment {
   userId             String                 @db.Uuid
   competitionEntryId String?                @db.Uuid
   provider           PaymentProvider        @default(MOCK)
+  providerInvoiceId  String?                @unique @db.VarChar(128)
   providerPaymentId  String?                @unique @db.VarChar(128)
   idempotencyKey     String                 @unique @db.VarChar(128)
   status             PaymentStatus          @default(CREATED)

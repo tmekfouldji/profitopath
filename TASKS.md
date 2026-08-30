@@ -602,3 +602,44 @@ Rules:
   - Acceptance: the approved provider, documentation version/links or supplied files, credential
     and rate-limit model, redistribution/cache limits, symbol/session semantics, historical bounds,
     and simulated-execution/display rights are recorded before P9 implementation tasks are expanded.
+
+## In progress — Phase 10
+
+- [x] P10-001 Implement the backend-only NOWPayments hosted-invoice adapter and signed IPN intake.
+  - Acceptance: checkout creation uses the documented hosted-invoice API from the server only; API and
+    IPN secrets are environment-only; a callback validates the documented recursively sorted HMAC-SHA-512
+    signature before it can affect a payment; exact USD price, provider payment ID, provider invoice ID,
+    and our immutable order ID are correlated; no payout, custody, stored-value, fiat, or browser-owned
+    payment flow is introduced.
+- [x] P10-002 Extend durable payment persistence and provider-neutral processing for NOWPayments.
+  - Acceptance: provider/invoice/payment references are forward-migrated, duplicate IPNs are idempotent,
+    terminal regressions are rejected, `finished` is the only provider status that provisions an entry,
+    and under/overpayment cannot activate simulated capital.
+- [x] P10-003 Route eligible competition checkout to the configured provider without weakening mock use.
+  - Acceptance: `PAYMENT_PROVIDER=mock` stays the development default; selecting `nowpayments` requires
+    complete server-only configuration; user-facing flow redirects only to the hosted invoice and displays
+    no API/IPN secret or wallet custody UI.
+- [x] P10-004 Add unit, route, and PostgreSQL integration coverage for invoice creation, HMAC validation,
+      callback replay, invoice/order correlation, status mapping, and exact-amount activation.
+- [x] P10-005 Pass the Phase 10 quality gate and update persistent project memory.
+  - Acceptance: formatter, Prisma validation/generation, typecheck, lint, tests, build, environment
+    documentation, changelog, project state, and handoff are current. Production enablement remains
+    blocked until the business/legal merchant-acceptance evidence and a publicly reachable IPN endpoint
+    are separately verified.
+- [!] P10-006 Complete the preorder checkout operational activation gate.
+  - Product owner reports NOWPayments approval and receipt of the API key on 30 August 2026. Record the
+    approval artefact outside Git; never paste the key into this repository or chat.
+  - Implementation evidence: preorder UI/test coverage, the single-host Docker/Caddy launch composition,
+    deployment variable inventory, smoke procedure, rollback plan, 191 database-backed tests, and a
+    production build are complete.
+  - Blocker: the current runtime has no resolvable or configured `profitopath` SSH target, no final
+    launch hostname/DNS or host identity, no managed PostgreSQL/Valkey values, no deployment-secret
+    injection, and no approved first competition schedule. The direct SSH preflight resolved
+    `profitopath` only as an unknown hostname; no remote machine was modified.
+  - Remaining operational work: provide the saved SSH target or `user@host` and verified host key;
+    provision the API/IPN secrets in the deployment secret manager; configure the final public HTTPS
+    origin and raw-body IPN path; run the documented controlled invoice/IPN smoke test; then enable
+    `PAYMENT_PROVIDER=nowpayments` only in that deployed environment.
+  - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
+    a terminal before their competition activates, and the deployment team has a secret-safe activation
+    and rollback runbook. `PAYMENT_PROVIDER=mock` remains the repository and local-development default.
