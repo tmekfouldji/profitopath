@@ -633,8 +633,10 @@ Rules:
     deployment variable inventory, smoke procedure, rollback plan, 191 database-backed tests, and a
     production build are complete.
   - Host preparation: connected to `root@72.62.90.38`; installed Docker Engine 29.7.2 and Docker Compose
-    5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; cloned launch revision `4621bbe` to
-    `/opt/profitopath`. No application, database, or payment service was started.
+    5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; pulled revision `7fb9e26` to
+    `/opt/profitopath`; and started private PostgreSQL 17/Valkey 8 volumes with migrations through
+    `20260830190000_email_verification` applied. Web, realtime, worker, Caddy, and live payments remain
+    stopped.
   - Temporary infrastructure decision: the product owner explicitly authorized private PostgreSQL and Valkey
     Docker containers on the launch VM without an off-host backup destination. The configuration keeps both
     ports private and records the required later managed-service migration; it is not highly available.

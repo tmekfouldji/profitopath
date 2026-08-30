@@ -8,6 +8,8 @@
   resends, auditable confirmation events, and a credential sign-in gate that rejects unverified accounts.
 - Added forward-only superadmin-observability and email-verification database migrations plus temporary
   launch-host SMTP environment templates. Raw secrets remain server-only.
+- Pulled the release to the temporary launch host and applied its migrations to the private PostgreSQL 17
+  service; only PostgreSQL and Valkey are running while public activation gates remain unmet.
 
 ### Project direction
 

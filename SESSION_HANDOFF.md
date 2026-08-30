@@ -11,7 +11,7 @@ selected provider supplies official documentation and commercial customer-displa
 The product owner requested a 15 September 2026 preorder storefront and authorized deployment to
 `root@72.62.90.38`. The public app is deliberately not started yet. The launch host has Docker Engine
 29.7.2, Docker Compose 5.5.0, a default-deny UFW permitting SSH/HTTP/HTTPS, and `/opt/profitopath` at
-revision `010705c`. Private PostgreSQL 17 and Valkey 8 Docker containers are healthy; no DB/cache ports
+revision `7fb9e26`. Private PostgreSQL 17 and Valkey 8 Docker containers are healthy; no DB/cache ports
 are published. Their Docker volumes have no off-host backup destination, so this is a temporary explicit
 pre-launch exception (D-025), not HA or a managed database solution. Migrate before market-data/trading
 launch.
@@ -76,11 +76,11 @@ test email, and only then enable public registration. For NOWPayments, set both 
 - `pnpm db:generate`, `pnpm db:validate`, `pnpm typecheck`, and `pnpm lint` passed.
 - Production-mode `pnpm build` completed successfully.
 - `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed: 136 files, 200 tests.
-- Compose config and Caddy validation for the self-hosted launch composition passed before this code revision.
-  Re-run them and deploy migrations on the host after the next commit/pull.
+- Compose config and Caddy validation for the self-hosted launch composition passed. The host pulled
+  `7fb9e26` and applied both new migrations successfully; only data containers are running.
 
 ## Next work
 
-Finish P10-008 by running the full quality/docs gate after the latest documentation format check, commit and
-push the superadmin/email work, pull it on the launch host, run `migrate`, and keep web/realtime/worker/Caddy
-stopped until the DNS, SMTP, NOWPayments, and first-competition gates are satisfied. P9-001 is still blocked.
+Keep web/realtime/worker/Caddy stopped until the DNS, SMTP, NOWPayments, and first-competition gates are
+satisfied. Then run the controlled confirmation and checkout/IPN smoke tests before enabling public
+registration or live payment. P9-001 is still blocked.

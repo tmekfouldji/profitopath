@@ -15,7 +15,7 @@ This file is the authoritative high-level state for Codex.
   and owner observability (deployment blocked on DNS/secrets/schedule)**
 - Production deployment: launch host has Docker/Compose, default-deny firewall, private PostgreSQL 17 and
   Valkey 8 containers, and applied migrations through `20260830190000_email_verification`; public
-  application services remain intentionally stopped
+  application services remain intentionally stopped at launch revision `7fb9e26`
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
