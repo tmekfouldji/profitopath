@@ -16,6 +16,9 @@
   the competition begins. Added the single-host Docker/Caddy launch composition, secret-variable inventory,
   controlled checkout/IPN smoke test, and rollback handoff; it uses externally managed PostgreSQL/Valkey
   and is ready for a configured launch host.
+- Prepared the designated Ubuntu launch VM with Docker Engine, Compose, an SSH/HTTP/HTTPS-only firewall,
+  and the checked-out launch revision. No application service or authoritative database has been started
+  pending public DNS, managed data services, secrets, and the controlled payment smoke test.
 - Persistent Codex project-memory workflow added.
 
 ### Repository foundation

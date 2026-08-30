@@ -12,7 +12,8 @@ This file is the authoritative high-level state for Codex.
   repository/local default remains mock
 - Legal/company working assumption: SVG Business Company, final approval pending
 - Current implementation phase: **Phase 10 — preorder checkout activation (deployment blocked on external host/secrets)**
-- Production deployment: launch composition prepared; no remote machine changed
+- Production deployment: launch host prepared with Docker/Compose, firewall, and revision `4621bbe`;
+  application services are not started
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
@@ -30,7 +31,8 @@ caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Mock 
 active; no real market-data provider is authorized. The NOWPayments implementation follows its documented
 hosted-invoice and IPN flow, but production activation remains blocked on merchant acceptance, SVG legal
 approval evidence retention, secret-manager provisioning, final public origin/DNS, a public HTTPS IPN
-endpoint test, an explicit launch competition schedule, and access to the designated launch host.
+endpoint test, an explicit launch competition schedule, and managed PostgreSQL/Valkey endpoints. The
+designated Ubuntu launch host is prepared but intentionally has no authoritative database.
 
 ## Phase 0–1 completion evidence
 
@@ -194,13 +196,13 @@ and launch composition have since been implemented and verified as part of P10-0
 
 ## Next task
 
-P10-006 — deploy the prepared launch composition. The current blocker is external: this session has no
-saved `profitopath` SSH target (the default hostname did not resolve), no launch-host user/host-key
-identity, no final public hostname/DNS, no managed PostgreSQL/Valkey connection values, no deployment
-secret injection, and no approved first competition schedule. Once supplied, install Docker/Compose on
-that machine, materialize its ignored `.env.launch` from the secret manager, deploy, and run the controlled
-invoice/IPN smoke test. P9-001 remains intentionally deferred until the approved vendor documentation and
-infrastructure are delivered.
+P10-006 — deploy the prepared launch composition. The host is now reachable as `root@72.62.90.38` and
+contains Docker Engine 29.7.2, Docker Compose 5.5.0, UFW rules for SSH/HTTP/HTTPS, and the checked-out
+launch revision at `/opt/profitopath`. The remaining external blockers are no public DNS (as of 30 August
+2026, `profitopath.com` has no A record), no managed PostgreSQL/Valkey connection values, no deployment
+secret injection, and no approved first competition schedule. After these arrive, materialize the ignored
+`.env.launch` from the secret manager, deploy, and run the controlled invoice/IPN smoke test. P9-001
+remains intentionally deferred until the approved vendor documentation and infrastructure are delivered.
 
 ## Quality status
 

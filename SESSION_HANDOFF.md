@@ -9,10 +9,11 @@ balances, live brokerage execution, payouts, or browser-authoritative payment ac
 preorders before real market data, set a target storefront launch of 15 September 2026, and authorized
 installation on the designated `profitopath` SSH launch machine.
 
-The application is launch-ready but has **not** been deployed. This session has no NOWPayments API/IPN
-secrets and no saved SSH alias or resolvable hostname named `profitopath`; the attempted read-only SSH
-preflight used the effective default `profitopath` / local user and failed hostname resolution. No remote
-machine was accessed or modified.
+The application is launch-ready but has **not** been started. The host is reachable as
+`root@72.62.90.38`: Docker Engine 29.7.2 and Docker Compose 5.5.0 are installed and enabled, UFW is
+default-deny with SSH/HTTP/HTTPS allowed, and launch revision `4621bbe` is checked out at
+`/opt/profitopath`. This session has no NOWPayments/API/IPN or infrastructure secrets; no application,
+database, or payment container has been started.
 
 ## Integrated work
 
@@ -34,6 +35,9 @@ machine was accessed or modified.
   VM. The web Docker image now accepts the build-time `NEXT_PUBLIC_REALTIME_URL` required by the browser.
 - The repository/local default remains `PAYMENT_PROVIDER=mock`. Only the ignored `.env.launch` created on
   the production host from the secret manager sets `PAYMENT_PROVIDER=nowpayments`.
+- `profitopath.com` and `www.profitopath.com` currently have no public A record. The required Namecheap
+  setup is `A @ → 72.62.90.38` and `CNAME www → profitopath.com`, with no URL forwarding or AAAA record.
+  The cloud/provider firewall must also permit inbound TCP 80 and 443 for Caddy's certificate issuance.
 
 ## Verification
 
@@ -52,19 +56,19 @@ machine was accessed or modified.
 To continue the user-authorized installation, obtain one of the following through the secure infrastructure
 channel:
 
-1. A saved SSH target named `profitopath` that is visible to this session, or the exact `user@hostname`
-   plus verified host-key fingerprint and the authorized SSH identity.
-2. The final storefront and realtime hostnames with DNS already pointed at the launch VM.
-3. Managed PostgreSQL and Valkey URLs, injected via the deployment secret manager together with
+1. The Namecheap `A` and `www` CNAME records, propagated to the prepared launch VM.
+2. Managed PostgreSQL and Valkey URLs, injected via the deployment secret manager together with
    `NEXTAUTH_SECRET`, `MOCK_PAYMENT_SIGNING_SECRET`, `NOWPAYMENTS_API_KEY`, and
    `NOWPAYMENTS_IPN_SECRET`. Never paste any of these in chat or Git.
-4. The approved first five-session competition date, signup close, tiers/rules version, and the written
+3. The approved first five-session competition date, signup close, tiers/rules version, and the written
    merchant approval artefact retained in restricted operations storage.
 
-When those are available, clone/pull this branch on the host, materialize protected `.env.launch` from
+When those are available, pull `main` on the host, materialize protected `.env.launch` from
 `ops/launch.env.example`, run the three Compose commands in `13_PREORDER_PAYMENT_ACTIVATION.md`, verify
 the public health/IPN route, and execute the controlled company-wallet NOWPayments smoke test before
-opening customer sales.
+opening customer sales. Do not place the production PostgreSQL ledger in a single Docker volume on this VM:
+it would violate the no-irreplaceable-disk production rule unless the owner explicitly accepts a separately
+designed off-host backup/recovery architecture.
 
 ## Deferred market data
 
@@ -77,13 +81,13 @@ details. Do not infer a provider API from approval correspondence.
 ## Worktree
 
 - Do not touch the user-owned untracked `marketing/` directory or `package-lock.json`.
-- All Phase 10 files are still uncommitted. The pre-existing NOWPayments implementation, this preorder
-  work, docs, Prisma migration, and launch composition need a review/commit before remote deployment.
+- Phase 10/preorder work was committed and pushed to `main` as `4621bbe` (`feat: prepare NOWPayments
+preorder launch`); that revision is checked out on the launch host.
 
 ## Exact next task
 
-P10-006 — receive a valid SSH target and host identity, deploy the prepared Docker/Caddy composition to
-the launch VM with secret-manager values and managed services, provision the approved scheduled
-competition, then run and record the controlled NOWPayments invoice/IPN smoke test. Keep public sales
-closed until that test succeeds. Start Phase 9 only after the deferred provider documents and
+P10-006 — after DNS propagates and the managed data-service/secrets are provisioned, materialize protected
+`.env.launch` on `/opt/profitopath`, deploy the prepared Docker/Caddy composition, provision the approved
+scheduled competition, then run and record the controlled NOWPayments invoice/IPN smoke test. Keep public
+sales closed until that test succeeds. Start Phase 9 only after the deferred provider documents and
 commercial-use limits are supplied.

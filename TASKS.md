@@ -632,13 +632,16 @@ Rules:
   - Implementation evidence: preorder UI/test coverage, the single-host Docker/Caddy launch composition,
     deployment variable inventory, smoke procedure, rollback plan, 191 database-backed tests, and a
     production build are complete.
-  - Blocker: the current runtime has no resolvable or configured `profitopath` SSH target, no final
-    launch hostname/DNS or host identity, no managed PostgreSQL/Valkey values, no deployment-secret
-    injection, and no approved first competition schedule. The direct SSH preflight resolved
-    `profitopath` only as an unknown hostname; no remote machine was modified.
-  - Remaining operational work: provide the saved SSH target or `user@host` and verified host key;
-    provision the API/IPN secrets in the deployment secret manager; configure the final public HTTPS
-    origin and raw-body IPN path; run the documented controlled invoice/IPN smoke test; then enable
+  - Host preparation: connected to `root@72.62.90.38`; installed Docker Engine 29.7.2 and Docker Compose
+    5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; cloned launch revision `4621bbe` to
+    `/opt/profitopath`. No application, database, or payment service was started.
+  - Blocker: `profitopath.com` and `www.profitopath.com` have no public A record, managed PostgreSQL/Valkey
+    values and deployment-secret injection are absent, and the first competition schedule is unapproved.
+    A single-host Docker database would violate the no-irreplaceable-ledger-disk production rule unless the
+    owner explicitly accepts a redesigned, externally backed-up recovery plan.
+  - Remaining operational work: add the Namecheap DNS records; provision managed database/Valkey and the
+    API/IPN/auth secrets through the deployment secret manager; configure the final public HTTPS origin and
+    raw-body IPN path; run the documented controlled invoice/IPN smoke test; then enable
     `PAYMENT_PROVIDER=nowpayments` only in that deployed environment.
   - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
     a terminal before their competition activates, and the deployment team has a secret-safe activation
