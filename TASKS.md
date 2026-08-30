@@ -662,11 +662,14 @@ Rules:
     plaintext tokens and SMTP credentials are never persisted; an unverified account cannot authenticate;
     confirmation and resend activity is audited; production SMTP configuration is environment-only; and
     the public interface never reveals whether a resend email belongs to an account.
-- [~] P10-010 Add secure password-reset recovery.
+- [x] P10-010 Add secure password-reset recovery.
   - Acceptance: a generic, rate-limited reset request only emails active, confirmed credential users; the
     stored token is hashed, single-use, and expiring; reset replaces the password and invalidates existing
     sessions; request, issue, and completion actions are audited; and no account-existence information or
     secret is exposed to the browser.
+  - Deployment evidence: migration `20260830211500_password_reset_recovery` applied to the launch
+    PostgreSQL service; `/reset-password`, its generic request endpoint, and application readiness returned
+    successful responses over production HTTPS.
 - [ ] P10-011 Add an evergreen simulated-competition preorder entitlement.
   - Scope: a customer selects an available simulated tier and pays for one non-transferable future weekly
     competition entry even when no competition is currently listed. It is not a funded account, customer

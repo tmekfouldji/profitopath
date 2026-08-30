@@ -33,7 +33,7 @@ launch.
 - Added Zoho SMTP delivery through Nodemailer. `EMAIL_PROVIDER=smtp` requires `EMAIL_FROM`, `SMTP_HOST`,
   `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` in the runtime environment. Registration returns no success
   until SMTP is configured and the email send succeeds.
-- Implemented (not yet deployed) secure password recovery with its own `PasswordResetToken` migration,
+- Deployed secure password recovery with its own `PasswordResetToken` migration,
   hashed opaque single-use token, 60-minute default expiry, generic Valkey-rate-limited request path,
   password replacement, audit records, and invalidation of earlier credential JWTs through `credentialVersion`.
 
@@ -70,7 +70,7 @@ switched to port 587). The first signed real payment callback is still untested.
 
 Keep the public application running and monitor confirmation delivery. Do not announce or promote customer
 checkout until the controlled confirmation and exact-amount checkout/IPN tests complete and the first
-competition schedule is approved. Deploy migration `20260830211500_password_reset_recovery` and its web
-image; then test request/reset/new sign-in/old-session invalidation. The separate evergreen tier-bound
-preorder entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
-implementation. P9-001 is still blocked.
+competition schedule is approved. `20260830211500_password_reset_recovery` and `/reset-password` are live;
+perform a complete user request/reset/new sign-in/old-session-invalidated check next. The separate evergreen
+tier-bound preorder entitlement must receive explicit pricing, expiry/refund, and cancellation-policy
+approval before implementation. P9-001 is still blocked.

@@ -218,9 +218,11 @@ The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, priva
 are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. Run the documented exact-amount
 invoice/signed-IPN smoke test before promoting checkout, then approve the first `SCHEDULED` competition.
 `www.profitopath.com` canonically redirects to the root domain.
-P10-010 password recovery is implemented locally and awaiting migration/deployment verification. P10-011
-evergreen preorder entitlement is explicitly scoped but needs approved pricing/expiry/refund policy. P9-001
-remains intentionally deferred until the approved provider documentation and infrastructure are delivered.
+P10-010 password recovery is deployed at `/reset-password`; migration
+`20260830211500_password_reset_recovery` applied successfully and its public reset page/API health smoke
+tests passed. P10-011 evergreen preorder entitlement is explicitly scoped but needs approved
+pricing/expiry/refund policy. P9-001 remains intentionally deferred until the approved provider
+documentation and infrastructure are delivered.
 
 ## Quality status
 
