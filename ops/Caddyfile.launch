@@ -1,3 +1,7 @@
+www.{$PROFITOPATH_PUBLIC_HOST} {
+	redir https://{$PROFITOPATH_PUBLIC_HOST}{uri} permanent
+}
+
 {$PROFITOPATH_PUBLIC_HOST} {
 	encode zstd gzip
 	header {

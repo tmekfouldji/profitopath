@@ -12,10 +12,10 @@ This file is the authoritative high-level state for Codex.
   repository/local default remains mock
 - Legal/company working assumption: SVG Business Company, final approval pending
 - Current implementation phase: **Phase 10 — preorder checkout activation, mandatory email confirmation,
-  and owner observability (deployment blocked on DNS/secrets/schedule)**
-- Production deployment: launch host has Docker/Compose, default-deny firewall, private PostgreSQL 17 and
-  Valkey 8 containers, and applied migrations through `20260830190000_email_verification`; public
-  application services remain intentionally stopped at launch revision `7fb9e26`
+  and owner observability (public stack deployed; live-registration/payment activation awaits secrets/schedule)**
+- Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
+  Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
+  through `20260830190000_email_verification` are applied.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
@@ -37,7 +37,8 @@ endpoint test, an explicit launch competition schedule, and managed PostgreSQL/V
 designated Ubuntu launch host now has the temporary, private single-host PostgreSQL/Valkey exception
 approved by the product owner; it has no off-host backup and must migrate before the market-data/trading
 launch. Public credential registration now also requires working Zoho SMTP delivery because unverified
-accounts cannot sign in.
+accounts cannot sign in. The non-secret public DNS is now live and Caddy issued a valid certificate, but
+live registration/payment must not be enabled until their respective secrets and smoke tests are complete.
 
 ## Phase 0–1 completion evidence
 
@@ -207,12 +208,12 @@ and launch composition have since been implemented and verified as part of P10-0
 
 ## Next task
 
-P10-006 — complete live checkout deployment after DNS, email, payment secrets, and the first approved
-competition schedule arrive. The host is reachable as `root@72.62.90.38`; private PostgreSQL/Valkey are
-healthy and `/opt/profitopath` contains the launch composition. The remaining external blockers are no
-public DNS (as of 30 August 2026, `profitopath.com` has no A record), no NOWPayments API/IPN values, no
-Zoho SMTP app password, and no approved first competition schedule. After these arrive, materialize the
-ignored `.env.launch`, deploy, and run the controlled email-confirmation and invoice/IPN smoke tests.
+P10-006 — complete live checkout deployment after email/payment secrets and the first approved competition
+schedule arrive. The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, private
+PostgreSQL/Valkey, and `https://profitopath.com` are healthy. The remaining external blockers are no
+NOWPayments API/IPN values, no Zoho SMTP app password, and no approved first competition schedule. After
+these arrive, update the ignored `.env.launch`, redeploy, and run the controlled email-confirmation and
+invoice/IPN smoke tests. `www.profitopath.com` canonically redirects to the root domain.
 P10-008 is the remaining superadmin-quality/documentation task. P9-001 remains intentionally deferred
 until the approved provider documentation and infrastructure are delivered.
 

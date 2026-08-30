@@ -632,19 +632,18 @@ Rules:
   - Implementation evidence: preorder UI/test coverage, the single-host Docker/Caddy launch composition,
     deployment variable inventory, smoke procedure, rollback plan, 191 database-backed tests, and a
     production build are complete.
-  - Host preparation: connected to `root@72.62.90.38`; installed Docker Engine 29.7.2 and Docker Compose
-    5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; pulled revision `7fb9e26` to
-    `/opt/profitopath`; and started private PostgreSQL 17/Valkey 8 volumes with migrations through
-    `20260830190000_email_verification` applied. Web, realtime, worker, Caddy, and live payments remain
-    stopped.
+  - Host deployment: connected to `root@72.62.90.38`; installed Docker Engine 29.7.2 and Docker Compose
+    5.5.0; enabled a default-deny UFW with SSH/HTTP/HTTPS allowed; pulled the launch revision to
+    `/opt/profitopath`; started Caddy, web, realtime, worker, and private PostgreSQL 17/Valkey 8 volumes;
+    and applied migrations through `20260830190000_email_verification`. `https://profitopath.com` has a
+    valid certificate and its readiness endpoint is healthy; `www` redirects canonically to the root host.
   - Temporary infrastructure decision: the product owner explicitly authorized private PostgreSQL and Valkey
     Docker containers on the launch VM without an off-host backup destination. The configuration keeps both
     ports private and records the required later managed-service migration; it is not highly available.
-  - Blocker: `profitopath.com` and `www.profitopath.com` have no public A record, NOWPayments API/IPN
-    secrets and deployment-secret injection are absent, and the first competition schedule is unapproved.
-  - Remaining operational work: deploy the private data containers; add the Namecheap DNS records; generate
-    local auth/data secrets; configure the final public HTTPS origin and raw-body IPN path; securely place
-    NOWPayments credentials; run the documented controlled invoice/IPN smoke test; then enable
+  - Blocker: NOWPayments API/IPN and Zoho SMTP secrets are absent, and the first competition schedule is
+    unapproved. Registration remains unavailable until SMTP is configured; the payment provider remains mock.
+  - Remaining operational work: securely place the SMTP and NOWPayments credentials; run the documented
+    controlled confirmation and invoice/IPN smoke tests; approve the schedule; then enable
     `PAYMENT_PROVIDER=nowpayments` only in that deployed environment.
   - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
     a terminal before their competition activates, and the deployment team has a secret-safe activation

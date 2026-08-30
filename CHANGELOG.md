@@ -8,8 +8,10 @@
   resends, auditable confirmation events, and a credential sign-in gate that rejects unverified accounts.
 - Added forward-only superadmin-observability and email-verification database migrations plus temporary
   launch-host SMTP environment templates. Raw secrets remain server-only.
-- Pulled the release to the temporary launch host and applied its migrations to the private PostgreSQL 17
-  service; only PostgreSQL and Valkey are running while public activation gates remain unmet.
+- Deployed the public Docker stack to the temporary launch host. `profitopath.com` now has a valid
+  Let's Encrypt certificate, a healthy homepage/readiness endpoint, and a canonical redirect from `www`.
+  Live registration and real checkout remain disabled until their server-only SMTP/NOWPayments secrets are
+  configured and tested.
 
 ### Project direction
 

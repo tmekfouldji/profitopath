@@ -9,10 +9,11 @@ signed raw IPNs remain the sole checkout boundary. Real market data remains bloc
 selected provider supplies official documentation and commercial customer-display/simulation rights.
 
 The product owner requested a 15 September 2026 preorder storefront and authorized deployment to
-`root@72.62.90.38`. The public app is deliberately not started yet. The launch host has Docker Engine
-29.7.2, Docker Compose 5.5.0, a default-deny UFW permitting SSH/HTTP/HTTPS, and `/opt/profitopath` at
-revision `7fb9e26`. Private PostgreSQL 17 and Valkey 8 Docker containers are healthy; no DB/cache ports
-are published. Their Docker volumes have no off-host backup destination, so this is a temporary explicit
+`root@72.62.90.38`. The public stack is live at `https://profitopath.com`, with a valid Let's Encrypt
+certificate and canonical `www` redirect. The launch host has Docker Engine 29.7.2, Docker Compose 5.5.0,
+a default-deny UFW permitting SSH/HTTP/HTTPS, and `/opt/profitopath` at the launch revision. Caddy, web,
+realtime, and worker are healthy alongside private PostgreSQL 17 and Valkey 8; no DB/cache ports are
+published. Their Docker volumes have no off-host backup destination, so this is a temporary explicit
 pre-launch exception (D-025), not HA or a managed database solution. Migrate before market-data/trading
 launch.
 
@@ -57,17 +58,15 @@ mailbox) and port 465 SSL or 587 TLS. Then, after DNS resolves, deploy the updat
 test email, and only then enable public registration. For NOWPayments, set both secrets, change
 `PAYMENT_PROVIDER=nowpayments`, and run the controlled hosted-invoice/IPN smoke test.
 
-## Required external work before public deployment
+## Required external activation work
 
-1. In Namecheap add `A` host `@` → `72.62.90.38` and `CNAME` host `www` → `profitopath.com`; remove any
-   conflicting `@`/`www` records and forwarding. No AAAA record. Wait for public resolution before Caddy.
-2. Securely populate/enable Zoho SMTP as above; confirm the domain’s existing SPF/DKIM records remain valid
+1. Securely populate/enable Zoho SMTP as above; confirm the domain’s existing SPF/DKIM records remain valid
    in Zoho. Then test confirmation/blocked-before-verification/allowed-after-verification.
-3. Securely populate `NOWPAYMENTS_API_KEY` and `NOWPAYMENTS_IPN_SECRET`; set the merchant IPN endpoint to
+2. Securely populate `NOWPAYMENTS_API_KEY` and `NOWPAYMENTS_IPN_SECRET`; set the merchant IPN endpoint to
    `https://profitopath.com/api/payments/nowpayments/ipn`; run the controlled exact-amount invoice/IPN
    smoke test.
-4. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
-5. Bootstrap one owner after that account confirms its email: promote it through a controlled PostgreSQL
+3. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
+4. Bootstrap one owner after that account confirms its email: promote it through a controlled PostgreSQL
    command to `SUPERADMIN`, then use `/superadmin`. Do not promote from a browser/config-variable form.
 
 ## Verification in this session
@@ -76,11 +75,12 @@ test email, and only then enable public registration. For NOWPayments, set both 
 - `pnpm db:generate`, `pnpm db:validate`, `pnpm typecheck`, and `pnpm lint` passed.
 - Production-mode `pnpm build` completed successfully.
 - `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed: 136 files, 200 tests.
-- Compose config and Caddy validation for the self-hosted launch composition passed. The host pulled
-  `7fb9e26` and applied both new migrations successfully; only data containers are running.
+- Compose config and Caddy validation for the self-hosted launch composition passed. The host applied both
+  new migrations successfully, started every launch service, and externally returned
+  HTTP 200 for the homepage and healthy JSON for `/api/health/ready` over HTTPS.
 
 ## Next work
 
-Keep web/realtime/worker/Caddy stopped until the DNS, SMTP, NOWPayments, and first-competition gates are
-satisfied. Then run the controlled confirmation and checkout/IPN smoke tests before enabling public
-registration or live payment. P9-001 is still blocked.
+Keep the public application running with registration and real payment disabled until SMTP, NOWPayments,
+and first-competition gates are satisfied. Then run the controlled confirmation and checkout/IPN smoke
+tests before enabling public registration or live payment. P9-001 is still blocked.
