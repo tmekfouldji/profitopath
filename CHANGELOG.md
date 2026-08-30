@@ -10,8 +10,13 @@
   launch-host SMTP environment templates. Raw secrets remain server-only.
 - Deployed the public Docker stack to the temporary launch host. `profitopath.com` now has a valid
   Let's Encrypt certificate, a healthy homepage/readiness endpoint, and a canonical redirect from `www`.
-  Live registration and real checkout remain disabled until their server-only SMTP/NOWPayments secrets are
-  configured and tested.
+  Server-only Zoho SMTP and NOWPayments credentials are now configured in the protected launch environment;
+  SMTP authentication and a verification-email resend have succeeded. A controlled real invoice/IPN test is
+  still required before customer checkout is announced.
+- Made registration-recovery guidance explicit when email delivery fails, and added structured server-side
+  delivery-failure logs so a failed confirmation email does not appear as an unexplained generic error.
+- Added secure password recovery: generic rate-limited requests, hashed and expiring one-time reset tokens,
+  auditable completion, replacement credentials, and server-enforced invalidation of earlier JWT sessions.
 
 ### Project direction
 

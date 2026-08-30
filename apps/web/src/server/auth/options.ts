@@ -49,15 +49,26 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user !== undefined) {
+        token.credentialVersion = user.credentialVersion;
         token.role = user.role;
         token.status = user.status;
       } else if (token.sub !== undefined) {
         const currentUser = await database.user.findUnique({
-          select: { role: true, status: true },
+          select: { credentialVersion: true, role: true, status: true },
           where: { id: token.sub },
         });
-        token.role = currentUser?.role ?? 'TRADER';
-        token.status = currentUser?.status ?? 'CLOSED';
+        if (
+          currentUser === null ||
+          currentUser.credentialVersion !== token.credentialVersion
+        ) {
+          token.role = 'TRADER';
+          token.sessionInvalidated = true;
+          token.status = 'CLOSED';
+        } else {
+          token.role = currentUser.role;
+          token.sessionInvalidated = false;
+          token.status = currentUser.status;
+        }
       }
       return token;
     },
@@ -154,6 +165,7 @@ export const authOptions: NextAuthOptions = {
 
         return {
           email: user.email,
+          credentialVersion: user.credentialVersion,
           id: user.id,
           name: user.displayName ?? user.name ?? user.email,
           role: user.role,

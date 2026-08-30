@@ -59,6 +59,12 @@ export const runtimeEnvSchema = z
     NOWPAYMENTS_API_KEY: z.string().min(1).optional(),
     NOWPAYMENTS_IPN_SECRET: z.string().min(1).optional(),
     PAYMENT_PROVIDER: z.enum(['mock', 'nowpayments']).default('mock'),
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: z.coerce
+      .number()
+      .int()
+      .min(15)
+      .max(1_440)
+      .default(60),
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_PORT: integerPort.optional(),

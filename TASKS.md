@@ -640,11 +640,13 @@ Rules:
   - Temporary infrastructure decision: the product owner explicitly authorized private PostgreSQL and Valkey
     Docker containers on the launch VM without an off-host backup destination. The configuration keeps both
     ports private and records the required later managed-service migration; it is not highly available.
-  - Blocker: NOWPayments API/IPN and Zoho SMTP secrets are absent, and the first competition schedule is
-    unapproved. Registration remains unavailable until SMTP is configured; the payment provider remains mock.
-  - Remaining operational work: securely place the SMTP and NOWPayments credentials; run the documented
-    controlled confirmation and invoice/IPN smoke tests; approve the schedule; then enable
-    `PAYMENT_PROVIDER=nowpayments` only in that deployed environment.
+  - Live configuration: protected Zoho SMTP and NOWPayments credentials are loaded on the host;
+    `EMAIL_PROVIDER=smtp` authenticated to Zoho over SSL/465 and `PAYMENT_PROVIDER=nowpayments` is active.
+    A confirmation-email resend was accepted by the provider. Raw values were not displayed or committed.
+  - Blocker: the first competition schedule is unapproved, and a controlled exact-amount invoice/signed-IPN
+    smoke test has not yet established the real checkout path end to end.
+  - Remaining operational work: run the documented controlled confirmation and invoice/IPN smoke tests;
+    approve the schedule; then announce customer checkout in the deployed environment.
   - Acceptance: scheduled competition entries are presented as preorders, confirmed preorders cannot open
     a terminal before their competition activates, and the deployment team has a secret-safe activation
     and rollback runbook. `PAYMENT_PROVIDER=mock` remains the repository and local-development default.
@@ -660,3 +662,17 @@ Rules:
     plaintext tokens and SMTP credentials are never persisted; an unverified account cannot authenticate;
     confirmation and resend activity is audited; production SMTP configuration is environment-only; and
     the public interface never reveals whether a resend email belongs to an account.
+- [~] P10-010 Add secure password-reset recovery.
+  - Acceptance: a generic, rate-limited reset request only emails active, confirmed credential users; the
+    stored token is hashed, single-use, and expiring; reset replaces the password and invalidates existing
+    sessions; request, issue, and completion actions are audited; and no account-existence information or
+    secret is exposed to the browser.
+- [ ] P10-011 Add an evergreen simulated-competition preorder entitlement.
+  - Scope: a customer selects an available simulated tier and pays for one non-transferable future weekly
+    competition entry even when no competition is currently listed. It is not a funded account, customer
+    balance, crypto custody, deposit, or tradable stored value.
+  - Acceptance: a confirmed payment durably creates one tier-bound entitlement; the worker atomically
+    redeems it into exactly one active-tier entry for the earliest eligible future `SCHEDULED` competition;
+    retries are idempotent, capacity/rule mismatch remains pending and auditable, and the terminal remains
+    unavailable until the competition actually starts. Pricing, expiry/refund, and cancellation policy must
+    be explicitly approved before production enablement.

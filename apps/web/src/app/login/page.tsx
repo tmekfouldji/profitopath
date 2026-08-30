@@ -9,6 +9,7 @@ const notices: Record<string, string> = {
   'email-already-verified':
     'This email address is already confirmed. Sign in to continue.',
   'email-verified': 'Email confirmed. You can now sign in.',
+  'password-reset': 'Password reset. Sign in with your new password.',
 };
 
 export default async function LoginPage({
@@ -40,6 +41,9 @@ export default async function LoginPage({
           </p>
         )}
         <AuthForm callbackUrl={destination} mode="login" />
+        <p className="field-help">
+          Forgot your password? <Link href="/reset-password">Reset it</Link>
+        </p>
         <p className="form-aside">
           New here?{' '}
           <Link href={authPageHref('/register', destination)}>

@@ -1,5 +1,9 @@
 import { Prisma, database } from '@profitopath/database';
-import { hashPassword, registrationInputSchema } from '@profitopath/shared';
+import {
+  createLogger,
+  hashPassword,
+  registrationInputSchema,
+} from '@profitopath/shared';
 
 import {
   isSmtpEmailDeliveryConfigured,
@@ -10,6 +14,8 @@ import {
   emailVerificationExpiry,
   hashEmailVerificationToken,
 } from '@/server/email-verification';
+
+const logger = createLogger({ service: 'web-auth', version: '0.1.0' });
 
 export async function POST(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
@@ -80,7 +86,11 @@ export async function POST(request: Request): Promise<Response> {
         recipient: user.email,
         token: verificationToken,
       });
-    } catch {
+    } catch (error) {
+      logger.error(
+        { error },
+        'Email verification delivery failed during registration',
+      );
       return Response.json(
         { error: 'email_delivery_unavailable' },
         { status: 503 },

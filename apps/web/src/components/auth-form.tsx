@@ -15,6 +15,7 @@ export function AuthForm({
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [showVerificationResend, setShowVerificationResend] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState<string>();
 
   async function authenticate(
@@ -40,6 +41,7 @@ export function AuthForm({
     event.preventDefault();
     setError(undefined);
     setPending(true);
+    setShowVerificationResend(false);
     const form = new FormData(event.currentTarget);
     const email = String(form.get('email') ?? '');
     const password = String(form.get('password') ?? '');
@@ -56,11 +58,14 @@ export function AuthForm({
           method: 'POST',
         });
         if (!response.ok) {
+          if (response.status === 409 || response.status === 503) {
+            setShowVerificationResend(true);
+          }
           setError(
             response.status === 409
-              ? 'An account already uses this email. Sign in instead.'
+              ? 'An account already uses this email. It may still need confirmation.'
               : response.status >= 500
-                ? 'Registration is temporarily unavailable. Try again.'
+                ? 'Your profile may have been created, but we could not send its confirmation email.'
                 : 'Check your details and use a password of at least 12 characters.',
           );
           return;
@@ -106,6 +111,12 @@ export function AuthForm({
       {error === undefined ? null : (
         <p aria-live="polite" className="form-error" role="alert">
           {error}
+        </p>
+      )}
+      {!showVerificationResend ? null : (
+        <p className="field-help">
+          Once email delivery is restored,{' '}
+          <Link href="/verify-email">send a new confirmation link</Link>.
         </p>
       )}
       {verificationEmail === undefined ? null : (

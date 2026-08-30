@@ -9,18 +9,18 @@ This file is the authoritative high-level state for Codex.
 - Repository: single GitHub monorepo
 - Cloud target: DigitalOcean
 - Payment target: NOWPayments hosted invoices, preorder implementation and launch composition complete;
-  repository/local default remains mock
+  repository/local default remains mock while the protected launch host uses NOWPayments
 - Legal/company working assumption: SVG Business Company, final approval pending
 - Current implementation phase: **Phase 10 — preorder checkout activation, mandatory email confirmation,
-  and owner observability (public stack deployed; live-registration/payment activation awaits secrets/schedule)**
+  and owner observability (public stack and email delivery active; controlled payment test/schedule pending)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
   through `20260830190000_email_verification` are applied.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: not started
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
-  are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. No real credential is
-  configured in this environment.
+  are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
+  is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
 
 ## Active milestone
 
@@ -37,8 +37,9 @@ endpoint test, an explicit launch competition schedule, and managed PostgreSQL/V
 designated Ubuntu launch host now has the temporary, private single-host PostgreSQL/Valkey exception
 approved by the product owner; it has no off-host backup and must migrate before the market-data/trading
 launch. Public credential registration now also requires working Zoho SMTP delivery because unverified
-accounts cannot sign in. The non-secret public DNS is now live and Caddy issued a valid certificate, but
-live registration/payment must not be enabled until their respective secrets and smoke tests are complete.
+accounts cannot sign in. The production SMTP transport authenticated successfully on 30 August 2026 and a
+verification-email resend was accepted by Zoho. The non-secret public DNS is live and Caddy issued a valid
+certificate. A controlled real invoice/IPN smoke test and first approved competition schedule remain.
 
 ## Phase 0–1 completion evidence
 
@@ -174,7 +175,7 @@ All items above are complete, including the service-backed GitHub Actions run.
 - GitHub Actions run `32554756501` applied all eight migrations and passed Compose validation,
   formatter, typecheck, lint, all 127 tests, and production build
 
-## Phase 10 preorder activation evidence — deployment pending
+## Phase 10 preorder activation evidence — public deployment verified
 
 - versioned provider-neutral payment contract and Prisma migration retain provider invoice and actual
   payment IDs separately, preserving invoice-to-IPN/order correlation and provider-scoped replay safety
@@ -199,7 +200,10 @@ All items above are complete, including the service-backed GitHub Actions run.
   It never displays, stores, or accepts raw API keys in the browser.
 - registration creates a hashed, single-use, 60-minute email-verification token and sends it only through
   configured SMTP. A credential password cannot sign in until confirmation; resends are generic,
-  rate-limited, and audited. Zoho SMTP is not configured on the launch host yet.
+  rate-limited, and audited. Zoho SMTP authenticated successfully on the launch host using SSL port 465.
+- Password recovery is implemented with a separate forward-only reset-token table. Requests do not disclose
+  whether an account exists; accepted reset replaces the credential, consumes all reset tokens, audits the
+  event, and invalidates earlier credential JWTs through a monotonic user credential version.
 
 ## Last completed task
 
@@ -208,14 +212,15 @@ and launch composition have since been implemented and verified as part of P10-0
 
 ## Next task
 
-P10-006 — complete live checkout deployment after email/payment secrets and the first approved competition
-schedule arrive. The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, private
-PostgreSQL/Valkey, and `https://profitopath.com` are healthy. The remaining external blockers are no
-NOWPayments API/IPN values, no Zoho SMTP app password, and no approved first competition schedule. After
-these arrive, update the ignored `.env.launch`, redeploy, and run the controlled email-confirmation and
-invoice/IPN smoke tests. `www.profitopath.com` canonically redirects to the root domain.
-P10-008 is the remaining superadmin-quality/documentation task. P9-001 remains intentionally deferred
-until the approved provider documentation and infrastructure are delivered.
+P10-006 — complete the controlled live-checkout test and approve the first preorder competition schedule.
+The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, private PostgreSQL/Valkey, and
+`https://profitopath.com` are healthy. Protected SMTP and NOWPayments credentials are loaded, runtime modes
+are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. Run the documented exact-amount
+invoice/signed-IPN smoke test before promoting checkout, then approve the first `SCHEDULED` competition.
+`www.profitopath.com` canonically redirects to the root domain.
+P10-010 password recovery is implemented locally and awaiting migration/deployment verification. P10-011
+evergreen preorder entitlement is explicitly scoped but needs approved pricing/expiry/refund policy. P9-001
+remains intentionally deferred until the approved provider documentation and infrastructure are delivered.
 
 ## Quality status
 

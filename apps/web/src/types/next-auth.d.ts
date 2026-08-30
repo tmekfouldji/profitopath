@@ -11,6 +11,7 @@ declare module 'next-auth' {
   }
 
   interface User {
+    credentialVersion: number;
     role: UserRole;
     status: UserStatus;
   }
@@ -18,7 +19,9 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
   interface JWT {
+    credentialVersion: number;
     role: UserRole;
+    sessionInvalidated?: boolean;
     status: UserStatus;
   }
 }

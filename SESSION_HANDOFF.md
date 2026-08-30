@@ -33,38 +33,25 @@ launch.
 - Added Zoho SMTP delivery through Nodemailer. `EMAIL_PROVIDER=smtp` requires `EMAIL_FROM`, `SMTP_HOST`,
   `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` in the runtime environment. Registration returns no success
   until SMTP is configured and the email send succeeds.
+- Implemented (not yet deployed) secure password recovery with its own `PasswordResetToken` migration,
+  hashed opaque single-use token, 60-minute default expiry, generic Valkey-rate-limited request path,
+  password replacement, audit records, and invalidation of earlier credential JWTs through `credentialVersion`.
 
 ## Launch-host configuration state
 
-`/opt/profitopath/.env.launch` is mode 0600 and has generated database/Valkey/auth/mock-payment secrets.
-It contains **commented-only** template lines for live providers; no real provider values were entered:
-
-```dotenv
-# NOWPAYMENTS_API_KEY=
-# NOWPAYMENTS_IPN_SECRET=
-# EMAIL_PROVIDER=smtp
-# EMAIL_FROM=contact@profitopath.com
-# SMTP_HOST=smtppro.zoho.com
-# SMTP_PORT=465
-# SMTP_USER=contact@profitopath.com
-# SMTP_PASSWORD=
-EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=60
-```
-
-When the product owner has generated a Zoho app-specific password, edit that protected remote file over
-SSH—never chat/Git/browser—and uncomment/set every SMTP value. Use the exact SMTP host shown in the Zoho
-account’s server configuration for its datacenter (typically `smtppro.zoho.com` for a paid custom-domain
-mailbox) and port 465 SSL or 587 TLS. Then, after DNS resolves, deploy the updated tracked code, confirm a
-test email, and only then enable public registration. For NOWPayments, set both secrets, change
-`PAYMENT_PROVIDER=nowpayments`, and run the controlled hosted-invoice/IPN smoke test.
+`/opt/profitopath/.env.launch` is mode 0600 and has generated database/Valkey/auth secrets plus protected
+live Zoho SMTP and NOWPayments values. The runtime is `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtppro.zoho.com`,
+`SMTP_PORT=465`, and `PAYMENT_PROVIDER=nowpayments`; no raw secret has been displayed, committed, or copied
+to chat. On 30 August 2026, the running container verified Zoho SMTP authentication and Zoho accepted a
+resend for the product owner’s unconfirmed account. The app recognizes SSL on port 465 (or TLS if explicitly
+switched to port 587). The first signed real payment callback is still untested.
 
 ## Required external activation work
 
-1. Securely populate/enable Zoho SMTP as above; confirm the domain’s existing SPF/DKIM records remain valid
-   in Zoho. Then test confirmation/blocked-before-verification/allowed-after-verification.
-2. Securely populate `NOWPAYMENTS_API_KEY` and `NOWPAYMENTS_IPN_SECRET`; set the merchant IPN endpoint to
-   `https://profitopath.com/api/payments/nowpayments/ipn`; run the controlled exact-amount invoice/IPN
-   smoke test.
+1. Confirm the received email, verify blocked-before-confirmation/allowed-after-confirmation, and check
+   Zoho SPF/DKIM delivery outcomes.
+2. Run the controlled exact-amount NOWPayments invoice/signed-IPN smoke test at
+   `https://profitopath.com/api/payments/nowpayments/ipn`.
 3. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
 4. Bootstrap one owner after that account confirms its email: promote it through a controlled PostgreSQL
    command to `SUPERADMIN`, then use `/superadmin`. Do not promote from a browser/config-variable form.
@@ -81,6 +68,9 @@ test email, and only then enable public registration. For NOWPayments, set both 
 
 ## Next work
 
-Keep the public application running with registration and real payment disabled until SMTP, NOWPayments,
-and first-competition gates are satisfied. Then run the controlled confirmation and checkout/IPN smoke
-tests before enabling public registration or live payment. P9-001 is still blocked.
+Keep the public application running and monitor confirmation delivery. Do not announce or promote customer
+checkout until the controlled confirmation and exact-amount checkout/IPN tests complete and the first
+competition schedule is approved. Deploy migration `20260830211500_password_reset_recovery` and its web
+image; then test request/reset/new sign-in/old-session invalidation. The separate evergreen tier-bound
+preorder entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
+implementation. P9-001 is still blocked.

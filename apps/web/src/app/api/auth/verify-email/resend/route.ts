@@ -1,5 +1,8 @@
 import { database } from '@profitopath/database';
-import { verificationEmailInputSchema } from '@profitopath/shared';
+import {
+  createLogger,
+  verificationEmailInputSchema,
+} from '@profitopath/shared';
 
 import {
   isSmtpEmailDeliveryConfigured,
@@ -17,6 +20,7 @@ export const runtime = 'nodejs';
 
 const acceptedResponse = () =>
   Response.json({ status: 'accepted' }, { status: 202 });
+const logger = createLogger({ service: 'web-auth', version: '0.1.0' });
 
 export async function POST(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
@@ -64,7 +68,12 @@ export async function POST(request: Request): Promise<Response> {
     await sendEmailVerification({
       recipient: user.email,
       token: verificationToken,
-    }).catch(() => undefined);
+    }).catch((error: unknown) => {
+      logger.error(
+        { error },
+        'Email verification delivery failed during resend',
+      );
+    });
   }
   return acceptedResponse();
 }

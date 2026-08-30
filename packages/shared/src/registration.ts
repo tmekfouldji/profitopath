@@ -24,5 +24,10 @@ export const registrationInputSchema = z.object({
   password: z.string().min(12).max(128),
 });
 
+export const passwordResetInputSchema = z.object({
+  password: z.string().min(12).max(128),
+  token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+});
+
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type RegistrationInput = z.infer<typeof registrationInputSchema>;

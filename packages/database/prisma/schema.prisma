@@ -158,24 +158,26 @@ enum LeaderboardEligibilityStatus {
 }
 
 model User {
-  id               String              @id @default(uuid()) @db.Uuid
-  email            String              @unique @db.VarChar(320)
-  emailVerified    DateTime?           @db.Timestamptz(3)
-  name             String?             @db.VarChar(100)
-  displayName      String?             @db.VarChar(100)
-  image            String?             @db.Text
-  role             UserRole            @default(TRADER)
-  status           UserStatus          @default(ACTIVE)
-  createdAt        DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime            @updatedAt @db.Timestamptz(3)
-  profile          UserProfile?
-  entries          CompetitionEntry[]
-  payments         Payment[]
-  auditEvents      AuditEvent[]
-  authAccounts     Account[]
-  authSessions     Session[]
-  credential       PasswordCredential?
-  freeEntryCredits FreeEntryCredit[]
+  id                  String               @id @default(uuid()) @db.Uuid
+  email               String               @unique @db.VarChar(320)
+  emailVerified       DateTime?            @db.Timestamptz(3)
+  name                String?              @db.VarChar(100)
+  displayName         String?              @db.VarChar(100)
+  image               String?              @db.Text
+  credentialVersion   Int                  @default(0)
+  role                UserRole             @default(TRADER)
+  status              UserStatus           @default(ACTIVE)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  profile             UserProfile?
+  entries             CompetitionEntry[]
+  payments            Payment[]
+  auditEvents         AuditEvent[]
+  authAccounts        Account[]
+  authSessions        Session[]
+  credential          PasswordCredential?
+  passwordResetTokens PasswordResetToken[]
+  freeEntryCredits    FreeEntryCredit[]
 }
 
 model WebsiteVisit {
@@ -233,6 +235,17 @@ model PasswordCredential {
   createdAt    DateTime @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @db.Timestamptz(3)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique @db.VarChar(255)
+  expires   DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expires])
 }
 
 model UserProfile {
