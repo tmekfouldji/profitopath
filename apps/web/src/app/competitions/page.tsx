@@ -24,8 +24,8 @@ export default async function CompetitionsPage() {
           <span className="data-label">Schedule clear</span>
           <h2>No competition has been scheduled.</h2>
           <p>
-            Run the development seed or ask an administrator to publish the next
-            week.
+            The next preorder window has not been published yet. Check back here
+            once the weekly schedule is announced.
           </p>
         </section>
       ) : (

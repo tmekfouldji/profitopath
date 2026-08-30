@@ -17,6 +17,13 @@
   delivery-failure logs so a failed confirmation email does not appear as an unexplained generic error.
 - Added secure password recovery: generic rate-limited requests, hashed and expiring one-time reset tokens,
   auditable completion, replacement credentials, and server-enforced invalidation of earlier JWT sessions.
+- Expanded the owner console into a separate sidebar-based control center with authoritative overview,
+  competition-draft scheduling/publishing, versioned challenge pricing, member role/status operations,
+  payment/revenue review, payout-workflow access, and secret-safe system readiness. All browser mutations
+  are server-authorized and audited; paid tier configuration cannot be rewritten.
+- Made the customer purchase journey consistently configuration-driven: the home tier preview now reads
+  active published tiers, public competition discovery hides drafts/cancelled records, and the normal
+  trading desk provides direct purchase access for both new and returning customers.
 
 ### Project direction
 

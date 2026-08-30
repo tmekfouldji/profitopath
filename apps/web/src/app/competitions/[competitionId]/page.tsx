@@ -84,7 +84,8 @@ export default async function CompetitionPage({
             <h2>Competition tiers</h2>
           </div>
           <p>
-            Starting balances shown here are configurable development values.
+            Fees and simulated account rules are set by the published challenge
+            tier configuration.
           </p>
         </div>
         <div className="tier-grid">

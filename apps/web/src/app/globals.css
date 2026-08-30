@@ -4251,7 +4251,7 @@ body::before {
 .home-section-heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.48fr);
-  align-items: end;
+  align-items: flex-end;
   gap: 3rem;
   margin-bottom: 2.2rem;
 }
@@ -5092,6 +5092,555 @@ body::before {
   .auth-card h1,
   .empty-state h1 {
     font-size: clamp(3.2rem, 18vw, 5rem);
+  }
+}
+
+.status-draft,
+.status-suspended,
+.status-created {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.status-frozen,
+.status-finalized,
+.status-archived,
+.status-closed,
+.status-expired,
+.status-refunded {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.superadmin-shell {
+  display: grid;
+  width: min(100%, 1440px);
+  min-height: min(72rem, calc(100vh - 4.7rem));
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  margin: 0 auto;
+}
+
+.superadmin-sidebar {
+  display: flex;
+  position: sticky;
+  top: 4.7rem;
+  height: calc(100vh - 4.7rem);
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2.5rem 1.5rem;
+  border-right: 1px solid var(--line-soft);
+  background: rgb(7 23 34 / 65%);
+}
+
+.superadmin-sidebar h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 2.05rem;
+  font-weight: 600;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.superadmin-sidebar-copy {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.superadmin-nav {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.superadmin-nav a,
+.superadmin-return-link {
+  padding: 0.75rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font: 0.65rem var(--data);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.superadmin-nav a:hover,
+.superadmin-return-link:hover {
+  border-color: var(--line);
+  background: rgb(255 255 255 / 3%);
+  color: var(--aqua);
+}
+
+.superadmin-return-link {
+  margin-top: auto;
+  border-top-color: var(--line-soft);
+  border-radius: 0;
+}
+
+.superadmin-workspace {
+  min-width: 0;
+  padding: clamp(2.5rem, 6vw, 5.5rem) clamp(1.25rem, 4vw, 4rem);
+}
+
+.superadmin-workspace > .content-page {
+  width: 100%;
+  padding: 0;
+}
+
+.superadmin-section .page-heading {
+  margin-bottom: 3.2rem;
+}
+
+.superadmin-command-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: -1rem 0 4rem;
+  background: var(--line);
+}
+
+.superadmin-command-grid a {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.3rem;
+  background: var(--panel);
+  transition: background 160ms ease;
+}
+
+.superadmin-command-grid a:hover {
+  background: var(--panel-raised);
+}
+
+.superadmin-command-grid span,
+.superadmin-payment-row span {
+  color: var(--aqua);
+  font: 0.58rem var(--data);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.superadmin-command-grid strong {
+  max-width: 13rem;
+  font-family: var(--display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.superadmin-form-panel,
+.superadmin-list-section,
+.superadmin-callout {
+  margin-top: 4rem;
+}
+
+.superadmin-form-panel {
+  padding: clamp(1.3rem, 3vw, 2.25rem);
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    135deg,
+    rgb(86 214 201 / 8%),
+    rgb(16 43 55 / 45%)
+  );
+}
+
+.superadmin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.superadmin-form-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.superadmin-form-grid label,
+.superadmin-search label {
+  display: grid;
+  gap: 0.5rem;
+  color: var(--muted);
+  font: 0.58rem var(--data);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.superadmin-form-grid input,
+.superadmin-search input,
+.superadmin-danger-form input,
+.superadmin-availability-form input {
+  width: 100%;
+  min-height: 2.8rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  outline: 0;
+  background: var(--ink);
+  color: var(--fog);
+  font: 0.73rem var(--data);
+}
+
+.superadmin-form-grid input:focus,
+.superadmin-search input:focus,
+.superadmin-danger-form input:focus,
+.superadmin-availability-form input:focus {
+  border-color: var(--aqua);
+}
+
+.superadmin-form-grid button,
+.superadmin-inline-actions button,
+.superadmin-availability-form button,
+.superadmin-search button {
+  min-height: 2.8rem;
+  align-self: end;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--aqua-deep);
+  border-radius: var(--radius-sm);
+  background: rgb(86 214 201 / 11%);
+  color: var(--aqua);
+  cursor: pointer;
+  font: 0.62rem var(--data);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.superadmin-form-grid button:hover,
+.superadmin-inline-actions button:hover,
+.superadmin-availability-form button:hover,
+.superadmin-search button:hover {
+  border-color: var(--aqua);
+  background: rgb(86 214 201 / 18%);
+}
+
+.superadmin-record-list,
+.superadmin-payment-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.superadmin-record,
+.superadmin-payment-row {
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: rgb(11 32 43 / 77%);
+}
+
+.superadmin-record > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.superadmin-record h3 {
+  margin: 0.75rem 0 0.3rem;
+  font-family: var(--display);
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.superadmin-record code,
+.superadmin-payment-row code {
+  color: var(--muted);
+  font: 0.64rem var(--data);
+  overflow-wrap: anywhere;
+}
+
+.superadmin-record > p {
+  margin: 1.3rem 0 0;
+  color: var(--fog);
+  font-size: 0.82rem;
+}
+
+.superadmin-record-note {
+  color: var(--muted) !important;
+  font: 0.65rem/1.55 var(--data) !important;
+}
+
+.superadmin-record-meta,
+.superadmin-tier-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4.6rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.superadmin-record-meta div,
+.superadmin-tier-values div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.superadmin-record-meta dt,
+.superadmin-tier-values dt {
+  color: var(--muted);
+  font: 0.54rem var(--data);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.superadmin-record-meta dd,
+.superadmin-tier-values dd {
+  margin: 0;
+  color: var(--aqua);
+  font: 0.72rem var(--data);
+}
+
+.superadmin-tier-values {
+  max-width: 38rem;
+  margin-top: 1.5rem;
+}
+
+.superadmin-draft-controls {
+  margin-top: 1.5rem;
+}
+
+.superadmin-inline-actions,
+.superadmin-availability-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.superadmin-inline-actions form,
+.superadmin-availability-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.superadmin-danger-form button {
+  border-color: rgb(255 128 101 / 40%);
+  background: rgb(255 128 101 / 8%);
+  color: var(--coral);
+}
+
+.superadmin-danger-form button:hover {
+  border-color: var(--coral);
+  background: rgb(255 128 101 / 15%);
+}
+
+.superadmin-search {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 1.1rem;
+  border: 1px solid var(--line-soft);
+  background: rgb(255 255 255 / 2%);
+}
+
+.superadmin-search label {
+  width: min(100%, 26rem);
+}
+
+.superadmin-search span {
+  padding-bottom: 0.75rem;
+  color: var(--muted);
+  font: 0.62rem var(--data);
+}
+
+.superadmin-user-actions {
+  margin-top: 1.2rem;
+}
+
+.superadmin-user-actions form {
+  max-width: 28rem;
+}
+
+.superadmin-payment-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.superadmin-payment-row {
+  display: grid;
+  grid-template-columns: 1.15fr 1.1fr 0.8fr 0.72fr 1fr;
+  align-items: start;
+  gap: 1rem;
+}
+
+.superadmin-payment-row > div {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.superadmin-payment-row strong {
+  color: var(--fog);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.superadmin-payment-row small {
+  color: var(--muted);
+  font: 0.56rem var(--data);
+}
+
+.superadmin-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.3rem, 3vw, 2.2rem);
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-md);
+  background: rgb(229 188 103 / 5%);
+}
+
+.superadmin-callout h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.superadmin-callout p:not(.eyebrow) {
+  max-width: 50rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.dashboard-heading-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.dashboard-heading-actions p {
+  margin: 0;
+}
+
+.dashboard-purchase-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 3rem;
+  padding: clamp(1.3rem, 3vw, 2.1rem);
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--aqua);
+  border-radius: var(--radius-md);
+  background: rgb(86 214 201 / 4%);
+}
+
+.dashboard-purchase-strip h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.dashboard-purchase-strip p:not(.eyebrow) {
+  max-width: 44rem;
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 1080px) {
+  .superadmin-shell {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+
+  .superadmin-command-grid,
+  .superadmin-payment-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .superadmin-form-grid,
+  .superadmin-form-grid.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .superadmin-payment-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .superadmin-shell {
+    display: block;
+  }
+
+  .superadmin-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    gap: 1.2rem;
+    padding: 1.5rem 1.15rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .superadmin-nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .superadmin-nav a {
+    flex: 0 0 auto;
+  }
+
+  .superadmin-return-link {
+    margin-top: 0;
+  }
+
+  .superadmin-workspace {
+    padding: 2.5rem 1.15rem 4rem;
+  }
+
+  .superadmin-command-grid,
+  .superadmin-payment-metrics,
+  .superadmin-form-grid,
+  .superadmin-form-grid.compact,
+  .superadmin-payment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .superadmin-record > header,
+  .superadmin-callout,
+  .dashboard-purchase-strip,
+  .superadmin-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .superadmin-record-meta,
+  .superadmin-tier-values {
+    width: 100%;
+  }
+
+  .superadmin-inline-actions form,
+  .superadmin-availability-form {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .superadmin-inline-actions input,
+  .superadmin-availability-form input {
+    flex: 1 1 12rem;
   }
 }
 

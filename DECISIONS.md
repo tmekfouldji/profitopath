@@ -268,6 +268,22 @@ secrets. Those values remain in the protected launch-host environment (and later
 an explicit rolling deployment required after rotation. Zoho SMTP verification is mandatory for public
 credential registration; unverified accounts cannot sign in.
 
+## D-027 — Owner-managed competition configuration is versioned and auditable
+
+Status: Accepted for implementation
+
+The separate `SUPERADMIN` control center is the operational interface for competition setup. It may create
+future UTC competition drafts, edit only unpublished drafts, publish a draft to `SCHEDULED` preorder state
+only when its times are valid and at least one active simulated tier exists, and cancel an unpublished draft
+with a retained reason. It may create, enable, disable, and edit a challenge tier only while that tier has
+no entries. Once an entry exists, its price, simulated balance, drawdown, benchmark, and rule version are
+immutable; a new tier code/version is required for future offering changes. The control center may change a
+non-owner user's `TRADER`/`ADMIN` role and lifecycle status with audits, but it cannot manage `SUPERADMIN`
+accounts from the browser. Customer-visible competition discovery excludes drafts and cancelled records,
+and the public tier preview reads active configuration rather than hard-coded launch economics. Prize and
+payout operations retain their existing evidence and dual-review constraints; deployment secrets remain
+outside the browser.
+
 ## Pending decisions
 
 - starting balance per tier

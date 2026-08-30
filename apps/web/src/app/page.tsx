@@ -1,8 +1,12 @@
 import Link from 'next/link';
 
-import { WeekTape } from '@/components/week-tape';
+import { formatUsdMinor } from '@profitopath/shared';
 
-export default function Home() {
+import { WeekTape } from '@/components/week-tape';
+import { listActiveChallengeTiers } from '@/server/queries';
+
+export default async function Home() {
+  const tiers = await listActiveChallengeTiers();
   return (
     <main className="home-page">
       <section className="hero-grid">
@@ -111,33 +115,40 @@ export default function Home() {
             Compare the next week <span aria-hidden="true">↗</span>
           </Link>
         </div>
-        <div className="home-tier-grid">
-          <article>
-            <span className="tier-index">01</span>
-            <p className="data-label">Rookie</p>
-            <h3>$5 entry</h3>
-            <p>A measured starting point with a $1,000 max drawdown.</p>
-            <strong>$2,000 benchmark</strong>
-          </article>
-          <article className="is-featured">
-            <span className="tier-index">02</span>
-            <p className="data-label">Trader</p>
-            <h3>$10 entry</h3>
-            <p>More headroom and a $2,000 max drawdown.</p>
-            <strong>$4,000 benchmark</strong>
-          </article>
-          <article>
-            <span className="tier-index">03</span>
-            <p className="data-label">Elite</p>
-            <h3>$15 entry</h3>
-            <p>The widest range with a $4,000 max drawdown.</p>
-            <strong>$6,000 benchmark</strong>
-          </article>
-        </div>
+        {tiers.length === 0 ? (
+          <p className="tier-preview-note">
+            Challenge tiers will appear here once the next preorder offering is
+            published.
+          </p>
+        ) : (
+          <div className="home-tier-grid">
+            {tiers.map((tier, index) => (
+              <article
+                className={index === 1 ? 'is-featured' : undefined}
+                key={tier.id}
+              >
+                <span className="tier-index">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <p className="data-label">{tier.name}</p>
+                <h3>{formatUsdMinor(tier.entryFeeMinor)} entry</h3>
+                <p>
+                  Simulated starting balance{' '}
+                  {formatUsdMinor(tier.startingBalanceMinor)}
+                  {' · '}maximum drawdown{' '}
+                  {formatUsdMinor(tier.maxDrawdownMinor)}.
+                </p>
+                <strong>
+                  {formatUsdMinor(tier.performanceBenchmarkMinor)} benchmark
+                </strong>
+              </article>
+            ))}
+          </div>
+        )}
         <p className="tier-preview-note">
-          Entry fees and thresholds are the current product values. Starting
-          balances remain configurable development values until formally
-          approved.
+          Entry fees and simulated thresholds are shown from the active tier
+          configuration. A confirmed purchase is one competition entry—not a
+          funded account, customer balance, or deposit.
         </p>
       </section>
 

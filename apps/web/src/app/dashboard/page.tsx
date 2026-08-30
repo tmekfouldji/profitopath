@@ -48,10 +48,15 @@ export default async function DashboardPage({
           <p className="eyebrow">Authoritative account view</p>
           <h1>Trading desk</h1>
         </div>
-        <p>
-          Your competition home base. Open a terminal, check your standing, and
-          follow every weekly entry from signup to final result.
-        </p>
+        <div className="dashboard-heading-actions">
+          <p>
+            Your competition home base. Open a terminal, check your standing,
+            and follow every weekly entry from signup to final result.
+          </p>
+          <Link className="button button-primary" href="/competitions">
+            Buy a competition entry
+          </Link>
+        </div>
       </header>
 
       <section aria-label="Trading desk summary" className="dashboard-summary">
@@ -214,6 +219,22 @@ export default async function DashboardPage({
               </article>
             );
           })}
+        </section>
+      )}
+      {entries.length === 0 ? null : (
+        <section className="dashboard-purchase-strip">
+          <div>
+            <p className="eyebrow">Another weekly entry</p>
+            <h2>Browse the next available competition</h2>
+            <p>
+              Choose an open weekly competition, select a simulated tier, and
+              complete secure checkout. Confirmed preorders stay visible here
+              until their trading window begins.
+            </p>
+          </div>
+          <Link className="button button-secondary" href="/competitions">
+            View open competitions
+          </Link>
         </section>
       )}
       {prizes.length === 0 ? null : (

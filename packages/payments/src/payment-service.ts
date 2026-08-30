@@ -137,6 +137,11 @@ export async function createCompetitionCheckout(
 ): Promise<CompetitionCheckout> {
   const now = input.now ?? new Date();
   const reservation = await database.$transaction(async (transaction) => {
+    await transaction.$executeRaw`
+      SELECT pg_advisory_xact_lock(
+        hashtextextended(${`challenge-tier:${input.tierId}`}, 0)
+      )
+    `;
     const [user, competition, tier] = await Promise.all([
       transaction.user.findUnique({ where: { id: input.userId } }),
       transaction.competition.findUnique({

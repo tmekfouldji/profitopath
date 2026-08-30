@@ -315,7 +315,7 @@ export default async function AdminPage({
         )}
       </section>
 
-      <section className="admin-prize-board">
+      <section className="admin-prize-board" id="payout-operations">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Company-funded award ledger</p>

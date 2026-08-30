@@ -13,15 +13,26 @@ export function listCompetitions() {
     include: { _count: { select: { entries: true } } },
     orderBy: { tradingStartsAt: 'asc' },
     take: 20,
-    where: { status: { not: 'ARCHIVED' } },
+    where: { status: { in: ['SCHEDULED', 'ACTIVE', 'FROZEN', 'FINALIZED'] } },
+  });
+}
+
+export function listActiveChallengeTiers() {
+  return database.challengeTier.findMany({
+    orderBy: [{ entryFeeMinor: 'asc' }, { code: 'asc' }],
+    take: 3,
+    where: { active: true },
   });
 }
 
 export async function getCompetition(id: string) {
   const [competition, tiers] = await Promise.all([
-    database.competition.findUnique({
+    database.competition.findFirst({
       include: { _count: { select: { entries: true } } },
-      where: { id },
+      where: {
+        id,
+        status: { in: ['SCHEDULED', 'ACTIVE', 'FROZEN', 'FINALIZED'] },
+      },
     }),
     database.challengeTier.findMany({
       orderBy: { entryFeeMinor: 'asc' },
@@ -221,5 +232,98 @@ export async function getSuperadminOverview() {
     newMembersLast30Days,
     totalAccounts,
     uniqueVisitorsLast30Days,
+  };
+}
+
+export function getSuperadminChallengeTiers() {
+  return database.challengeTier.findMany({
+    include: {
+      _count: { select: { entries: true, prizes: true } },
+    },
+    orderBy: [{ active: 'desc' }, { entryFeeMinor: 'asc' }, { code: 'asc' }],
+  });
+}
+
+export function getSuperadminCompetitionSetup() {
+  return database.competition.findMany({
+    include: {
+      _count: { select: { entries: true, prizes: true } },
+    },
+    orderBy: { tradingStartsAt: 'asc' },
+    where: { status: { in: ['DRAFT', 'SCHEDULED', 'ACTIVE', 'FROZEN'] } },
+  });
+}
+
+export async function getSuperadminUserDirectory(search: string) {
+  const normalizedSearch = search.trim().slice(0, 100);
+  const where =
+    normalizedSearch.length === 0
+      ? {}
+      : {
+          OR: [
+            {
+              email: {
+                contains: normalizedSearch,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              displayName: {
+                contains: normalizedSearch,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              name: {
+                contains: normalizedSearch,
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
+        };
+  const [members, total] = await Promise.all([
+    database.user.findMany({
+      include: {
+        _count: { select: { entries: true, payments: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      where,
+    }),
+    database.user.count({ where }),
+  ]);
+  return { members, normalizedSearch, total };
+}
+
+export async function getSuperadminPaymentLedger() {
+  const [confirmedRevenue, payments, paymentCounts] = await Promise.all([
+    database.payment.aggregate({
+      _sum: { amountMinor: true },
+      where: { currency: 'USD', status: 'CONFIRMED' },
+    }),
+    database.payment.findMany({
+      include: {
+        competitionEntry: {
+          include: {
+            competition: { select: { code: true, name: true } },
+            tier: { select: { code: true, name: true } },
+          },
+        },
+        user: { select: { email: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    database.payment.groupBy({
+      _count: { _all: true },
+      by: ['status'],
+    }),
+  ]);
+  return {
+    confirmedRevenueMinor: confirmedRevenue._sum.amountMinor ?? 0,
+    paymentCounts: Object.fromEntries(
+      paymentCounts.map((record) => [record.status, record._count._all]),
+    ),
+    payments,
   };
 }

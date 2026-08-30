@@ -12,7 +12,7 @@ This file is the authoritative high-level state for Codex.
   repository/local default remains mock while the protected launch host uses NOWPayments
 - Legal/company working assumption: SVG Business Company, final approval pending
 - Current implementation phase: **Phase 10 — preorder checkout activation, mandatory email confirmation,
-  and owner observability (public stack and email delivery active; controlled payment test/schedule pending)**
+  and owner operations (public stack and email delivery active; controlled payment test/schedule pending)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
   through `20260830190000_email_verification` are applied.
@@ -215,8 +215,10 @@ and launch composition have since been implemented and verified as part of P10-0
 P10-006 — complete the controlled live-checkout test and approve the first preorder competition schedule.
 The host is reachable as `root@72.62.90.38`; Caddy, web, realtime, worker, private PostgreSQL/Valkey, and
 `https://profitopath.com` are healthy. Protected SMTP and NOWPayments credentials are loaded, runtime modes
-are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. Run the documented exact-amount
-invoice/signed-IPN smoke test before promoting checkout, then approve the first `SCHEDULED` competition.
+are `smtp` and `nowpayments`, and Zoho accepted a confirmation-email resend. The owner control-center
+implementation is verified locally and awaiting the same launch-host deployment. Run the documented exact-amount
+invoice/signed-IPN smoke test before promoting checkout, then use its Competition and Challenge pricing sections
+to approve the first `SCHEDULED` competition.
 `www.profitopath.com` canonically redirects to the root domain.
 P10-010 password recovery is deployed at `/reset-password`; migration
 `20260830211500_password_reset_recovery` applied successfully and its public reset page/API health smoke

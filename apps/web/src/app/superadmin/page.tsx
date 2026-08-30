@@ -1,4 +1,5 @@
 import { formatUsdMinor } from '@profitopath/shared';
+import Link from 'next/link';
 
 import { requireSuperadmin } from '@/server/auth/session';
 import { getSuperadminOverview } from '@/server/queries';
@@ -12,7 +13,7 @@ export default async function SuperadminPage() {
   const overview = await getSuperadminOverview();
 
   return (
-    <main className="content-page superadmin-page">
+    <section className="superadmin-section superadmin-page">
       <header className="page-heading split-heading superadmin-heading">
         <div>
           <p className="eyebrow">Owner-only operational view</p>
@@ -24,6 +25,28 @@ export default async function SuperadminPage() {
           never enter this interface.
         </p>
       </header>
+
+      <section
+        className="superadmin-command-grid"
+        aria-label="Control center sections"
+      >
+        <Link href="/superadmin/competitions">
+          <span>Competition setup</span>
+          <strong>Create drafts and publish validated preorder windows.</strong>
+        </Link>
+        <Link href="/superadmin/challenge-pricing">
+          <span>Challenge pricing</span>
+          <strong>Set versioned simulated tier fees and rules.</strong>
+        </Link>
+        <Link href="/superadmin/users">
+          <span>Member operations</span>
+          <strong>Review users, operational roles, and account status.</strong>
+        </Link>
+        <Link href="/superadmin/payments">
+          <span>Payment ledger</span>
+          <strong>Review confirmed revenue and invoice lifecycle state.</strong>
+        </Link>
+      </section>
 
       <section
         aria-label="Platform signals"
@@ -133,6 +156,6 @@ export default async function SuperadminPage() {
           </div>
         </dl>
       </section>
-    </main>
+    </section>
   );
 }
