@@ -259,6 +259,11 @@ documentation and infrastructure are delivered.
   the production build passed before deployment. Revision `84e676a` is live; an authenticated browser reload
   confirmed the compatible pattern compiles without console errors, while public home, competition, and
   readiness routes returned HTTP 200.
+- Overlapping signup windows: a signup close may occur during trading but not after trading ends. Checkout
+  accepts a `SCHEDULED` or `ACTIVE` competition while its signup window remains open; confirmed active-window
+  payments provision the normal active simulated account. PostgreSQL-backed setup/payment coverage passed,
+  along with formatter, typecheck, lint, the full default suite (209 tests / 72 files, 40 skipped), and the
+  production build.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

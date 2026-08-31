@@ -68,7 +68,7 @@ integrationTest('superadmin setup services', () => {
       code: `OPS-WEEK-${suffix}`,
       name: 'Operations Weekly',
       rulesVersion: 1,
-      signupClosesAt: new Date('2027-01-03T20:00:00.000Z'),
+      signupClosesAt: new Date('2027-01-05T20:00:00.000Z'),
       tradingEndsAt: new Date('2027-01-08T21:00:00.000Z'),
       tradingStartsAt: new Date('2027-01-04T00:00:00.000Z'),
     });
@@ -81,6 +81,17 @@ integrationTest('superadmin setup services', () => {
       tradingEndsAt: new Date('2027-01-15T21:00:00.000Z'),
       tradingStartsAt: new Date('2027-01-11T00:00:00.000Z'),
     });
+    await expect(
+      createCompetitionDraft({
+        actorUserId: owner.id,
+        code: `OPS-INVALID-${suffix}`,
+        name: 'Invalid signup window',
+        rulesVersion: 1,
+        signupClosesAt: new Date('2027-01-09T00:00:00.000Z'),
+        tradingEndsAt: new Date('2027-01-08T21:00:00.000Z'),
+        tradingStartsAt: new Date('2027-01-04T00:00:00.000Z'),
+      }),
+    ).rejects.toThrow('Signup must close no later than trading ends');
     fixtures.push({
       competitionIds: [competition.id, cancelledDraft.id],
       ownerId: owner.id,

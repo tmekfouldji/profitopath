@@ -48,7 +48,7 @@ function validDraftForm(): FormData {
   form.set('code', 'WEEK-20260915');
   form.set('name', 'September 15 Weekly');
   form.set('rulesVersion', '1');
-  form.set('signupClosesAt', '2026-09-14T23:00');
+  form.set('signupClosesAt', '2026-09-15T01:00');
   form.set('tradingStartsAt', '2026-09-15T00:00');
   form.set('tradingEndsAt', '2026-09-19T23:00');
   return form;
@@ -69,7 +69,7 @@ describe('superadmin server actions', () => {
       code: 'WEEK-20260915',
       name: 'September 15 Weekly',
       rulesVersion: 1,
-      signupClosesAt: new Date('2026-09-14T23:00:00.000Z'),
+      signupClosesAt: new Date('2026-09-15T01:00:00.000Z'),
       tradingEndsAt: new Date('2026-09-19T23:00:00.000Z'),
       tradingStartsAt: new Date('2026-09-15T00:00:00.000Z'),
     });

@@ -26,6 +26,9 @@ export default async function CompetitionPage({
   if (competition === null) {
     notFound();
   }
+  const signupOpen =
+    (competition.status === 'SCHEDULED' || competition.status === 'ACTIVE') &&
+    new Date() < competition.signupClosesAt;
 
   return (
     <main className="content-page">
@@ -57,10 +60,16 @@ export default async function CompetitionPage({
         </p>
       ) : null}
 
-      {competition.status === 'SCHEDULED' ? (
+      {competition.status === 'SCHEDULED' && signupOpen ? (
         <p className="notice-banner" role="status">
           Preorder is open. A completed checkout reserves your tier; simulated
           trading opens with the scheduled competition window.
+        </p>
+      ) : null}
+      {competition.status === 'ACTIVE' && signupOpen ? (
+        <p className="notice-banner" role="status">
+          Registration is open while this competition is in progress. Complete
+          checkout to join the current simulated trading window.
         </p>
       ) : null}
 
@@ -124,14 +133,13 @@ export default async function CompetitionPage({
                 <input name="tierId" type="hidden" value={tier.id} />
                 <button
                   className="button button-primary"
-                  disabled={
-                    competition.status !== 'SCHEDULED' ||
-                    new Date() >= competition.signupClosesAt
-                  }
+                  disabled={!signupOpen}
                   type="submit"
                 >
-                  {competition.status === 'SCHEDULED'
-                    ? `Preorder ${tier.name}`
+                  {signupOpen
+                    ? competition.status === 'SCHEDULED'
+                      ? `Preorder ${tier.name}`
+                      : `Join ${tier.name}`
                     : 'Entry unavailable'}
                 </button>
               </form>

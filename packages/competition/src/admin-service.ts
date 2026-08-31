@@ -85,9 +85,12 @@ function assertFutureCompetitionWindow(input: {
       'Competition timestamps are invalid',
     );
   }
-  if (signupClosesAt >= tradingStartsAt || tradingStartsAt >= tradingEndsAt) {
+  if (tradingStartsAt >= tradingEndsAt) {
+    throw new CompetitionAdminCommandError('Trading must end after it starts');
+  }
+  if (signupClosesAt > tradingEndsAt) {
     throw new CompetitionAdminCommandError(
-      'Signup must close before trading starts, and trading must end after it starts',
+      'Signup must close no later than trading ends',
     );
   }
 }

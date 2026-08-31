@@ -88,6 +88,12 @@ switched to port 587). The first signed real payment callback is still untested.
   character-class syntax. Full quality checks passed before deployment. Revision `84e676a` is live; an
   authenticated browser reload confirmed the new pattern compiles with no console errors, while public
   home, competition, and readiness routes return HTTP 200.
+- Signup now may close after trading begins, so customers can join an in-progress competition until its
+  configured close time. It may not close after trading ends. The payment service accepts both `SCHEDULED`
+  and `ACTIVE` competitions before that close time, and a confirmed active-window checkout provisions the
+  normal active simulated account. The competition detail page labels this as an open in-progress entry
+  instead of a preorder. PostgreSQL-backed setup/payment coverage passed, followed by formatter, typecheck,
+  lint, the full default suite (209 tests / 72 files, 40 skipped), and a production build.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors

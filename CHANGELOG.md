@@ -29,6 +29,9 @@
   are now shown when a pricing, competition, or user action is actually rejected.
 - Corrected the owner code-field HTML patterns for Chromium's current Unicode regex mode, preventing a
   client-side exception before tier or competition form submission.
+- Allowed signup to remain open after a competition begins, up to the configured trading end. Active-window
+  checkout now provisions the standard active simulated account and the customer interface labels it as an
+  in-progress entry rather than a preorder.
 
 ### Project direction
 

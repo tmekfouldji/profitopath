@@ -708,3 +708,10 @@ Rules:
   - Deployment evidence: revision `84e676a` is live. The owner competition page exposes the compatible
     pattern, the browser compiles it successfully in `v` mode with no console errors, and all containers
     plus public home/competition/readiness routes are healthy.
+- [x] P10-015 Support signup windows that overlap active trading.
+  - Acceptance: a competition draft permits signup to close during, but not after, its trading window;
+    active competitions remain purchasable until signup closes, and the public interface clearly distinguishes
+    an open in-progress entry from a future preorder.
+  - Verification: PostgreSQL-backed setup and payment integration coverage passed, including an active
+    competition checkout that provisions an active simulated account before signup closes; formatter,
+    typecheck, lint, the full default suite, and the production build passed.

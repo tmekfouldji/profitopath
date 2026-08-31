@@ -219,6 +219,48 @@ integrationTest('mock checkout and provisioning', () => {
     ).resolves.toBeNull();
   });
 
+  it('allows checkout and provisioning while active signup remains open', async () => {
+    const fixture = await createFixture();
+    const provider = createProvider();
+    await database.competition.update({
+      data: {
+        signupClosesAt: new Date('2026-08-24T12:00:00.000Z'),
+        status: 'ACTIVE',
+        tradingStartsAt: new Date('2026-08-24T00:00:00.000Z'),
+      },
+      where: { id: fixture.competitionId },
+    });
+
+    const checkout = await createCompetitionCheckout(
+      { ...fixture, now: new Date('2026-08-24T09:00:00.000Z') },
+      provider,
+    );
+    const callback = provider.createSignedCallback({
+      amountMinor: 500,
+      currency: 'USD',
+      providerPaymentId: checkout.checkout.providerPaymentId,
+      status: 'CONFIRMED',
+    });
+    const event = await provider.verifyCallback(callback);
+
+    await expect(
+      processVerifiedPaymentEvent({
+        event,
+        payloadHash: hashPaymentEvent(event),
+        receivedAt: new Date('2026-08-24T09:05:00.000Z'),
+      }),
+    ).resolves.toMatchObject({ status: 'CONFIRMED' });
+    await expect(
+      database.competitionEntry.findUniqueOrThrow({
+        include: { tradingAccount: true },
+        where: { id: checkout.competitionEntryId },
+      }),
+    ).resolves.toMatchObject({
+      status: 'ACTIVE',
+      tradingAccount: { status: 'ACTIVE' },
+    });
+  });
+
   it('correlates a hosted invoice IPN to our immutable order ID before activation', async () => {
     const fixture = await createFixture();
     const checkout = await createCompetitionCheckout(

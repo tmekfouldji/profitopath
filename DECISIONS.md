@@ -275,14 +275,17 @@ Status: Accepted for implementation
 The separate `SUPERADMIN` control center is the operational interface for competition setup. It may create
 future UTC competition drafts, edit only unpublished drafts, publish a draft to `SCHEDULED` preorder state
 only when its times are valid and at least one active simulated tier exists, and cancel an unpublished draft
-with a retained reason. It may create, enable, disable, and edit a challenge tier only while that tier has
-no entries. Once an entry exists, its price, simulated balance, drawdown, benchmark, and rule version are
-immutable; a new tier code/version is required for future offering changes. The control center may change a
-non-owner user's `TRADER`/`ADMIN` role and lifecycle status with audits, but it cannot manage `SUPERADMIN`
-accounts from the browser. Customer-visible competition discovery excludes drafts and cancelled records,
-and the public tier preview reads active configuration rather than hard-coded launch economics. Prize and
-payout operations retain their existing evidence and dual-review constraints; deployment secrets remain
-outside the browser.
+with a retained reason. Signup may close during an active trading window but cannot close after trading ends:
+both `SCHEDULED` preorder competitions and `ACTIVE` competitions accept a tier checkout until that close
+time. A confirmation during an open active window provisions the normal active simulated account; it does
+not create customer custody, a balance, or real execution. It may create, enable, disable, and edit a
+challenge tier only while that tier has no entries. Once an entry exists, its price, simulated balance,
+drawdown, benchmark, and rule version are immutable; a new tier code/version is required for future
+offering changes. The control center may change a non-owner user's `TRADER`/`ADMIN` role and lifecycle
+status with audits, but it cannot manage `SUPERADMIN` accounts from the browser. Customer-visible
+competition discovery excludes drafts and cancelled records, and the public tier preview reads active
+configuration rather than hard-coded launch economics. Prize and payout operations retain their existing
+evidence and dual-review constraints; deployment secrets remain outside the browser.
 
 ## Pending decisions
 

@@ -79,7 +79,10 @@ export default async function SuperadminCompetitionsPage({
             <p className="eyebrow">Step 1</p>
             <h2>Create a competition draft</h2>
           </div>
-          <p>All three times are interpreted as UTC.</p>
+          <p>
+            All three times are UTC. Signup may remain open once trading has
+            started, but cannot close after trading ends.
+          </p>
         </div>
         <form
           action={createCompetitionDraftAction}

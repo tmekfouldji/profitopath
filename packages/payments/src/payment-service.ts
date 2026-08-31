@@ -153,7 +153,10 @@ export async function createCompetitionCheckout(
     if (user === null || user.status !== 'ACTIVE') {
       throw new CheckoutUnavailableError('Active trader account required');
     }
-    if (competition === null || competition.status !== 'SCHEDULED') {
+    if (
+      competition === null ||
+      (competition.status !== 'SCHEDULED' && competition.status !== 'ACTIVE')
+    ) {
       throw new CheckoutUnavailableError('Competition is not open for signup');
     }
     if (now >= competition.signupClosesAt) {
