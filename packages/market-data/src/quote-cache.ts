@@ -41,6 +41,7 @@ function quoteKey(symbol: string): string {
 
 export class ValkeyQuoteStore implements QuoteStore {
   readonly #client: QuoteCacheClient;
+  #connectPromise: Promise<unknown> | undefined;
   readonly #now: () => Date;
   readonly #ttlSeconds: number;
 
@@ -111,8 +112,15 @@ export class ValkeyQuoteStore implements QuoteStore {
   }
 
   async #ensureConnected(): Promise<void> {
+    if (this.#connectPromise !== undefined) {
+      await this.#connectPromise;
+      return;
+    }
     if (this.#client.status === 'wait' && this.#client.connect !== undefined) {
-      await this.#client.connect();
+      this.#connectPromise = this.#client.connect().finally(() => {
+        this.#connectPromise = undefined;
+      });
+      await this.#connectPromise;
     }
   }
 }

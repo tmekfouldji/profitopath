@@ -660,6 +660,11 @@ Rules:
   - Live configuration: protected Zoho SMTP and NOWPayments credentials are loaded on the host;
     `EMAIL_PROVIDER=smtp` authenticated to Zoho over SSL/465 and `PAYMENT_PROVIDER=nowpayments` is active.
     A confirmation-email resend was accepted by the provider. Raw values were not displayed or committed.
+  - Controlled terminal QA: on 31 August 2026, the owner authorized the short-lived
+    `QA-FLOW-20260831-1750` competition and a complimentary, audited Rookie account for the verified owner
+    profile. It has no `Payment` record, invoice, or reported revenue. The production worker's deterministic
+    mock feed is enabled solely to exercise the terminal flow; it does not enable Twelve Data or real-market
+    data.
   - Blocker: the first competition schedule is unapproved, and a controlled exact-amount invoice/signed-IPN
     smoke test has not yet established the real checkout path end to end.
   - Remaining operational work: run the documented controlled confirmation and invoice/IPN smoke tests;
@@ -752,3 +757,7 @@ Rules:
   - Verification: the authenticated NOWPayments dashboard persisted **Payment covering = 10.00%** (the
     documented maximum), while the separate unbounded Default payment status remains **Partially Paid**. The
     launch runbook documents the one-time recovery procedure for older partial payments.
+- [~] P10-018 Fix concurrent lazy Valkey quote reads in the live terminal.
+  - Acceptance: concurrent server-rendered instrument reads share one connection attempt, rather than
+    treating a still-connecting Valkey client as an unavailable quote; the terminal remains fail-closed for
+    genuinely absent or stale quotes.

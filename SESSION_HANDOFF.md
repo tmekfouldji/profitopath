@@ -136,6 +136,13 @@ untested.
   public HTTPS readiness checks returned HTTP 200. The host explicitly reports
   `MARKET_DATA_SOURCE=mock` and `TWELVE_DATA_PRIVATE_TEST_ENABLED=false`; a fresh public competition-board
   browser check has no application-console errors.
+- On 31 August 2026, the owner authorized a controlled production terminal-flow test. The verified
+  `mekfouldjitahar@gmail.com` owner profile received an active Rookie simulated account in the short-lived
+  `QA-FLOW-20260831-1750` competition, which the worker promoted to `ACTIVE` at its configured UTC start.
+  The grant has an authoritative initial-balance ledger and audit records but deliberately no `Payment`,
+  NOWPayments invoice, or revenue. `MOCK_MARKET_DATA_ENABLED=true` is now set in the protected launch-host
+  environment, and the worker restarts healthy, recovers both active accounts, and publishes four mock
+  quotes every five seconds. The Twelve Data private probe remains disabled on the host.
 
 ## Next work
 
@@ -144,7 +151,10 @@ before revision `c6d6270` once, then retry it; normal future web releases retain
 not announce or promote customer checkout until the controlled confirmation and checkout/IPN tests (including
 the approved 90% provider floor) complete and the first competition schedule is approved.
 `20260830211500_password_reset_recovery` and `/reset-password` are live; perform a complete user
-request/reset/new sign-in/old-session-invalidated check next. The separate evergreen tier-bound preorder
+request/reset/new sign-in/old-session-invalidated check next. The owner should now sign in as the verified
+owner profile, open the controlled QA account from `/dashboard`, and exercise terminal rendering and an
+authoritative simulated order. Do not create a real NOWPayments invoice during this terminal-only grant;
+the controlled invoice/IPN smoke test remains separate. The separate evergreen tier-bound preorder
 entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
 implementation. To test Twelve Data, the owner must set `TWELVE_DATA_PRIVATE_TEST_ENABLED=true` and the
 private key only in the local loopback `.env`, then check the worker's no-price probe event. P9-001 remains

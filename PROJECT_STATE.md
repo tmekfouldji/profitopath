@@ -16,7 +16,11 @@ This file is the authoritative high-level state for Codex.
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
   through `20260830211500_password_reset_recovery` are applied. Revision `7847a72` is deployed; its
-  Twelve Data Basic probe is explicitly disabled on the production host.
+  Twelve Data Basic probe is explicitly disabled on the production host. On 31 August 2026 the owner
+  authorized a short-lived `QA-FLOW-20260831-1750` terminal-flow competition and a complimentary, audited
+  Rookie simulated account for the verified owner account; it records no payment or revenue. The worker's
+  server-owned deterministic mock feed is enabled for this controlled QA flow and continues to be the only
+  customer-delivered quote source.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: no customer-facing provider integration; a local-only, server-owned
   Twelve Data Basic connectivity probe is implemented but awaits a privately supplied local API key

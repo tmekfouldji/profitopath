@@ -29,6 +29,32 @@ class MemoryQuoteCache implements QuoteCacheClient {
   }
 }
 
+class LazyMemoryQuoteCache extends MemoryQuoteCache {
+  connectCalls = 0;
+  status = 'wait';
+  #resolveConnect!: () => void;
+  readonly connected = new Promise<void>((resolve) => {
+    this.#resolveConnect = resolve;
+  });
+
+  async connect(): Promise<void> {
+    this.connectCalls += 1;
+    await this.connected;
+    this.status = 'ready';
+  }
+
+  releaseConnection(): void {
+    this.#resolveConnect();
+  }
+
+  override async get(key: string): Promise<string | null> {
+    if (this.status !== 'ready') {
+      throw new Error('Stream is not writeable');
+    }
+    return super.get(key);
+  }
+}
+
 describe('shared quote cache', () => {
   it('round-trips exact normalized quotes through rebuildable cache state', async () => {
     const cache = new MemoryQuoteCache();
@@ -59,6 +85,32 @@ describe('shared quote cache', () => {
     await expect(provider.getLatestQuote('EURUSD')).rejects.toThrow(
       'Cached quote is unavailable',
     );
+  });
+
+  it('shares one lazy Valkey connection across concurrent quote reads', async () => {
+    const cache = new LazyMemoryQuoteCache();
+    const timestamp = new Date('2026-08-24T09:00:00.000Z');
+    const store = new ValkeyQuoteStore(cache, 30, () => timestamp);
+    const quote = JSON.stringify({
+      ask: '1.10020',
+      bid: '1.10000',
+      sequence: '42',
+      symbol: 'EURUSD',
+      timestamp: timestamp.toISOString(),
+    });
+    cache.values.set('market:quote:v1:EURUSD', quote);
+    cache.values.set(
+      'market:quote:v1:GBPUSD',
+      quote.replace('EURUSD', 'GBPUSD'),
+    );
+
+    const first = store.get('EURUSD');
+    const second = store.get('GBPUSD');
+    await Promise.resolve();
+    expect(cache.connectCalls).toBe(1);
+
+    cache.releaseConnection();
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
   });
 
   it('fails closed when cached data has outlived its accepted age', async () => {
