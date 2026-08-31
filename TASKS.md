@@ -715,3 +715,6 @@ Rules:
   - Verification: PostgreSQL-backed setup and payment integration coverage passed, including an active
     competition checkout that provisions an active simulated account before signup closes; formatter,
     typecheck, lint, the full default suite, and the production build passed.
+  - Deployment evidence: revision `43753bd` is live. The owner scheduling guidance renders in an authenticated
+    browser without console errors; public home, competition, and readiness routes return HTTP 200 and all
+    launch containers are healthy.

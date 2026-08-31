@@ -263,7 +263,9 @@ documentation and infrastructure are delivered.
   accepts a `SCHEDULED` or `ACTIVE` competition while its signup window remains open; confirmed active-window
   payments provision the normal active simulated account. PostgreSQL-backed setup/payment coverage passed,
   along with formatter, typecheck, lint, the full default suite (209 tests / 72 files, 40 skipped), and the
-  production build.
+  production build. Revision `43753bd` is live; the authenticated owner page renders the updated scheduling
+  guidance with no browser-console errors, public home/competition/readiness checks return HTTP 200, and all
+  launch services are healthy.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

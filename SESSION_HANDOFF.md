@@ -94,6 +94,9 @@ switched to port 587). The first signed real payment callback is still untested.
   normal active simulated account. The competition detail page labels this as an open in-progress entry
   instead of a preorder. PostgreSQL-backed setup/payment coverage passed, followed by formatter, typecheck,
   lint, the full default suite (209 tests / 72 files, 40 skipped), and a production build.
+- Revision `43753bd` is live. An authenticated browser confirms the owner scheduling guidance renders without
+  console errors; public home, competition, and readiness routes return HTTP 200; Caddy, PostgreSQL, Valkey,
+  web, realtime, and worker are healthy.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
