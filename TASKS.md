@@ -602,7 +602,8 @@ Rules:
     the 800-credit daily Basic limit, no provider price in logs, focused response/error/configuration
     coverage, and a separate customer-flow smoke test that continues to use deterministic mock data.
   - Complete: added the gated worker probe, exact response validation, test coverage, operator runbook,
-    and HTTPS/client/in-container launch-stack smoke checks. No real API key was supplied or used.
+    and HTTPS/client/in-container launch-stack smoke checks. Revision `7847a72` is live with the probe
+    disabled and the public stack still mock-only. No real API key was supplied or used.
 - [!] P9-T-002 Run one real local Twelve Data private-probe sample after the owner places the API key in
   their ignored loopback `.env`.
   - Blocker: the key must be entered privately by the owner. Verify only the worker's symbol/count event;

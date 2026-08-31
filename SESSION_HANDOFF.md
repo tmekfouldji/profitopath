@@ -131,6 +131,11 @@ untested.
   Chrome smoke check confirmed public home, competition discovery, and the pending-payment dashboard render
   with no application errors. In-container web/realtime/worker readiness and the Caddy-served public
   readiness route each returned HTTP 200; all six launch services were healthy.
+- Revision `7847a72` is deployed to the launch host. The self-hosted Compose stack rebuilt successfully;
+  Caddy, web, realtime, worker, PostgreSQL, and Valkey are healthy. In-container web/realtime/worker and
+  public HTTPS readiness checks returned HTTP 200. The host explicitly reports
+  `MARKET_DATA_SOURCE=mock` and `TWELVE_DATA_PRIVATE_TEST_ENABLED=false`; a fresh public competition-board
+  browser check has no application-console errors.
 
 ## Next work
 

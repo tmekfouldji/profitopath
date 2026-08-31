@@ -15,7 +15,8 @@ This file is the authoritative high-level state for Codex.
   and owner operations (public stack and email delivery active; controlled payment test/schedule pending)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
-  through `20260830211500_password_reset_recovery` are applied.
+  through `20260830211500_password_reset_recovery` are applied. Revision `7847a72` is deployed; its
+  Twelve Data Basic probe is explicitly disabled on the production host.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: no customer-facing provider integration; a local-only, server-owned
   Twelve Data Basic connectivity probe is implemented but awaits a privately supplied local API key
