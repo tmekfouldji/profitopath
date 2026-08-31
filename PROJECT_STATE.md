@@ -256,7 +256,9 @@ documentation and infrastructure are delivered.
 - Browser compatibility correction: owner code fields now use an HTML `v`-mode-safe expression, removing the
   client-side regular-expression exception seen in Chromium. The expression was exercised against valid and
   invalid codes; formatter, typecheck, lint, the full default suite (208 tests / 72 files, 39 skipped), and
-  the production build passed before deployment.
+  the production build passed before deployment. Revision `84e676a` is live; an authenticated browser reload
+  confirmed the compatible pattern compiles without console errors, while public home, competition, and
+  readiness routes returned HTTP 200.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

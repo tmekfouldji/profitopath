@@ -705,3 +705,6 @@ Rules:
     modern browsers without throwing a client-side regular-expression exception.
   - Verification: the HTML `v`-mode expression accepts valid hyphen/underscore code combinations and rejects
     spaces/slashes; formatter, typecheck, lint, the full default suite, and the production build passed.
+  - Deployment evidence: revision `84e676a` is live. The owner competition page exposes the compatible
+    pattern, the browser compiles it successfully in `v` mode with no console errors, and all containers
+    plus public home/competition/readiness routes are healthy.

@@ -85,7 +85,9 @@ switched to port 587). The first signed real payment callback is still untested.
 - Corrected the challenge-tier and competition-code HTML patterns for Chromium's current Unicode `v` regular
   expression mode. The prior character class caused a client-side exception before form submission. The new
   expression accepts only uppercase/lowercase letters, digits, underscores, and hyphens without the invalid
-  character-class syntax. Full quality checks passed before deployment.
+  character-class syntax. Full quality checks passed before deployment. Revision `84e676a` is live; an
+  authenticated browser reload confirmed the new pattern compiles with no console errors, while public
+  home, competition, and readiness routes return HTTP 200.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
