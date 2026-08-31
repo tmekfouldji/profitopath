@@ -15,12 +15,14 @@ This file is the authoritative high-level state for Codex.
   and owner operations (public stack and email delivery active; controlled payment test/schedule pending)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
-  through `20260830211500_password_reset_recovery` are applied. Revision `7847a72` is deployed; its
+  through `20260830211500_password_reset_recovery` are applied. Revision `3de46b7` is deployed; its
   Twelve Data Basic probe is explicitly disabled on the production host. On 31 August 2026 the owner
   authorized a short-lived `QA-FLOW-20260831-1750` terminal-flow competition and a complimentary, audited
   Rookie simulated account for the verified owner account; it records no payment or revenue. The worker's
   server-owned deterministic mock feed is enabled for this controlled QA flow and continues to be the only
-  customer-delivered quote source.
+  customer-delivered quote source. The launch database now has the explicit, audited active version-1 EURUSD
+  and GBPUSD simulated-instrument configurations required by that feed, and the browser terminal has been
+  verified with live mock prices plus an enabled server-authoritative ticket.
 - Production-shaped local Docker environment: complete and verified
 - Real market-data integration: no customer-facing provider integration; a local-only, server-owned
   Twelve Data Basic connectivity probe is implemented but awaits a privately supplied local API key
@@ -254,6 +256,12 @@ production bid/ask semantics, history, and resilience requirements are approved.
   tests), then formatter, full typecheck, lint, default suite (215 passed / 40 environment-dependent
   skipped), and production build passed. Live HTTPS home/competition/dashboard checks had no application
   console errors; Caddy, web, realtime, worker, PostgreSQL, and Valkey readiness checks were all HTTP 200.
+- Live terminal repair: focused quote-cache coverage, formatter, full typecheck, lint, default suite (176
+  passed / 40 skipped), and production build passed. Revision `3de46b7` is deployed. The public authenticated
+  WebSocket relay received a snapshot and quote delta. The owner-authorized, audited, idempotent launch-data
+  configuration created active version-1 EURUSD/GBPUSD simulated instruments using the repository's existing
+  rules; the connected browser now shows live EURUSD bid/ask, both pairs, valid `0.01` quantity constraints,
+  and an enabled simulated ticket with no application-console errors.
 - Current Phase 10 checkpoint: migrations `20260830180000_superadmin_observability` and
   `20260830190000_email_verification` applied locally; `pnpm typecheck`, `pnpm lint`, a production-mode
   `pnpm build`, and `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed (136 files / 200 tests).

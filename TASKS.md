@@ -757,7 +757,17 @@ Rules:
   - Verification: the authenticated NOWPayments dashboard persisted **Payment covering = 10.00%** (the
     documented maximum), while the separate unbounded Default payment status remains **Partially Paid**. The
     launch runbook documents the one-time recovery procedure for older partial payments.
-- [~] P10-018 Fix concurrent lazy Valkey quote reads in the live terminal.
+- [x] P10-018 Fix concurrent lazy Valkey quote reads in the live terminal.
   - Acceptance: concurrent server-rendered instrument reads share one connection attempt, rather than
     treating a still-connecting Valkey client as an unavailable quote; the terminal remains fail-closed for
     genuinely absent or stale quotes.
+  - Verification: the focused cache suite, full typecheck, lint, formatter, full default suite (176 passed /
+    40 skipped), and production build passed. Revision `3de46b7` is live; the public authenticated WebSocket
+    relay test received both its snapshot and quote delta.
+- [x] P10-019 Provision the versioned simulated instruments required by the live QA terminal.
+  - Acceptance: the launch database has explicit active version-1 configurations for the mock EURUSD and
+    GBPUSD instruments, allowing the owned terminal read model to expose only configured, auditable
+    simulated products with their quantities, leverage, and contract values.
+  - Verification: the production configuration upsert is audited and idempotent. An authenticated live-browser
+    terminal check shows both EURUSD/GBPUSD choices, live EURUSD bid/ask, valid quantity constraints, and an
+    enabled simulated order ticket; no application console errors were present.

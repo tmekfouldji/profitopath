@@ -142,7 +142,14 @@ untested.
   The grant has an authoritative initial-balance ledger and audit records but deliberately no `Payment`,
   NOWPayments invoice, or revenue. `MOCK_MARKET_DATA_ENABLED=true` is now set in the protected launch-host
   environment, and the worker restarts healthy, recovers both active accounts, and publishes four mock
-  quotes every five seconds. The Twelve Data private probe remains disabled on the host.
+  quotes every five seconds. The Twelve Data private probe remains disabled on the host. The launch database
+  now also has the explicit active version-1 EURUSD/GBPUSD simulated-instrument configurations required by
+  the QA terminal; the owner-authorized, idempotent upsert is audited and uses the existing repository rules.
+- Revision `3de46b7` is live. It serializes the initial lazy Valkey connection used by concurrent terminal
+  quote reads, retaining fail-closed behavior for genuinely stale/missing data. The public authenticated
+  WebSocket relay received a snapshot and quote delta, and the connected live browser terminal now shows
+  EURUSD bid/ask, both EURUSD/GBPUSD choices, correct `0.01` quantity constraints, and an enabled simulated
+  ticket with no application-console errors.
 
 ## Next work
 
@@ -151,9 +158,9 @@ before revision `c6d6270` once, then retry it; normal future web releases retain
 not announce or promote customer checkout until the controlled confirmation and checkout/IPN tests (including
 the approved 90% provider floor) complete and the first competition schedule is approved.
 `20260830211500_password_reset_recovery` and `/reset-password` are live; perform a complete user
-request/reset/new sign-in/old-session-invalidated check next. The owner should now sign in as the verified
-owner profile, open the controlled QA account from `/dashboard`, and exercise terminal rendering and an
-authoritative simulated order. Do not create a real NOWPayments invoice during this terminal-only grant;
+request/reset/new sign-in/old-session-invalidated check next. The owner may now sign in as the verified
+owner profile, open the controlled QA account from `/dashboard`, and exercise an authoritative simulated
+order using the live mock quotes. Do not create a real NOWPayments invoice during this terminal-only grant;
 the controlled invoice/IPN smoke test remains separate. The separate evergreen tier-bound preorder
 entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
 implementation. To test Twelve Data, the owner must set `TWELVE_DATA_PRIVATE_TEST_ENABLED=true` and the

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed live terminal initialization when its server-rendered instrument reads begin concurrently: one lazy
+  Valkey connection is now shared instead of producing a false unavailable-quote state. The temporary launch
+  QA environment also now has explicit, audited version-1 EURUSD and GBPUSD simulated-instrument
+  configurations, restoring live mock bid/ask display and the server-authoritative simulated order ticket.
 - Added a Twelve Data Basic-plan local private connectivity probe using its documented batched `/price`
   endpoint. It is development/test loopback-only, rate-safe for the free daily allowance, and validates
   server-only Decimal midpoints without logging, caching, persisting, executing on, or displaying them.
