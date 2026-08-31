@@ -6,7 +6,9 @@ Phase 10 is a preorder launch package with mandatory email confirmation and a pr
 plane. Product scope remains weekly simulated trading competitions only: no customer deposits, custody,
 fiat, payout provider, funded accounts, or real-market/broker execution. NOWPayments hosted invoices and
 signed raw IPNs remain the sole checkout boundary. Real market data remains blocked under P9-001 until the
-selected provider supplies official documentation and commercial customer-display/simulation rights.
+selected provider supplies official documentation and commercial customer-display/simulation rights. A
+strictly local Twelve Data Basic `/price` probe now exists for server connectivity only; its free-plan
+non-display terms prohibit using it for client delivery, cache/fan-out, candles, or simulated execution.
 
 The product owner requested a 15 September 2026 preorder storefront and authorized deployment to
 `root@72.62.90.38`. The public stack is live at `https://profitopath.com`, with a valid Let's Encrypt
@@ -57,6 +59,12 @@ launch.
   automatically marks a hosted-invoice payment `finished` when at least 90% of its quoted crypto equivalent
   is received. The app still accepts only a signed `finished` IPN and does not promote `partially_paid` locally.
   The unsafe unbounded Default payment status remains **Partially Paid**.
+- Added `TwelveDataPrivateProbe`, a worker-only client for the documented batched `/price` endpoint. It
+  samples EURUSD/GBPUSD midpoint values only on a development/test loopback origin with an owner-supplied
+  key. It defaults to five-minute polling (576 credits/day for two symbols), validates exact Decimals, and
+  logs only symbol names/sample count. It cannot publish to Valkey, candles, orders, execution, WebSockets,
+  HTTP, or browser code. `14_TWELVE_DATA_PRIVATE_TESTING.md` is the operator runbook; do not configure the
+  key or enable the probe on `/opt/profitopath`.
 
 ## Launch-host configuration state
 
@@ -118,6 +126,11 @@ untested.
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
   to the protected login flow.
+- Twelve Data private-probe response/error/configuration coverage passed, followed by formatter, full
+  typecheck, lint, the default suite (215 passed / 40 skipped), and a production build. An authenticated
+  Chrome smoke check confirmed public home, competition discovery, and the pending-payment dashboard render
+  with no application errors. In-container web/realtime/worker readiness and the Caddy-served public
+  readiness route each returned HTTP 200; all six launch services were healthy.
 
 ## Next work
 
@@ -128,4 +141,6 @@ the approved 90% provider floor) complete and the first competition schedule is 
 `20260830211500_password_reset_recovery` and `/reset-password` are live; perform a complete user
 request/reset/new sign-in/old-session-invalidated check next. The separate evergreen tier-bound preorder
 entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
-implementation. P9-001 is still blocked.
+implementation. To test Twelve Data, the owner must set `TWELVE_DATA_PRIVATE_TEST_ENABLED=true` and the
+private key only in the local loopback `.env`, then check the worker's no-price probe event. P9-001 remains
+blocked; do not change the public `MARKET_DATA_SOURCE=mock` or enable the probe on the launch host.

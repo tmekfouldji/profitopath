@@ -314,6 +314,22 @@ merchant policy, so the account must not be reused for products requiring an exa
 changing the setting and reviewing this decision. Existing partial payments require individual review and a
 provider-side status change/IPN resend.
 
+## D-030 — Twelve Data Basic is limited to a local private, non-display connectivity probe
+
+Status: Accepted for implementation
+
+Twelve Data's current Basic pricing describes the free plan as **internal non-display usage** and
+provides 8 API credits per minute with a daily cap of 800 credits. Profitopath may use the documented
+`/price` REST endpoint only to verify server-side connectivity on the developer's loopback environment;
+the probe queries the existing EURUSD and GBPUSD symbols in a single batch request at a rate-safe five
+minute cadence. The raw result is validated as a Decimal midpoint and immediately discarded: it is not
+logged, cached, persisted, used for simulated execution, or sent through HTTP/WebSocket/browser code.
+
+The public and customer-facing stack continues to use deterministic mock data. This decision does not
+approve Twelve Data for chart display, data redistribution/fan-out, history retention, bid/ask-based
+execution, or any customer-facing environment. A Phase 9 decision still requires a plan and written
+rights that expressly permit those uses, plus the full resilience, provenance, and market-rule work.
+
 ## Pending decisions
 
 - starting balance per tier

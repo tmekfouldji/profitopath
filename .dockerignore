@@ -3,6 +3,7 @@
 .github
 .next
 coverage
+marketing
 node_modules
 **/.next
 **/dist

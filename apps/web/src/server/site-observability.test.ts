@@ -35,6 +35,7 @@ describe('site observability boundaries', () => {
       nowPaymentsIpnSecretConfigured: true,
       paymentProvider: 'mock',
       publicOrigin: 'https://profitopath.com',
+      twelveDataPrivateTestEnabled: false,
     });
 
     expect(health.nowPayments).toBe('Credentials ready — mock checkout active');

@@ -592,6 +592,22 @@ Rules:
     chart-coordinate-bound click-to-lock measurement. Focused unit/component tests, full static checks,
     production image build, web readiness, and live two-click measurement QA passed.
 
+## Private non-display provider testing — does not advance Phase 9
+
+- [x] P9-T-001 Implement a local, server-only Twelve Data Basic-plan connectivity probe.
+  - Scope: use the documented `/price` batch endpoint for the existing EURUSD and GBPUSD test symbols,
+    validate exact Decimal mid-prices server-side, keep the credential outside Git, and make the probe
+    inaccessible to browsers, caches, simulated execution, and the public launch host.
+  - Acceptance: explicit development/loopback configuration gates, a rate-safe default cadence within
+    the 800-credit daily Basic limit, no provider price in logs, focused response/error/configuration
+    coverage, and a separate customer-flow smoke test that continues to use deterministic mock data.
+  - Complete: added the gated worker probe, exact response validation, test coverage, operator runbook,
+    and HTTPS/client/in-container launch-stack smoke checks. No real API key was supplied or used.
+- [!] P9-T-002 Run one real local Twelve Data private-probe sample after the owner places the API key in
+  their ignored loopback `.env`.
+  - Blocker: the key must be entered privately by the owner. Verify only the worker's symbol/count event;
+    do not add it to the public host or show a provider price in a browser.
+
 ## Blocked — Phase 9
 
 - [!] P9-001 Obtain the selected real market-data provider, official API documentation, and

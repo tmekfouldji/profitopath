@@ -17,7 +17,8 @@ This file is the authoritative high-level state for Codex.
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
   through `20260830211500_password_reset_recovery` are applied.
 - Production-shaped local Docker environment: complete and verified
-- Real market-data integration: not started
+- Real market-data integration: no customer-facing provider integration; a local-only, server-owned
+  Twelve Data Basic connectivity probe is implemented but awaits a privately supplied local API key
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
@@ -29,8 +30,10 @@ owner reported NOWPayments approval and receipt of the merchant API key, and req
 before the market-data rollout. That key is not present in the repository or this runtime. On 24 August 2026, TraderMade offered pricing and a paid,
 seven-day refundable trial, but stated that commercial terms can be discussed after testing. The reply
 does not supply official API documentation or confirm rights for customer-facing chart display,
-caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Mock market data remains
-active; no real market-data provider is authorized. The NOWPayments implementation follows its documented
+caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Twelve Data's official Basic
+pricing/docs now support only a loopback, non-display `/price` connectivity probe (D-030); it does not
+enter cache, candles, execution, or browser delivery and does not clear the Phase 9 gate. Mock market data
+remains the only authorized client source. The NOWPayments implementation follows its documented
 hosted-invoice and IPN flow, but production activation remains blocked on merchant acceptance, SVG legal
 approval evidence retention, secret-manager provisioning, final public origin/DNS, a public HTTPS IPN
 endpoint test, an explicit launch competition schedule, and managed PostgreSQL/Valkey endpoints. The
@@ -226,8 +229,9 @@ sections to approve the first `SCHEDULED` competition.
 P10-010 password recovery is deployed at `/reset-password`; migration
 `20260830211500_password_reset_recovery` applied successfully and its public reset page/API health smoke
 tests passed. P10-011 evergreen preorder entitlement is explicitly scoped but needs approved
-pricing/expiry/refund policy. P9-001 remains intentionally deferred until the approved provider
-documentation and infrastructure are delivered.
+pricing/expiry/refund policy. P9-T-002 awaits a privately entered local Twelve Data API key for one
+server-only probe sample; P9-001 remains intentionally deferred until customer-facing provider rights,
+production bid/ask semantics, history, and resilience requirements are approved.
 
 ## Quality status
 
@@ -241,6 +245,10 @@ documentation and infrastructure are delivered.
 - `RUN_DATABASE_TESTS=true pnpm test`: all 146 tests passed locally across 54 test files
 - `pnpm build`: passed
 - `pnpm db:validate` / `pnpm db:generate`: passed
+- Twelve Data private-probe release: focused response/configuration/observability coverage passed (15
+  tests), then formatter, full typecheck, lint, default suite (215 passed / 40 environment-dependent
+  skipped), and production build passed. Live HTTPS home/competition/dashboard checks had no application
+  console errors; Caddy, web, realtime, worker, PostgreSQL, and Valkey readiness checks were all HTTP 200.
 - Current Phase 10 checkpoint: migrations `20260830180000_superadmin_observability` and
   `20260830190000_email_verification` applied locally; `pnpm typecheck`, `pnpm lint`, a production-mode
   `pnpm build`, and `RUN_DATABASE_TESTS=true pnpm exec vitest run` passed (136 files / 200 tests).
@@ -396,6 +404,8 @@ documentation and infrastructure are delivered.
 - TraderMade offered pricing/a paid trial, but commercial terms, official documentation, and required
   client-display/redistribution/simulated-execution rights are not approved or integrated
 - official provider API documentation and commercial-use/redistribution approval not supplied
+- Twelve Data Basic permits only internal non-display use; its local probe is not permission to serve prices
+  to customers or use them for simulated execution
 - NOWPayments merchant acceptance, production credential provisioning, and public HTTPS IPN verification
   are not completed; real checkout remains disabled
 - SVG legal opinion not completed

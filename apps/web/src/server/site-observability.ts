@@ -119,6 +119,7 @@ export function configurationHealth(input: {
   nowPaymentsIpnSecretConfigured: boolean;
   paymentProvider: 'mock' | 'nowpayments';
   publicOrigin: string;
+  twelveDataPrivateTestEnabled: boolean;
 }) {
   const nowPaymentsConfigured =
     input.nowPaymentsApiKeyConfigured && input.nowPaymentsIpnSecretConfigured;
@@ -128,9 +129,13 @@ export function configurationHealth(input: {
         ? 'SMTP verification enabled'
         : 'SMTP verification not configured',
     emailProvider: input.emailProvider,
-    marketData: input.mockMarketDataEnabled
-      ? 'Mock feed enabled'
-      : 'Mock feed held',
+    marketData: input.twelveDataPrivateTestEnabled
+      ? input.mockMarketDataEnabled
+        ? 'Mock feed enabled; local Twelve Data probe enabled'
+        : 'Mock feed held; local Twelve Data probe enabled'
+      : input.mockMarketDataEnabled
+        ? 'Mock feed enabled'
+        : 'Mock feed held',
     marketDataSource: input.marketDataSource,
     nowPayments: nowPaymentsConfigured
       ? input.paymentProvider === 'nowpayments'
@@ -152,5 +157,6 @@ export function getConfigurationHealth() {
     nowPaymentsIpnSecretConfigured: env.NOWPAYMENTS_IPN_SECRET !== undefined,
     paymentProvider: env.PAYMENT_PROVIDER,
     publicOrigin: env.NEXTAUTH_URL,
+    twelveDataPrivateTestEnabled: env.TWELVE_DATA_PRIVATE_TEST_ENABLED,
   });
 }

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a Twelve Data Basic-plan local private connectivity probe using its documented batched `/price`
+  endpoint. It is development/test loopback-only, rate-safe for the free daily allowance, and validates
+  server-only Decimal midpoints without logging, caching, persisting, executing on, or displaying them.
+  The public/client stack continues to use deterministic mock data pending written commercial rights.
 - Added a protected `SUPERADMIN` control plane with registered-member, privacy-preserving daily visitor,
   active-member, confirmed USD revenue, simulated-account, and configuration-readiness reporting.
 - Added hashed, expiring, single-use email confirmation tokens; Zoho SMTP delivery, generic rate-limited

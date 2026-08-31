@@ -10,7 +10,9 @@ import { checkDatabase, database } from '@profitopath/database';
 import {
   LiveCandleProcessor,
   MockMarketDataProvider,
+  TwelveDataPrivateProbe,
   ValkeyQuoteStore,
+  twelveDataPrivateTestSymbols,
 } from '@profitopath/market-data';
 import {
   checkValkey,
@@ -43,6 +45,7 @@ const valkey = createValkeyClient(env.VALKEY_URL, (error) => {
 
 let mockCycleTimer: ReturnType<typeof setTimeout> | null = null;
 let competitionJobTimer: ReturnType<typeof setTimeout> | null = null;
+let twelveDataPrivateProbeTimer: ReturnType<typeof setTimeout> | null = null;
 let shuttingDown = false;
 
 if (env.COMPETITION_JOBS_ENABLED) {
@@ -156,6 +159,46 @@ if (env.MOCK_MARKET_DATA_ENABLED) {
   void runMockCycle();
 }
 
+if (env.TWELVE_DATA_PRIVATE_TEST_ENABLED) {
+  const twelveDataPrivateProbe = new TwelveDataPrivateProbe({
+    apiKey: env.TWELVE_DATA_API_KEY!,
+  });
+  let nextProbeDelayMs = env.TWELVE_DATA_POLL_INTERVAL_MS;
+  const runTwelveDataPrivateProbe = async () => {
+    try {
+      const samples = await twelveDataPrivateProbe.sample();
+      nextProbeDelayMs = env.TWELVE_DATA_POLL_INTERVAL_MS;
+      logger.info(
+        {
+          sampleCount: samples.length,
+          symbols: samples.map((sample) => sample.symbol),
+        },
+        'Twelve Data private non-display probe completed',
+      );
+    } catch (error: unknown) {
+      nextProbeDelayMs = Math.min(nextProbeDelayMs * 2, 3_600_000);
+      logger.warn(
+        { error, nextProbeDelayMs },
+        'Twelve Data private non-display probe failed; retry delayed',
+      );
+    } finally {
+      if (!shuttingDown) {
+        twelveDataPrivateProbeTimer = setTimeout(
+          () => void runTwelveDataPrivateProbe(),
+          nextProbeDelayMs,
+        );
+      }
+    }
+  };
+
+  void twelveDataPrivateProbe.subscribe(twelveDataPrivateTestSymbols).then(
+    () => void runTwelveDataPrivateProbe(),
+    (error: unknown) => {
+      logger.error({ error }, 'Twelve Data private probe could not initialize');
+    },
+  );
+}
+
 const server = createServer(async (request, response) => {
   response.setHeader('content-type', 'application/json');
 
@@ -191,6 +234,9 @@ async function shutdown(signal: string): Promise<void> {
   }
   if (competitionJobTimer !== null) {
     clearTimeout(competitionJobTimer);
+  }
+  if (twelveDataPrivateProbeTimer !== null) {
+    clearTimeout(twelveDataPrivateProbeTimer);
   }
   valkey.disconnect();
   await database.$disconnect();

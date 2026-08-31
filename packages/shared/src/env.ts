@@ -69,6 +69,14 @@ export const runtimeEnvSchema = z
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_PORT: integerPort.optional(),
     SMTP_USER: z.string().email().optional(),
+    TWELVE_DATA_API_KEY: z.string().min(1).optional(),
+    TWELVE_DATA_POLL_INTERVAL_MS: z.coerce
+      .number()
+      .int()
+      .min(300_000)
+      .max(3_600_000)
+      .default(300_000),
+    TWELVE_DATA_PRIVATE_TEST_ENABLED: booleanString,
     VALKEY_URL: z.string().url().startsWith('redis://'),
   })
   .superRefine((value, context) => {
@@ -98,6 +106,29 @@ export const runtimeEnvSchema = z
           'EMAIL_FROM, SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD are required when EMAIL_PROVIDER=smtp',
         path: ['EMAIL_PROVIDER'],
       });
+    }
+    if (value.TWELVE_DATA_PRIVATE_TEST_ENABLED) {
+      const origin = new URL(value.NEXTAUTH_URL);
+      const isLoopbackOrigin =
+        origin.hostname === 'localhost' ||
+        origin.hostname === '127.0.0.1' ||
+        origin.hostname === '::1';
+      if (value.TWELVE_DATA_API_KEY === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_API_KEY is required when TWELVE_DATA_PRIVATE_TEST_ENABLED=true',
+          path: ['TWELVE_DATA_PRIVATE_TEST_ENABLED'],
+        });
+      }
+      if (value.NODE_ENV === 'production' || !isLoopbackOrigin) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'Twelve Data Basic testing is restricted to a development/test loopback environment',
+          path: ['TWELVE_DATA_PRIVATE_TEST_ENABLED'],
+        });
+      }
     }
   });
 

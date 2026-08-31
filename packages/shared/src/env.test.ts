@@ -23,6 +23,8 @@ describe('parseRuntimeEnv', () => {
     expect(parsed.AUTO_FINALIZE_FROZEN_COMPETITIONS).toBe(false);
     expect(parsed.MARKET_DATA_SOURCE).toBe('mock');
     expect(parsed.MOCK_MARKET_DATA_ENABLED).toBe(false);
+    expect(parsed.TWELVE_DATA_PRIVATE_TEST_ENABLED).toBe(false);
+    expect(parsed.TWELVE_DATA_POLL_INTERVAL_MS).toBe(300_000);
     expect(parsed.PAYMENT_PROVIDER).toBe('mock');
     expect(parsed.EMAIL_PROVIDER).toBe('console');
   });
@@ -96,6 +98,43 @@ describe('parseRuntimeEnv', () => {
         NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
         NEXTAUTH_URL: 'https://profitopath.com',
         VALKEY_URL: 'redis://localhost:6379',
+      }),
+    ).toThrow();
+  });
+
+  it('accepts a credentialed loopback-only Twelve Data private probe', () => {
+    const parsed = parseRuntimeEnv({
+      DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+      MOCK_PAYMENT_SIGNING_SECRET:
+        'test-mock-payment-secret-with-thirty-two-characters',
+      NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+      NEXTAUTH_URL: 'http://localhost:3000',
+      TWELVE_DATA_API_KEY: 'private-test-key',
+      TWELVE_DATA_PRIVATE_TEST_ENABLED: 'true',
+      VALKEY_URL: 'redis://localhost:6379',
+    });
+
+    expect(parsed.TWELVE_DATA_PRIVATE_TEST_ENABLED).toBe(true);
+  });
+
+  it('rejects a Twelve Data probe without a key or with a public origin', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+      MOCK_PAYMENT_SIGNING_SECRET:
+        'test-mock-payment-secret-with-thirty-two-characters',
+      NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+      TWELVE_DATA_PRIVATE_TEST_ENABLED: 'true',
+      VALKEY_URL: 'redis://localhost:6379',
+    };
+
+    expect(() =>
+      parseRuntimeEnv({ ...base, NEXTAUTH_URL: 'http://localhost:3000' }),
+    ).toThrow();
+    expect(() =>
+      parseRuntimeEnv({
+        ...base,
+        NEXTAUTH_URL: 'https://profitopath.com',
+        TWELVE_DATA_API_KEY: 'private-test-key',
       }),
     ).toThrow();
   });
