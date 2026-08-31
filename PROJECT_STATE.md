@@ -183,8 +183,10 @@ All items above are complete, including the service-backed GitHub Actions run.
   immutable local payment ID as `order_id`; browser clients never receive API/IPN credentials or wallet UI
 - `/api/payments/nowpayments/ipn` receives raw IPN bodies, checks the recursively sorted HMAC-SHA-512
   `x-nowpayments-sig`, and rejects invalid, mismatched, regressive, or duplicate-conflicting events
-- only NOWPayments `finished` maps to the existing exact-amount `CONFIRMED` activation path; waiting,
-  confirming, partially paid, and sending states remain non-provisioning
+- only signed NOWPayments `finished` maps to the existing quoted-amount `CONFIRMED` activation path;
+  waiting, confirming, partially paid, and sending states remain non-provisioning. NOWPayments Payment
+  covering is configured at 10%, so the provider may emit `finished` when it accepts an actual deposit at or
+  above 90% of the quoted crypto equivalent; Profitopath does not locally promote a partial callback.
 - `PAYMENT_PROVIDER=mock` remains the default. `PAYMENT_PROVIDER=nowpayments` requires both
   server-only NOWPayments secrets and an HTTPS non-localhost callback origin
 - scheduled entries now render as preorders after a confirmed payment; the dashboard withholds the trading
@@ -272,6 +274,12 @@ documentation and infrastructure are delivered.
   runtime key. Formatter, typecheck, lint, default tests, production build/key assertion, and launch Compose
   validation passed. Revision `c6d6270` is live; all services are healthy and public readiness returns HTTP 200. Open forms from before this one-time migration must be reloaded once; later ordinary web releases
   retain their action identities.
+- NOWPayments bounded underpayment handling: the authenticated merchant dashboard's Payment covering is
+  persisted at 10.00%, its documented maximum. It lets NOWPayments automatically send `finished` for a
+  qualifying payment at or above 90% of the quoted crypto equivalent; the application continues to require a
+  signed `finished` callback and leaves `partially_paid` non-provisioning. The separate unbounded default
+  status remains **Partially Paid**. Existing partial payments require individual review, provider-side
+  completion, and an IPN resend.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

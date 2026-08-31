@@ -57,6 +57,26 @@ unchanged. This endpoint is intentionally unauthenticated; restrict only by norm
 that do not rewrite the body or strip the signature header. Do not use a localhost URL, a tunnel that
 is not owned by the company, or a browser redirect as the IPN endpoint.
 
+## Underpayment policy
+
+The product owner approved a **90% minimum** for a NOWPayments hosted-invoice payment: up to 10% of the
+quoted crypto equivalent may be short because of network-fee or final-fiat-equivalent variance. This
+tolerance is provider-owned, not a browser or application override. In NOWPayments Dashboard → Settings →
+Payments → Payment details, set **Payment covering** to **10.00%**. This is the bounded control whose label
+states the maximum shortfall it will still treat as completed. Do **not** use the separate **Default payment
+status: Finished** setting: that accepts every underpayment, with no lower bound.
+
+Profitopath continues to provision an entry only when it receives a signed NOWPayments `finished` IPN. It
+does not locally relabel a `partially_paid` callback as paid, so a forged or arbitrarily underpaid browser
+payment cannot bypass the provider's threshold. The local USD-cent validation remains a validation of the
+immutable invoice quote; NOWPayments applies the approved covering calculation to the actual crypto deposit.
+The setting is account-wide. Reassess it before using the same merchant account for goods that require an
+exact collected amount.
+
+The setting applies to new provider processing. For an older payment that is already `partially_paid`, review
+the actual received amount, mark only an approved payment as `finished` in the NOWPayments payment details,
+then use **Send IPN**. The signed callback will activate the matching pending competition entry exactly once.
+
 ## Pre-deployment checks
 
 1. Deploy from the tracked [`docker-compose.launch.yml`](docker-compose.launch.yml) composition with the
@@ -139,8 +159,10 @@ never use a customer payment as the first test.
    that no API key, IPN secret, wallet, amount selector, or local payment ID is rendered to the browser.
 3. Complete the controlled payment and wait for the signed IPN. Do not treat the success redirect as a
    confirmation.
-4. Verify one payment has the exact tier amount in USD cents, one provider invoice ID, one actual
-   payment ID, and a provider-event receipt. Only `finished` may set it to `CONFIRMED`.
+4. Verify one payment retains the exact quoted tier amount in USD cents, one provider invoice ID, one actual
+   payment ID, and a provider-event receipt. With the approved 10% Payment covering setting, test an amount
+   at or above 90% of the provider's quoted crypto equivalent and verify NOWPayments sends `finished`; only
+   signed `finished` may set the entry to `CONFIRMED`.
 5. Verify exactly one competition entry and simulated account were activated, one initial-balance ledger
    row exists, and replaying the same IPN causes no duplicate account or ledger record.
 6. Confirm the dashboard says **Preorder confirmed** and offers no terminal before the competition

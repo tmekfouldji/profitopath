@@ -728,3 +728,10 @@ Rules:
   - Deployment evidence: revision `c6d6270` is live. The launch host generated the protected 32-byte key
     locally, has it in the web build and container runtime without disclosing it, and the manifest equality
     check passed. All Docker services are healthy and `https://profitopath.com/api/health/ready` returns 200.
+- [x] P10-017 Configure bounded NOWPayments underpayment handling.
+  - Acceptance: NOWPayments automatically marks a new hosted-invoice payment `finished` only when at least
+    90% of its quoted crypto equivalent is received; Profitopath preserves signed-`finished`-only entry
+    activation and never promotes `partially_paid` locally.
+  - Verification: the authenticated NOWPayments dashboard persisted **Payment covering = 10.00%** (the
+    documented maximum), while the separate unbounded Default payment status remains **Partially Paid**. The
+    launch runbook documents the one-time recovery procedure for older partial payments.

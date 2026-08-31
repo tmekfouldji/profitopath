@@ -299,6 +299,21 @@ an unknown action. The key is never committed, logged, sent to a browser, or use
 An intentional rotation is a security deployment event that invalidates outstanding action requests and
 must be coordinated with a full web rollout.
 
+## D-029 — NOWPayments accepts a bounded 10% underpayment through provider payment covering
+
+Status: Accepted by product owner on 31 August 2026
+
+For the Profitopath preorder merchant account, an invoice is acceptable when NOWPayments determines that at
+least 90% of its quoted crypto equivalent was received. The provider's Dashboard → Settings → Payments →
+Payment details **Payment covering** value is set to 10.00%, its documented maximum; it automatically emits
+`finished` rather than `partially_paid` only within that provider-owned threshold. The application preserves
+its signed-IPN boundary and maps only `finished` to confirmation: it does not locally promote an arbitrary
+partial payment or expose a client-side payment decision. The `price_amount` exact-cent check still protects
+the immutable USD quote, while NOWPayments determines the actual crypto shortfall. This is account-wide
+merchant policy, so the account must not be reused for products requiring an exact collected amount without
+changing the setting and reviewing this decision. Existing partial payments require individual review and a
+provider-side status change/IPN resend.
+
 ## Pending decisions
 
 - starting balance per tier

@@ -35,6 +35,9 @@
 - Stabilized Next.js Server Action identities for the self-hosted launch: one protected, server-generated
   encryption key now reaches the web build and runtime, so ordinary web image rollouts no longer invalidate
   already-open forms. The key remains outside Git, browser code, logs, and chat.
+- Configured NOWPayments' bounded Payment covering at 10%, allowing the provider to mark a new payment
+  `finished` at or above its approved 90% floor. Profitopath retains signed-`finished`-only provisioning and
+  does not silently promote provider `partially_paid` notifications.
 
 ### Project direction
 

@@ -53,6 +53,10 @@ launch.
   protected 32-byte base64 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` into the web build and runtime. It was generated
   only on the launch host; the running server-reference manifest matches the runtime key without emitting its
   value. This corrects stale-form action failures after the required one-time browser reload.
+- Configured NOWPayments Payment covering at 10.00% in the authenticated merchant dashboard, so the provider
+  automatically marks a hosted-invoice payment `finished` when at least 90% of its quoted crypto equivalent
+  is received. The app still accepts only a signed `finished` IPN and does not promote `partially_paid` locally.
+  The unsafe unbounded Default payment status remains **Partially Paid**.
 
 ## Launch-host configuration state
 
@@ -68,8 +72,9 @@ untested.
 
 1. Confirm the received email, verify blocked-before-confirmation/allowed-after-confirmation, and check
    Zoho SPF/DKIM delivery outcomes.
-2. Run the controlled exact-amount NOWPayments invoice/signed-IPN smoke test at
-   `https://profitopath.com/api/payments/nowpayments/ipn`.
+2. Run the controlled NOWPayments invoice/signed-IPN smoke test at
+   `https://profitopath.com/api/payments/nowpayments/ipn`; verify the provider's approved 90% floor with a
+   company-controlled payment at or above that threshold.
 3. Approve the first real `SCHEDULED` competition and tiers/rules. Do not run development seeds publicly.
 4. The product owner account is already `SUPERADMIN`. Sign out and back in after a role change, then use
    `/superadmin`: create/activate a tier first, create a DRAFT competition with `signup close < start < end`
@@ -106,6 +111,9 @@ untested.
   Server Action key; Caddy, PostgreSQL, Valkey, web, realtime, and worker are healthy; and public readiness
   returns HTTP 200. The one-time migration invalidates forms opened before this deployment, so reload before
   resubmitting an owner-console form.
+- NOWPayments merchant dashboard verification: Payment covering persists as 10.00%; Default payment status
+  remains **Partially Paid** rather than the unsafe all-underpayments-finished mode. No deployment was
+  required because the production application already processes only signed `finished` IPNs.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
@@ -115,8 +123,9 @@ untested.
 
 Keep the public application running and monitor confirmation delivery. Reload any owner-console form opened
 before revision `c6d6270` once, then retry it; normal future web releases retain Server Action identities. Do
-not announce or promote customer checkout until the controlled confirmation and exact-amount checkout/IPN
-tests complete and the first competition schedule is approved. `20260830211500_password_reset_recovery` and
-`/reset-password` are live; perform a complete user request/reset/new sign-in/old-session-invalidated check
-next. The separate evergreen tier-bound preorder entitlement must receive explicit pricing, expiry/refund,
-and cancellation-policy approval before implementation. P9-001 is still blocked.
+not announce or promote customer checkout until the controlled confirmation and checkout/IPN tests (including
+the approved 90% provider floor) complete and the first competition schedule is approved.
+`20260830211500_password_reset_recovery` and `/reset-password` are live; perform a complete user
+request/reset/new sign-in/old-session-invalidated check next. The separate evergreen tier-bound preorder
+entitlement must receive explicit pricing, expiry/refund, and cancellation-policy approval before
+implementation. P9-001 is still blocked.
