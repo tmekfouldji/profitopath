@@ -19,6 +19,7 @@ services:
     build:
       args:
         NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL:?Set NEXT_PUBLIC_REALTIME_URL in .env.launch and pass it with --env-file.}
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:?Set a stable 32-byte base64 NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in .env.launch.}
       context: .
       dockerfile: apps/web/Dockerfile
     depends_on:

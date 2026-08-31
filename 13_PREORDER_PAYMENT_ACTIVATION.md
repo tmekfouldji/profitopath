@@ -7,10 +7,10 @@ integrated. The target storefront launch reported by the product owner is **15 S
 It does not set a competition start date: operators must schedule the first five-session competition
 using the approved rules and market-data readiness date.
 
-The application supports a paid entry only for a `SCHEDULED` competition. A valid NOWPayments IPN
-activates the entry and creates its simulated account, but the dashboard keeps it in **Preorder
-confirmed** until the competition is active. The simulator independently rejects orders before the
-trading window.
+The application supports paid entry for a `SCHEDULED` competition and for an `ACTIVE` competition
+until its configured signup-close time. A valid NOWPayments IPN activates the entry and creates its
+simulated account. Scheduled entries remain **Preorder confirmed** until the competition is active;
+the simulator independently rejects orders before the trading window.
 
 ## Evidence and boundaries
 
@@ -25,8 +25,9 @@ trading window.
 ## Deployment secret contract
 
 Inject these values from the production secret manager into every service that loads the shared runtime
-configuration. Do not add any value to `.env.example`, `.env.container.example`, Docker image layers,
-CI logs, browser code, or chat.
+configuration. Do not add any value to `.env.example`, `.env.container.example`, Docker `ENV`
+instructions, CI logs, browser code, or chat. The Server Action key is an intentional private build
+input for Next.js and must be identical at build and runtime; never expose it in a public build variable.
 
 | Variable                               | Required value                                                         |
 | -------------------------------------- | ---------------------------------------------------------------------- |
@@ -35,6 +36,7 @@ CI logs, browser code, or chat.
 | `NOWPAYMENTS_IPN_SECRET`               | Newly generated NOWPayments IPN secret from the same restricted store  |
 | `NEXTAUTH_URL`                         | Final public `https://` storefront origin, without a trailing path     |
 | `NEXTAUTH_SECRET`                      | One stable, high-entropy shared value across web and realtime replicas |
+| `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`   | One stable base64-encoded 32-byte key for the web build and runtime    |
 | `EMAIL_PROVIDER`                       | `smtp`                                                                 |
 | `EMAIL_FROM` / `SMTP_USER`             | `contact@profitopath.com`                                              |
 | `SMTP_HOST` / `SMTP_PORT`              | Exact Zoho account/datacenter SMTP values; 465 SSL or 587 TLS          |
@@ -68,8 +70,10 @@ is not owned by the company, or a browser redirect as the IPN endpoint.
 4. Send a confirmation link to a company-controlled mailbox. Confirm it in the browser and verify that a
    password cannot sign in before confirmation but can sign in after. Do not log the SMTP password or raw
    token.
-5. Deploy web, worker, and realtime with the same `NEXTAUTH_URL` and `NEXTAUTH_SECRET`; check their
-   readiness endpoints through the public deployment.
+5. Deploy web, worker, and realtime with the same `NEXTAUTH_URL` and `NEXTAUTH_SECRET`; build and run the
+   web service with the same `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`; check their readiness endpoints through
+   the public deployment. Retaining that action key prevents a normal web rollout from invalidating an
+   already-open form.
 6. Confirm `POST /api/payments/nowpayments/ipn` is reachable over public HTTPS and returns a non-5xx
    response for an intentionally invalid signed-callback test. Never use this test to expose a real
    signature or secret in logs.

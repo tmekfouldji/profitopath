@@ -287,6 +287,18 @@ competition discovery excludes drafts and cancelled records, and the public tier
 configuration rather than hard-coded launch economics. Prize and payout operations retain their existing
 evidence and dual-review constraints; deployment secrets remain outside the browser.
 
+## D-028 — Server Action identities remain stable across normal launch rollouts
+
+Status: Accepted for implementation
+
+The launch host generates one base64-encoded 32-byte `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, protects it in
+the mode-0600 `.env.launch`, and supplies it to the web image at build time and the web container at runtime.
+Next.js uses this private key to preserve the encrypted Server Action identifiers in a build. This prevents
+a normal replacement of the web image from making an already-open, legitimate owner-console form appear as
+an unknown action. The key is never committed, logged, sent to a browser, or used as a public build variable.
+An intentional rotation is a security deployment event that invalidates outstanding action requests and
+must be coordinated with a full web rollout.
+
 ## Pending decisions
 
 - starting balance per tier

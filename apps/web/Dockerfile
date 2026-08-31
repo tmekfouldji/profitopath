@@ -1,6 +1,7 @@
 FROM node:22-bookworm-slim
 
 ARG NEXT_PUBLIC_REALTIME_URL
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -21,7 +22,7 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
     NEXTAUTH_SECRET=build-only-nextauth-secret-at-least-thirty-two-characters \
     NEXTAUTH_URL=http://localhost:3000 \
     VALKEY_URL=redis://localhost:6379 \
-    pnpm --filter @profitopath/web build
+    sh -c 'if [ -n "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY; fi; pnpm --filter @profitopath/web build'
 RUN prisma_engine="$(find node_modules/.pnpm -type f -path '*/node_modules/.prisma/client/libquery_engine-*.so.node' -print -quit)" \
     && test -n "$prisma_engine" \
     && prisma_client_dir="$(dirname "$prisma_engine")" \
