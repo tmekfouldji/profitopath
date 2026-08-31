@@ -27,6 +27,8 @@
 - Corrected owner-console form mutations so successful actions retain their success notices instead of
   treating Next.js redirect control flow as a failed authoritative command. Safe typed validation details
   are now shown when a pricing, competition, or user action is actually rejected.
+- Corrected the owner code-field HTML patterns for Chromium's current Unicode regex mode, preventing a
+  client-side exception before tier or competition form submission.
 
 ### Project direction
 

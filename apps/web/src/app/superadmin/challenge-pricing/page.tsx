@@ -95,7 +95,7 @@ export default async function ChallengePricingPage({
             <input
               maxLength={32}
               name="code"
-              pattern="[A-Za-z0-9_-]+"
+              pattern="(?:[A-Za-z0-9_]|-)+"
               placeholder="ROOKIE_V2"
               required
             />

@@ -253,6 +253,10 @@ documentation and infrastructure are delivered.
   (208 tests across 72 files, with 39 environment-dependent tests skipped).
   Revision `36adbf0` is deployed to the launch host; public home, competition, and readiness checks returned
   HTTP 200 after the rebuilt web/realtime/worker services became healthy.
+- Browser compatibility correction: owner code fields now use an HTML `v`-mode-safe expression, removing the
+  client-side regular-expression exception seen in Chromium. The expression was exercised against valid and
+  invalid codes; formatter, typecheck, lint, the full default suite (208 tests / 72 files, 39 skipped), and
+  the production build passed before deployment.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

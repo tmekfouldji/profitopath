@@ -90,7 +90,7 @@ export default async function SuperadminCompetitionsPage({
             <input
               maxLength={64}
               name="code"
-              pattern="[A-Za-z0-9_-]+"
+              pattern="(?:[A-Za-z0-9_]|-)+"
               placeholder="WEEK-20260915"
               required
             />

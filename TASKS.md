@@ -700,3 +700,8 @@ Rules:
   - Deployment evidence: revision `36adbf0` is live. Public home, competition, and readiness routes return
     HTTP 200; the protected competition setup route redirects unauthenticated requests to sign-in; all
     launch containers are healthy.
+- [x] P10-014 Restore compatible owner-console code validation.
+  - Acceptance: challenge-tier and competition-code input patterns validate the allowed code characters in
+    modern browsers without throwing a client-side regular-expression exception.
+  - Verification: the HTML `v`-mode expression accepts valid hyphen/underscore code combinations and rejects
+    spaces/slashes; formatter, typecheck, lint, the full default suite, and the production build passed.
