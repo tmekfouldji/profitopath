@@ -24,6 +24,9 @@
 - Made the customer purchase journey consistently configuration-driven: the home tier preview now reads
   active published tiers, public competition discovery hides drafts/cancelled records, and the normal
   trading desk provides direct purchase access for both new and returning customers.
+- Corrected owner-console form mutations so successful actions retain their success notices instead of
+  treating Next.js redirect control flow as a failed authoritative command. Safe typed validation details
+  are now shown when a pricing, competition, or user action is actually rejected.
 
 ### Project direction
 

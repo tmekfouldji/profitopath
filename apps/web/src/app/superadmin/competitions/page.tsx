@@ -35,7 +35,7 @@ function utcInputValue(value: Date): string {
 export default async function SuperadminCompetitionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ detail?: string; notice?: string }>;
 }) {
   await requireSuperadmin();
   const [competitions, params] = await Promise.all([
@@ -44,6 +44,10 @@ export default async function SuperadminCompetitionsPage({
   ]);
   const notice =
     params.notice === undefined ? undefined : notices[params.notice];
+  const noticeDetail =
+    notice?.error === true && params.detail !== undefined
+      ? params.detail.slice(0, 240)
+      : undefined;
 
   return (
     <section className="superadmin-section">
@@ -65,6 +69,7 @@ export default async function SuperadminCompetitionsPage({
           role="status"
         >
           {notice.message}
+          {noticeDetail === undefined ? null : ` ${noticeDetail}`}
         </p>
       )}
 

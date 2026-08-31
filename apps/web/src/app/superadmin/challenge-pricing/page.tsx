@@ -37,7 +37,7 @@ function usdInputValue(value: bigint | number): string {
 export default async function ChallengePricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ detail?: string; notice?: string }>;
 }) {
   await requireSuperadmin();
   const [tiers, params] = await Promise.all([
@@ -46,6 +46,10 @@ export default async function ChallengePricingPage({
   ]);
   const notice =
     params.notice === undefined ? undefined : notices[params.notice];
+  const noticeDetail =
+    notice?.error === true && params.detail !== undefined
+      ? params.detail.slice(0, 240)
+      : undefined;
 
   return (
     <section className="superadmin-section">
@@ -67,6 +71,7 @@ export default async function ChallengePricingPage({
           role="status"
         >
           {notice.message}
+          {noticeDetail === undefined ? null : ` ${noticeDetail}`}
         </p>
       )}
 

@@ -690,3 +690,10 @@ Rules:
   - Deployment evidence: revision `008b102` is live on the launch host. Public home, competition, and
     readiness routes return HTTP 200 over HTTPS; unauthenticated owner routes redirect to the protected
     login flow; Caddy, web, realtime, worker, PostgreSQL, and Valkey report healthy.
+- [x] P10-013 Correct owner-console mutation redirect handling.
+  - Acceptance: successful server actions preserve their success redirect/notice instead of treating
+    Next.js's internal redirect signal as an invalid authoritative command; expected failures remain safe
+    and visible to the owner.
+  - Verification: owner-action regression coverage confirms a successful draft creation redirects exactly
+    once to `competition-created`; rejected domain commands remain on the safe error path with their
+    bounded, user-actionable validation detail.

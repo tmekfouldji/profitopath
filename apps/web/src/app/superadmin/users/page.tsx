@@ -32,13 +32,17 @@ function userName(user: {
 export default async function SuperadminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string; search?: string }>;
+  searchParams: Promise<{ detail?: string; notice?: string; search?: string }>;
 }) {
   await requireSuperadmin();
   const params = await searchParams;
   const directory = await getSuperadminUserDirectory(params.search ?? '');
   const notice =
     params.notice === undefined ? undefined : notices[params.notice];
+  const noticeDetail =
+    notice?.error === true && params.detail !== undefined
+      ? params.detail.slice(0, 240)
+      : undefined;
 
   return (
     <section className="superadmin-section">
@@ -60,6 +64,7 @@ export default async function SuperadminUsersPage({
           role="status"
         >
           {notice.message}
+          {noticeDetail === undefined ? null : ` ${noticeDetail}`}
         </p>
       )}
 

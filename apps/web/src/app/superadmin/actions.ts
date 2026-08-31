@@ -72,12 +72,23 @@ function parseUtcDateTime(value: string, label: string): Date {
   return parsed;
 }
 
-function expected(error: unknown): boolean {
+function expected(error: unknown): error is CompetitionAdminCommandError {
   return error instanceof CompetitionAdminCommandError;
 }
 
-function finish(path: string, notice: string): never {
-  redirect(`${path}?notice=${encodeURIComponent(notice)}`);
+function finish(path: string, notice: string, detail?: string): never {
+  const params = new URLSearchParams({ notice });
+  if (detail !== undefined) {
+    params.set('detail', detail);
+  }
+  redirect(`${path}?${params.toString()}`);
+}
+
+function finishFailure(path: string, error: unknown): never {
+  if (expected(error)) {
+    finish(path, 'invalid-operation', error.message);
+  }
+  finish(path, 'operation-failed');
 }
 
 function tierValues(formData: FormData) {
@@ -129,143 +140,134 @@ export async function createChallengeTierAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await createChallengeTier({
       actorUserId: owner.id,
       code: formString(formData, 'code'),
       ...tierValues(formData),
     });
-    finish('/superadmin/challenge-pricing', 'tier-created');
+    notice = 'tier-created';
   } catch (error) {
-    finish(
-      '/superadmin/challenge-pricing',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/challenge-pricing', error);
   }
+  finish('/superadmin/challenge-pricing', notice);
 }
 
 export async function updateChallengeTierAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await updateUnusedChallengeTier({
       actorUserId: owner.id,
       tierId: formString(formData, 'tierId'),
       ...tierValues(formData),
     });
-    finish('/superadmin/challenge-pricing', 'tier-updated');
+    notice = 'tier-updated';
   } catch (error) {
-    finish(
-      '/superadmin/challenge-pricing',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/challenge-pricing', error);
   }
+  finish('/superadmin/challenge-pricing', notice);
 }
 
 export async function setChallengeTierAvailabilityAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  const active = formString(formData, 'active') === 'true';
+  let notice: string;
   try {
-    const active = formString(formData, 'active') === 'true';
     await setChallengeTierAvailability({
       active,
       actorUserId: owner.id,
       reason: formString(formData, 'reason'),
       tierId: formString(formData, 'tierId'),
     });
-    finish(
-      '/superadmin/challenge-pricing',
-      active ? 'tier-enabled' : 'tier-disabled',
-    );
+    notice = active ? 'tier-enabled' : 'tier-disabled';
   } catch (error) {
-    finish(
-      '/superadmin/challenge-pricing',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/challenge-pricing', error);
   }
+  finish('/superadmin/challenge-pricing', notice);
 }
 
 export async function createCompetitionDraftAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await createCompetitionDraft({
       actorUserId: owner.id,
       code: formString(formData, 'code'),
       ...competitionValues(formData),
     });
-    finish('/superadmin/competitions', 'competition-created');
+    notice = 'competition-created';
   } catch (error) {
-    finish(
-      '/superadmin/competitions',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/competitions', error);
   }
+  finish('/superadmin/competitions', notice);
 }
 
 export async function updateCompetitionDraftAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await updateCompetitionDraft({
       actorUserId: owner.id,
       competitionId: formString(formData, 'competitionId'),
       ...competitionValues(formData),
     });
-    finish('/superadmin/competitions', 'competition-updated');
+    notice = 'competition-updated';
   } catch (error) {
-    finish(
-      '/superadmin/competitions',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/competitions', error);
   }
+  finish('/superadmin/competitions', notice);
 }
 
 export async function publishCompetitionDraftAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await publishCompetitionDraft({
       actorUserId: owner.id,
       competitionId: formString(formData, 'competitionId'),
     });
-    finish('/superadmin/competitions', 'competition-published');
+    notice = 'competition-published';
   } catch (error) {
-    finish(
-      '/superadmin/competitions',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/competitions', error);
   }
+  finish('/superadmin/competitions', notice);
 }
 
 export async function cancelCompetitionDraftAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     await cancelCompetitionDraft({
       actorUserId: owner.id,
       competitionId: formString(formData, 'competitionId'),
       reason: formString(formData, 'reason'),
     });
-    finish('/superadmin/competitions', 'competition-cancelled');
+    notice = 'competition-cancelled';
   } catch (error) {
-    finish(
-      '/superadmin/competitions',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/competitions', error);
   }
+  finish('/superadmin/competitions', notice);
 }
 
 export async function setManagedUserRoleAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     const role = formString(formData, 'role');
     if (role !== 'ADMIN' && role !== 'TRADER') {
@@ -276,19 +278,18 @@ export async function setManagedUserRoleAction(
       role,
       userId: formString(formData, 'userId'),
     });
-    finish('/superadmin/users', 'role-updated');
+    notice = 'role-updated';
   } catch (error) {
-    finish(
-      '/superadmin/users',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/users', error);
   }
+  finish('/superadmin/users', notice);
 }
 
 export async function transitionManagedUserStatusAction(
   formData: FormData,
 ): Promise<never> {
   const owner = await requireSuperadmin();
+  let notice: string;
   try {
     const status = formString(formData, 'status');
     if (!['ACTIVE', 'SUSPENDED', 'CLOSED'].includes(status)) {
@@ -300,11 +301,9 @@ export async function transitionManagedUserStatusAction(
       status: status as 'ACTIVE' | 'CLOSED' | 'SUSPENDED',
       userId: formString(formData, 'userId'),
     });
-    finish('/superadmin/users', 'status-updated');
+    notice = 'status-updated';
   } catch (error) {
-    finish(
-      '/superadmin/users',
-      expected(error) ? 'invalid-operation' : 'operation-failed',
-    );
+    return finishFailure('/superadmin/users', error);
   }
+  finish('/superadmin/users', notice);
 }

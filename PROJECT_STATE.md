@@ -246,6 +246,11 @@ documentation and infrastructure are delivered.
   (206 tests across 71 files, with 52 environment-dependent tests skipped), followed by `pnpm typecheck`,
   `pnpm lint`, and a clean production `pnpm build`. Revision `008b102` was deployed successfully and public
   home/competition/readiness HTTPS smoke checks returned HTTP 200; protected owner routes redirect to login.
+- Owner console mutation correction: successful create/update/publish/cancel, pricing, and user actions now
+  redirect only after their command completes, so the Next.js redirect control signal cannot be misreported as
+  an invalid command. Typed owner-command rejections retain a bounded, user-actionable explanation. Focused
+  regression coverage, formatter, typecheck, lint, production build, and the full default suite passed
+  (208 tests across 72 files, with 39 environment-dependent tests skipped).
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

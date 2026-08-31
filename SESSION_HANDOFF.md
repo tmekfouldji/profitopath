@@ -45,6 +45,10 @@ launch.
   times and an active tier. Public competition discovery hides drafts and cancelled competitions.
 - Customer-facing discovery now reads active tier pricing from the authoritative store, and the customer
   dashboard has a direct purchase CTA and repeat-customer purchase strip.
+- Corrected the owner-console server actions so a successful mutation redirects to its success notice only
+  after the `try` block. Previously Next.js's internal redirect was caught and displayed as a false invalid
+  operation. Typed validation errors now include their bounded, user-actionable explanation on the pricing,
+  competition, and user pages.
 
 ## Launch-host configuration state
 
@@ -73,6 +77,8 @@ switched to port 587). The first signed real payment callback is still untested.
 - Production-mode `pnpm build` completed successfully.
 - The focused superadmin PostgreSQL test passed; the default full suite passed 206 tests across 71 files
   (52 environment-dependent tests skipped).
+- Owner-action redirect regression coverage passed; after the correction, formatter, typecheck, lint, a
+  production build, and the full default suite passed (208 tests across 72 files, 39 skipped).
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
