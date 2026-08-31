@@ -697,3 +697,6 @@ Rules:
   - Verification: owner-action regression coverage confirms a successful draft creation redirects exactly
     once to `competition-created`; rejected domain commands remain on the safe error path with their
     bounded, user-actionable validation detail.
+  - Deployment evidence: revision `36adbf0` is live. Public home, competition, and readiness routes return
+    HTTP 200; the protected competition setup route redirects unauthenticated requests to sign-in; all
+    launch containers are healthy.

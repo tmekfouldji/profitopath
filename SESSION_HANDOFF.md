@@ -79,6 +79,9 @@ switched to port 587). The first signed real payment callback is still untested.
   (52 environment-dependent tests skipped).
 - Owner-action redirect regression coverage passed; after the correction, formatter, typecheck, lint, a
   production build, and the full default suite passed (208 tests across 72 files, 39 skipped).
+- Revision `36adbf0` is live on the launch host. Home, competition, and readiness HTTPS smoke routes return
+  HTTP 200; the protected competition setup route redirects to sign-in when unauthenticated; Caddy,
+  PostgreSQL, Valkey, web, realtime, and worker are healthy.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors

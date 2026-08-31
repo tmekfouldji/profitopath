@@ -251,6 +251,8 @@ documentation and infrastructure are delivered.
   an invalid command. Typed owner-command rejections retain a bounded, user-actionable explanation. Focused
   regression coverage, formatter, typecheck, lint, production build, and the full default suite passed
   (208 tests across 72 files, with 39 environment-dependent tests skipped).
+  Revision `36adbf0` is deployed to the launch host; public home, competition, and readiness checks returned
+  HTTP 200 after the rebuilt web/realtime/worker services became healthy.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;
