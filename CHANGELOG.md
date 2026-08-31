@@ -32,6 +32,9 @@
 - Allowed signup to remain open after a competition begins, up to the configured trading end. Active-window
   checkout now provisions the standard active simulated account and the customer interface labels it as an
   in-progress entry rather than a preorder.
+- Stabilized Next.js Server Action identities for the self-hosted launch: one protected, server-generated
+  encryption key now reaches the web build and runtime, so ordinary web image rollouts no longer invalidate
+  already-open forms. The key remains outside Git, browser code, logs, and chat.
 
 ### Project direction
 

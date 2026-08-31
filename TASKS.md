@@ -718,10 +718,13 @@ Rules:
   - Deployment evidence: revision `43753bd` is live. The owner scheduling guidance renders in an authenticated
     browser without console errors; public home, competition, and readiness routes return HTTP 200 and all
     launch containers are healthy.
-- [~] P10-016 Stabilize production Server Action identities across deployments.
+- [x] P10-016 Stabilize production Server Action identities across deployments.
   - Acceptance: the launch environment has one protected AES-valid base64 Server Action encryption key that
     is passed into the web image at build time and present at runtime, preventing ordinary web-image rebuilds
     from invalidating open owner-console forms.
   - Verification: the running Next.js server-reference manifest matches the protected runtime key without
     revealing it; launch Compose validation, formatter, typecheck, lint, focused and full tests, production
     build, and public browser/readiness smoke checks pass after deployment.
+  - Deployment evidence: revision `c6d6270` is live. The launch host generated the protected 32-byte key
+    locally, has it in the web build and container runtime without disclosing it, and the manifest equality
+    check passed. All Docker services are healthy and `https://profitopath.com/api/health/ready` returns 200.

@@ -266,6 +266,12 @@ documentation and infrastructure are delivered.
   production build. Revision `43753bd` is live; the authenticated owner page renders the updated scheduling
   guidance with no browser-console errors, public home/competition/readiness checks return HTTP 200, and all
   launch services are healthy.
+- Server Action deployment stability: the launch composition now supplies the protected
+  `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` to the web image build and runtime. The host generated and retained
+  a valid 32-byte base64 key without exposing it; the running server-reference manifest equals the container
+  runtime key. Formatter, typecheck, lint, default tests, production build/key assertion, and launch Compose
+  validation passed. Revision `c6d6270` is live; all services are healthy and public readiness returns HTTP 200. Open forms from before this one-time migration must be reloaded once; later ordinary web releases
+  retain their action identities.
 - all eight migrations, idempotent seed, PostgreSQL 17 readiness, and Valkey readiness passed locally
 - `docker compose -f docker-compose.production.yml config -q`: passed
 - production-shaped Compose startup: migrations/seed completed before the application services;

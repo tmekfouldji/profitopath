@@ -49,15 +49,20 @@ launch.
   after the `try` block. Previously Next.js's internal redirect was caught and displayed as a false invalid
   operation. Typed validation errors now include their bounded, user-actionable explanation on the pricing,
   competition, and user pages.
+- Stabilized Next.js Server Action identities across normal web deployments. The launch composition sends a
+  protected 32-byte base64 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` into the web build and runtime. It was generated
+  only on the launch host; the running server-reference manifest matches the runtime key without emitting its
+  value. This corrects stale-form action failures after the required one-time browser reload.
 
 ## Launch-host configuration state
 
-`/opt/profitopath/.env.launch` is mode 0600 and has generated database/Valkey/auth secrets plus protected
-live Zoho SMTP and NOWPayments values. The runtime is `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtppro.zoho.com`,
-`SMTP_PORT=465`, and `PAYMENT_PROVIDER=nowpayments`; no raw secret has been displayed, committed, or copied
-to chat. On 30 August 2026, the running container verified Zoho SMTP authentication and Zoho accepted a
-resend for the product owner’s unconfirmed account. The app recognizes SSL on port 465 (or TLS if explicitly
-switched to port 587). The first signed real payment callback is still untested.
+`/opt/profitopath/.env.launch` is mode 0600 and has generated database/Valkey/auth/Server-Action secrets plus
+protected live Zoho SMTP and NOWPayments values. The runtime is `EMAIL_PROVIDER=smtp`,
+`SMTP_HOST=smtppro.zoho.com`, `SMTP_PORT=465`, and `PAYMENT_PROVIDER=nowpayments`; no raw secret has been
+displayed, committed, or copied to chat. On 30 August 2026, the running container verified Zoho SMTP
+authentication and Zoho accepted a resend for the product owner’s unconfirmed account. The app recognizes SSL
+on port 465 (or TLS if explicitly switched to port 587). The first signed real payment callback is still
+untested.
 
 ## Required external activation work
 
@@ -97,6 +102,10 @@ switched to port 587). The first signed real payment callback is still untested.
 - Revision `43753bd` is live. An authenticated browser confirms the owner scheduling guidance renders without
   console errors; public home, competition, and readiness routes return HTTP 200; Caddy, PostgreSQL, Valkey,
   web, realtime, and worker are healthy.
+- Revision `c6d6270` is live. The Next.js server-reference manifest matches the running container's protected
+  Server Action key; Caddy, PostgreSQL, Valkey, web, realtime, and worker are healthy; and public readiness
+  returns HTTP 200. The one-time migration invalidates forms opened before this deployment, so reload before
+  resubmitting an owner-console form.
 - Compose config and Caddy validation for the self-hosted launch composition passed. The host applied all
   migrations, deployed revision `008b102`, and started every launch service. Public home, competition, and
   readiness routes returned HTTP 200 over HTTPS; `/superadmin` correctly redirects unauthenticated visitors
@@ -104,9 +113,10 @@ switched to port 587). The first signed real payment callback is still untested.
 
 ## Next work
 
-Keep the public application running and monitor confirmation delivery. Do not announce or promote customer
-checkout until the controlled confirmation and exact-amount checkout/IPN tests complete and the first
-competition schedule is approved. `20260830211500_password_reset_recovery` and `/reset-password` are live;
-perform a complete user request/reset/new sign-in/old-session-invalidated check next. The separate evergreen
-tier-bound preorder entitlement must receive explicit pricing, expiry/refund, and cancellation-policy
-approval before implementation. P9-001 is still blocked.
+Keep the public application running and monitor confirmation delivery. Reload any owner-console form opened
+before revision `c6d6270` once, then retry it; normal future web releases retain Server Action identities. Do
+not announce or promote customer checkout until the controlled confirmation and exact-amount checkout/IPN
+tests complete and the first competition schedule is approved. `20260830211500_password_reset_recovery` and
+`/reset-password` are live; perform a complete user request/reset/new sign-in/old-session-invalidated check
+next. The separate evergreen tier-bound preorder entitlement must receive explicit pricing, expiry/refund,
+and cancellation-policy approval before implementation. P9-001 is still blocked.
