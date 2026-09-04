@@ -672,6 +672,13 @@ Rules:
     terminal now renders the complete active instrument configuration as an account-local persistent watchlist,
     with live bid/ask/spread and stable long/short TP/SL defaults. D-031 still limits the trial configuration
     itself to EURUSD and GBPUSD; adding symbols requires a new explicit spread/configuration decision.
+- [x] P9-007 Restore free chart crosshair movement and account-local selected-symbol continuity.
+  - Acceptance: the chart crosshair is not magnetized to OHLC values; explicit Ctrl drawing snaps remain
+    unchanged; and a refreshed terminal restores its last selected active instrument without accepting a stale
+    or inactive local preference.
+  - Implemented: Lightweight Charts now uses free crosshair mode, while Ctrl is still the explicit drawing-only
+    candle-OHLC snapping modifier. The selected active symbol is persisted under an account-scoped browser key
+    and restored after refresh only if it remains in the server-authoritative active configuration.
 
 ## In progress — Phase 10
 

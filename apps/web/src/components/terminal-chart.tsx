@@ -3,6 +3,7 @@
 import {
   CandlestickSeries,
   ColorType,
+  CrosshairMode,
   createChart,
   createSeriesMarkers,
   LineSeries,
@@ -541,6 +542,7 @@ export function TerminalChart({
     const chart = createChart(container, {
       autoSize: true,
       crosshair: {
+        mode: CrosshairMode.Normal,
         horzLine: { color: '#40577b', labelBackgroundColor: '#182b50' },
         vertLine: { color: '#40577b', labelBackgroundColor: '#182b50' },
       },

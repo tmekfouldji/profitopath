@@ -7,6 +7,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -319,5 +320,109 @@ describe('terminal workstation presentation', () => {
       screen.getByLabelText('Instrument watchlist').querySelector('li')
         ?.textContent,
     ).toContain('GBPUSD');
+  });
+
+  it('restores the last selected active instrument after a terminal refresh', async () => {
+    mocks.updatePositionProtection.mockResolvedValue({
+      message: '',
+      status: 'IDLE',
+    });
+    const configuredState: OwnedTerminalState = {
+      ...state,
+      instruments: [
+        ...state.instruments,
+        {
+          minimumQuantity: '0.01',
+          priceScale: 5,
+          quantityStep: '0.01',
+          symbol: 'GBPUSD',
+        },
+      ],
+      quotes: [
+        ...state.quotes,
+        {
+          ask: '1.28020',
+          bid: '1.28000',
+          sequence: '1',
+          status: 'LIVE',
+          symbol: 'GBPUSD',
+          timestamp: '2026-08-24T09:00:00.000Z',
+        },
+      ],
+    };
+    const { TerminalWorkspace } = await import('./terminal-workspace');
+    const first = render(
+      createElement(TerminalWorkspace, {
+        historyAnchor: '2026-08-24T12:00:00.000Z',
+        initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
+        initialSymbol: 'EURUSD',
+        initialState: configuredState,
+        realtimeUrl: 'ws://localhost:3001',
+      }),
+    );
+    const firstWatchlist = screen.getByLabelText('Instrument watchlist');
+
+    fireEvent.click(
+      within(firstWatchlist).getByRole('button', {
+        name: /GBPUSD1\.280001\.280202\.0 pips/,
+      }),
+    );
+    expect(
+      window.localStorage.getItem(
+        'profitopath:terminal-selected-symbol:v1:account-1',
+      ),
+    ).toBe('GBPUSD');
+
+    first.unmount();
+    render(
+      createElement(TerminalWorkspace, {
+        historyAnchor: '2026-08-24T12:00:00.000Z',
+        initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
+        initialSymbol: 'EURUSD',
+        initialState: configuredState,
+        realtimeUrl: 'ws://localhost:3001',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(
+        within(screen.getByLabelText('Instrument watchlist'))
+          .getByRole('button', { name: /GBPUSD1\.280001\.280202\.0 pips/ })
+          .getAttribute('aria-pressed'),
+      ).toBe('true'),
+    );
+  });
+
+  it('ignores a stale selected-symbol preference that is no longer active', async () => {
+    mocks.updatePositionProtection.mockResolvedValue({
+      message: '',
+      status: 'IDLE',
+    });
+    window.localStorage.setItem(
+      'profitopath:terminal-selected-symbol:v1:account-1',
+      'GBPUSD',
+    );
+    const { TerminalWorkspace } = await import('./terminal-workspace');
+
+    render(
+      createElement(TerminalWorkspace, {
+        historyAnchor: '2026-08-24T12:00:00.000Z',
+        initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
+        initialSymbol: 'EURUSD',
+        initialState: state,
+        realtimeUrl: 'ws://localhost:3001',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(
+        within(screen.getByLabelText('Instrument watchlist'))
+          .getByRole('button', { name: /EURUSD1\.100001\.100202\.0 pips/ })
+          .getAttribute('aria-pressed'),
+      ).toBe('true'),
+    );
   });
 });

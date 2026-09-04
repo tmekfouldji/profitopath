@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restored a free terminal crosshair: it now follows the pointer continuously instead of snapping to OHLC values.
+  Ctrl remains the explicit drawing-only candle snap modifier. The terminal also remembers the last active symbol
+  per account/browser across a refresh and ignores stale local selections that are no longer configured.
 - Improved the staff terminal's live trading feedback: quote updates no longer wait on persistence work,
   completed simulation processing emits an authenticated account refresh signal, fills switch directly to the
   executions ledger and update chart markers without reconstructing or recentering the chart. The terminal now

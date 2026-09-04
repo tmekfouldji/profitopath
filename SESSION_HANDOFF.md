@@ -54,6 +54,10 @@ This is not a commercial launch.
 - The browser applies quotes locally for responsive bid/ask/spread display and coalesces snapshot refreshes.
   On the post-simulation signal it refreshes immediately, reveals the Executions ledger for a new fill, and
   renders the execution marker.
+- The chart now uses Lightweight Charts' `CrosshairMode.Normal`, so its crosshair follows the pointer freely.
+  The existing Ctrl-only drawing modifier remains the deliberate candle-OHLC snapping interaction. The terminal
+  persists its last selected symbol under an account-scoped local-storage key and restores it only when that
+  symbol remains active in the server-supplied instrument configuration.
 - The terminal includes a compact Instrument watchlist that renders every active server configuration, shows
   bid, ask, and derived full spread, and stores star/favorite ordering in browser local storage scoped by account.
   It does not grant market-data access or alter pricing. Unset protection controls have separate 10-pip visual

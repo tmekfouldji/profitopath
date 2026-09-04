@@ -11,6 +11,11 @@ import {
 import { createElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const chartMocks = vi.hoisted(() => ({
+  createChart:
+    vi.fn<(container: unknown, options: Record<string, unknown>) => unknown>(),
+}));
+
 const chartApi = {
   addSeries: vi.fn(),
   applyOptions: vi.fn(),
@@ -37,7 +42,8 @@ const lineSeries: Array<{
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: 'candlestick',
   ColorType: { Solid: 'solid' },
-  createChart: vi.fn(() => chartApi),
+  CrosshairMode: { Normal: 0 },
+  createChart: chartMocks.createChart,
   createSeriesMarkers: vi.fn(),
   LineSeries: 'line',
 }));
@@ -49,6 +55,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   chartApi.addSeries.mockReset();
+  chartMocks.createChart.mockReset();
   chartApi.applyOptions.mockReset();
   chartApi.remove.mockReset();
   chartApi.subscribeClick.mockReset();
@@ -80,6 +87,7 @@ function renderChart({
   overlayCoordinates?: boolean;
 } = {}) {
   lineSeries.length = 0;
+  chartMocks.createChart.mockReturnValue(chartApi);
   chartApi.addSeries.mockImplementation((seriesType) => {
     if (seriesType === 'candlestick') return candleSeries;
     const series = { applyOptions: vi.fn(), setData: vi.fn() };
@@ -140,6 +148,14 @@ function renderChart({
 }
 
 describe('terminal chart context-menu integration', () => {
+  it('uses a free crosshair instead of OHLC magnet mode', () => {
+    renderChart();
+
+    expect(chartMocks.createChart.mock.calls[0]?.[1]).toMatchObject({
+      crosshair: { mode: 0 },
+    });
+  });
+
   it('opens the command menu on right-click and adds a local horizontal ray at that chart point', () => {
     renderChart();
 

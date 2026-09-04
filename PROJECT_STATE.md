@@ -46,6 +46,10 @@ This file is the authoritative high-level state for Codex.
   GBPUSD because D-031 authorizes only their trial configurations; no unapproved provider symbols were added.
   This release is deployed on the launch host: web, realtime, and worker passed their Docker health checks;
   public HTTPS readiness returned HTTP 200; and the worker re-acquired its staff-scoped EURUSD/GBPUSD feed lease.
+- Terminal interaction continuity: the chart uses Lightweight Charts' free crosshair mode rather than OHLC
+  magnetization, while the existing Ctrl drawing modifier remains the deliberate way to snap annotations to a
+  candle. The terminal also restores an account-local selected-symbol preference only when that symbol is still
+  active in the server configuration.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.

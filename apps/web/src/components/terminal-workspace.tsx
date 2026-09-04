@@ -56,6 +56,14 @@ function favoriteSymbolsStorageKey(accountId: string): string {
   return `profitopath:terminal-favorites:v1:${accountId}`;
 }
 
+function selectedSymbolStorageKey(accountId: string): string {
+  return `profitopath:terminal-selected-symbol:v1:${accountId}`;
+}
+
+function defaultSelectedSymbol(state: OwnedTerminalState): string {
+  return state.positions[0]?.symbol ?? state.instruments[0]?.symbol ?? 'EURUSD';
+}
+
 function liveSpreadPips(
   quote: OwnedTerminalState['quotes'][number] | undefined,
   priceScale: number | undefined,
@@ -516,10 +524,8 @@ export function TerminalWorkspace({
   realtimeUrl: string;
 }) {
   const [state, setState] = useState(initialState);
-  const [selectedSymbol, setSelectedSymbol] = useState(
-    initialState.positions[0]?.symbol ??
-      initialState.instruments[0]?.symbol ??
-      'EURUSD',
+  const [selectedSymbol, setSelectedSymbol] = useState(() =>
+    defaultSelectedSymbol(initialState),
   );
   const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
   const [connection, setConnection] = useState<ConnectionState>('CONNECTING');
@@ -533,6 +539,7 @@ export function TerminalWorkspace({
   const [protectionState, updateChartProtection, protectionPending] =
     useActionState(updatePositionProtection, initialTerminalActionState);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedSymbolStorageScope = useRef<string | null>(null);
   const selectedSymbolRef = useRef(selectedSymbol);
   const staleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshQueued = useRef(false);
@@ -540,6 +547,24 @@ export function TerminalWorkspace({
   const terminalRef = useRef<HTMLElement>(null);
 
   useEffect(() => setState(initialState), [initialState]);
+  useEffect(() => {
+    const storageKey = selectedSymbolStorageKey(initialState.account.id);
+    if (selectedSymbolStorageScope.current === storageKey) return;
+    selectedSymbolStorageScope.current = storageKey;
+    try {
+      const stored = window.localStorage.getItem(storageKey);
+      if (
+        stored !== null &&
+        initialState.instruments.some(
+          (instrument) => instrument.symbol === stored,
+        )
+      ) {
+        setSelectedSymbol(stored);
+      }
+    } catch {
+      // Selected symbol is an optional local preference, never terminal authority.
+    }
+  }, [initialState.account.id, initialState.instruments]);
   useEffect(() => {
     setCurrentTime(Date.now());
     const timer = setInterval(() => setCurrentTime(Date.now()), 60_000);
@@ -549,6 +574,37 @@ export function TerminalWorkspace({
     selectedSymbolRef.current = selectedSymbol;
     setLiveCandle(null);
   }, [selectedSymbol]);
+
+  const selectSymbol = useCallback(
+    (symbol: string) => {
+      if (
+        !state.instruments.some((instrument) => instrument.symbol === symbol)
+      ) {
+        return;
+      }
+      setSelectedSymbol(symbol);
+      try {
+        window.localStorage.setItem(
+          selectedSymbolStorageKey(state.account.id),
+          symbol,
+        );
+      } catch {
+        // Selected symbol is an optional local preference, never terminal authority.
+      }
+    },
+    [state.account.id, state.instruments],
+  );
+
+  useEffect(() => {
+    if (
+      state.instruments.some(
+        (instrument) => instrument.symbol === selectedSymbol,
+      )
+    ) {
+      return;
+    }
+    selectSymbol(defaultSelectedSymbol(state));
+  }, [selectSymbol, selectedSymbol, state]);
 
   const refreshState = useCallback(async () => {
     if (refreshQueued.current) {
@@ -885,7 +941,7 @@ export function TerminalWorkspace({
           instruments={state.instruments}
           quotes={state.quotes}
           selectedSymbol={selectedSymbol}
-          setSelectedSymbol={setSelectedSymbol}
+          setSelectedSymbol={selectSymbol}
         />
         <TerminalOrderTicket
           accountActive={state.account.status === 'ACTIVE'}
@@ -897,7 +953,7 @@ export function TerminalWorkspace({
           quotes={state.quotes}
           selectedSymbol={selectedSymbol}
           setOrderSide={setOrderSide}
-          setSelectedSymbol={setSelectedSymbol}
+          setSelectedSymbol={selectSymbol}
         />
       </section>
       <TerminalLedger state={state} />
