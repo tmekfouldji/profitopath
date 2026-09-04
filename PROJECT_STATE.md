@@ -32,10 +32,11 @@ This file is the authoritative high-level state for Codex.
   worker endpoint backfilled a fresh 27-bar range. The staff-only live-host deployment also succeeded:
   20,258 bars bootstrapped, both cache keys refreshed, public checkout paused, unauthenticated candle access
   denied, and worker backfill bearer authentication rejected invalid callers. The active competition initially
-  had no staff account; the next deployment includes a protected, idempotent complimentary staff-account
-  provisioner that uses an inactive zero-fee tier and writes full ledger/audit evidence without payment or
-  revenue. The public site stays online but does not sell new entries or deliver trial data to non-staff, and
-  the runtime stops no later than `2026-09-13T00:00:00.000Z` unless an earlier exact expiry is supplied.
+  had no staff account; the protected, idempotent complimentary staff-account provisioner is now deployed and
+  created the sole active superadmin's inactive-zero-fee-tier account, its initial-balance ledger record, and
+  three audit events with no associated staff-tier payment. The public site stays online but does not sell new
+  entries or deliver trial data to non-staff, and the runtime stops no later than `2026-09-13T00:00:00.000Z`
+  unless an earlier exact expiry is supplied.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
@@ -50,9 +51,9 @@ must be retained outside Git. This unblocks only a time-limited server-owned tri
 Data's documented feed has no bid/ask, so D-031 records fixed server-side synthetic trial spreads of 1.2
 pips for EURUSD and 2.4 pips for GBPUSD. The Phase 9 adapter and single-subscriber worker pipeline are
 implemented, including worker-owned historical backfill/range coalescing, local credentialed smoke, and
-staff-only live deployment. The remaining validation is deployment/provisioning of the active superadmin's
-audited staff account, then an owner-signed-in staff terminal/order smoke; public checkout remains paused
-and non-staff cannot receive or trigger on provider data. The deployment must
+staff-only live deployment. The active superadmin's audited staff account is provisioned; the remaining
+validation is an owner-signed-in staff terminal/order smoke. Public checkout remains paused and non-staff
+cannot receive or trigger on provider data. The deployment must
 revert to mock no later than `2026-09-13T00:00:00.000Z` unless a paid continuation is explicitly recorded.
 On 30 August 2026, the product
 owner reported NOWPayments approval and receipt of the merchant API key, and requested a preorder launch

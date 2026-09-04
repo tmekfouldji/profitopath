@@ -6,7 +6,8 @@
   during the Twelve Data validation window. It creates a complimentary inactive zero-fee internal tier,
   active simulated account, initial-balance ledger event, and correlated audit records without a payment,
   invoice, or revenue. Internal-tier entries are excluded from public competition counts and public
-  leaderboard views.
+  leaderboard views. Deployed it to the protected host and provisioned the active superadmin's staff account;
+  its entry has no payment record.
 - Added the time-bounded, server-only Twelve Data commercial-trial adapter for EURUSD and GBPUSD. It
   consumes provider midpoints only, derives auditable Decimal bid/ask quotes from the approved fixed
   full synthetic spreads, validates freshness, reconnects with bounded backoff, and stops at the

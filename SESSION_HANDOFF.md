@@ -69,14 +69,14 @@ This is not a commercial launch.
 - Realtime initially failed closed because it received neither worker-only boundary secret. `49945eb` scopes
   that validation to web/worker and the rebuilt realtime container now reports healthy. No provider data was
   emitted during that restart loop.
-- The initially signed-in superadmin has one completed account in the frozen QA competition and no active
-  account in the current validation competition. After deploying the next revision, run
-  `pnpm --filter @profitopath/worker market-data:provision-twelve-data-trial-staff-account` through the
-  protected worker compose environment. With exactly one active superadmin it selects that account; otherwise
-  provide `TWELVE_DATA_TRIAL_STAFF_USER_ID` and, if needed, `TWELVE_DATA_TRIAL_COMPETITION_ID` for the one
-  active validation competition. It is idempotent and creates an inactive zero-fee tier, active account,
-  initial balance, and audit trail without any payment/revenue. Inactive staff tiers are excluded from public
-  counts and leaderboards.
+- The initially signed-in superadmin had only a completed QA account. The host now has the staff-account
+  provisioner (content commit `9d27440`, applied on-host as `07a2b81`) and it provisioned the sole active
+  superadmin into the validation competition. PostgreSQL verified one active account, one initial-balance
+  ledger record, and the `STAFF_TRIAL_TIER_CREATED`, `STAFF_TRIAL_ENTRY_PROVISIONED`, and
+  `STAFF_TRIAL_ACCOUNT_PROVISIONED` audit events; the `TD-STAFF-202609` entry has no payment. The command is
+  idempotent for future staff setup: it selects the only active superadmin by default, or accepts exact
+  `TWELVE_DATA_TRIAL_STAFF_USER_ID` and (if necessary) `TWELVE_DATA_TRIAL_COMPETITION_ID`. Inactive staff
+  tiers are excluded from public counts and leaderboards.
 - Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke (view chart and quote, then a controlled
   order only if desired). Do not automate login or submit an order without the owner's active-session authority.
 - Before the cutoff, set `MARKET_DATA_SOURCE=mock`, remove `.env.worker.launch`, restart the compose stack,

@@ -657,8 +657,11 @@ Rules:
     commit `49945eb` rebuilt it and it is now healthy. The initially logged-in superadmin had only a completed
     account in the frozen QA competition, so `market-data:provision-twelve-data-trial-staff-account` now
     creates one complimentary, inactive-tier, fully audited active staff account in the current competition
-    without a payment/invoice/revenue record. Remaining: deploy/provision that account, owner-signed-in
-    staff terminal/order smoke without involving a non-staff account, and mandatory rollback before the cutoff.
+    without a payment/invoice/revenue record. The host deployed it (content commit `9d27440`, applied as
+    `07a2b81`) and provisioned the sole active superadmin: its active entry/account and one initial-balance
+    ledger record are verified; the three staff-provision audit records are present and the staff-tier entry
+    has no payment. Remaining: owner refreshes the dashboard and completes staff terminal/order smoke without
+    involving a non-staff account, then mandatory rollback before the cutoff.
 
 ## In progress — Phase 10
 
