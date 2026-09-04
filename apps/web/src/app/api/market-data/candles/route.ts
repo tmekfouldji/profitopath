@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 
 import { getSession } from '@/server/auth/session';
 import { terminalCandleService } from '@/server/terminal';
+import { canAccessTwelveDataTrial } from '@/server/twelve-data-trial-access';
 
 const timeframes = new Set<CandleTimeframe>([
   '1m',
@@ -21,6 +22,9 @@ export async function GET(request: Request) {
   const session = await getSession();
   if (session?.user === undefined || session.user.status !== 'ACTIVE') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  if (!canAccessTwelveDataTrial(session.user)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
   const query = new URL(request.url).searchParams;
   const accountId = query.get('accountId') ?? '';

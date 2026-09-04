@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "market-data:activate-twelve-data-trial": "tsx src/activate-twelve-data-trial.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },

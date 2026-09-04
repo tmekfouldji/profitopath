@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRuntimeEnv } from './env';
+import { parseRuntimeEnv, workerServiceEnvSchema } from './env';
 
 describe('parseRuntimeEnv', () => {
   it('parses valid service configuration', () => {
@@ -74,6 +74,47 @@ describe('parseRuntimeEnv', () => {
     ).toThrow();
   });
 
+  it('requires a complete isolated Twelve Data trial configuration', () => {
+    const base = {
+      DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
+      MARKET_DATA_SOURCE: 'twelve-data-trial',
+      MARKET_DATA_INTERNAL_TOKEN:
+        'internal-market-data-token-with-at-least-thirty-two-chars',
+      MARKET_DATA_WORKER_INTERNAL_URL: 'http://worker:3002',
+      MOCK_PAYMENT_SIGNING_SECRET:
+        'test-mock-payment-secret-with-thirty-two-characters',
+      NEXTAUTH_SECRET: 'test-secret-with-at-least-thirty-two-characters',
+      NEXTAUTH_URL: 'https://staging.profitopath.example',
+      TWELVE_DATA_API_KEY: 'server-only-trial-key',
+      TWELVE_DATA_TRIAL_ENDS_AT: '2026-09-14T00:00:00.000Z',
+      TWELVE_DATA_TRIAL_SPREAD_EURUSD: '0.00012',
+      TWELVE_DATA_TRIAL_SPREAD_GBPUSD: '0.00024',
+      VALKEY_URL: 'redis://localhost:6379',
+    };
+
+    expect(parseRuntimeEnv(base).MARKET_DATA_SOURCE).toBe('twelve-data-trial');
+    expect(() =>
+      parseRuntimeEnv({ ...base, MOCK_MARKET_DATA_ENABLED: 'true' }),
+    ).toThrow('MOCK_MARKET_DATA_ENABLED');
+    expect(() =>
+      parseRuntimeEnv({ ...base, TWELVE_DATA_TRIAL_SPREAD_EURUSD: undefined }),
+    ).toThrow('TWELVE_DATA_TRIAL_SPREAD_EURUSD');
+    expect(() =>
+      parseRuntimeEnv({ ...base, TWELVE_DATA_TRIAL_STAFF_ONLY: 'false' }),
+    ).toThrow('TWELVE_DATA_TRIAL_STAFF_ONLY');
+    expect(
+      parseRuntimeEnv({ ...base, TWELVE_DATA_API_KEY: undefined })
+        .MARKET_DATA_SOURCE,
+    ).toBe('twelve-data-trial');
+    expect(() =>
+      workerServiceEnvSchema.parse({
+        ...base,
+        PORT: '3002',
+        TWELVE_DATA_API_KEY: undefined,
+      }),
+    ).toThrow('TWELVE_DATA_API_KEY');
+  });
+
   it('requires NOWPayments credentials when that provider is selected', () => {
     expect(() =>
       parseRuntimeEnv({
@@ -103,7 +144,7 @@ describe('parseRuntimeEnv', () => {
   });
 
   it('accepts a credentialed loopback-only Twelve Data private probe', () => {
-    const parsed = parseRuntimeEnv({
+    const parsed = workerServiceEnvSchema.parse({
       DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
       MOCK_PAYMENT_SIGNING_SECRET:
         'test-mock-payment-secret-with-thirty-two-characters',
@@ -128,10 +169,13 @@ describe('parseRuntimeEnv', () => {
     };
 
     expect(() =>
-      parseRuntimeEnv({ ...base, NEXTAUTH_URL: 'http://localhost:3000' }),
+      workerServiceEnvSchema.parse({
+        ...base,
+        NEXTAUTH_URL: 'http://localhost:3000',
+      }),
     ).toThrow();
     expect(() =>
-      parseRuntimeEnv({
+      workerServiceEnvSchema.parse({
         ...base,
         NEXTAUTH_URL: 'https://profitopath.com',
         TWELVE_DATA_API_KEY: 'private-test-key',

@@ -330,6 +330,44 @@ approve Twelve Data for chart display, data redistribution/fan-out, history rete
 execution, or any customer-facing environment. A Phase 9 decision still requires a plan and written
 rights that expressly permit those uses, plus the full resilience, provenance, and market-rule work.
 
+## D-031 — Twelve Data commercial trial uses a server-owned synthetic spread
+
+Status: Accepted by product owner on 1 September 2026; expires 13 September 2026
+
+Twelve Data support confirmed the account has a 12-day Unlimited trial through 13 September 2026,
+with 2,584 API credits and 2,500 WebSocket credits. In response to Profitopath's stated browser-based
+simulated-trading use case, support confirmed that the requested customer display, backend fan-out,
+cache/retention, and server-side simulated-execution use is allowed for that trial period, with a full
+$499 subscription required afterwards. The source email is retained outside Git. This is a trial-only
+authorization: it must not be treated as permission to keep serving provider data after expiry.
+
+Twelve Data's documented stream supplies a price but not bid/ask quotes. Because simulated orders,
+SL/TP, P&L, margin, and drawdown use executable sides, Profitopath will derive an explicit bid/ask pair
+around each provider midpoint in the server-owned adapter. The product owner authorized that policy.
+For the trial, use conservative fixed full spreads of 1.2 pips for EURUSD (`0.00012`) and 2.4 pips for
+GBPUSD (`0.00024`), rounded up from IG's currently published all-session average spreads of 1.13 and
+2.38 pips respectively. The selected values, their source, and every derived execution price must be
+auditable; no browser can set or alter a spread. This is a versioned trial rule, not a claim that Twelve
+Data supplies executable bid/ask prices. Any production renewal, new symbols, variable-spread policy, or
+different economics requires an explicit new decision before activation.
+
+## D-032 — Commercial-trial data is limited to active staff accounts
+
+Status: Accepted by product owner on 4 September 2026; automatically expires no later than 13 September 2026
+
+The owner authorized completing production-shaped validation using the Twelve Data commercial trial while
+the public site remains online, but only active internal staff may use or receive that market data. For this
+temporary mode, staff means an active `ADMIN` or `SUPERADMIN` user. `TRADER` users remain unable to load
+trial-backed charts or terminal state, connect to the trial realtime stream, submit trial-backed orders, or
+have existing pending orders/positions marked or triggered from the provider feed. This gate applies at the
+page, HTTP, WebSocket, order-command, and worker-processing boundaries; browser concealment alone is not
+enough.
+
+Twelve Data's email says the trial is active “until 13.09.2026” without a precise time or timezone. The
+runtime must therefore use 2026-09-13T00:00:00.000Z as the conservative automatic stop unless the provider
+supplies a more precise, authoritative UTC expiry. It may never be extended by assumption. This decision
+does not authorize a paid launch, a customer trial, or provider use after the stated end date.
+
 ## Pending decisions
 
 - starting balance per tier

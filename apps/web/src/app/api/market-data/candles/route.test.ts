@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   findAccount: vi.fn(),
@@ -25,13 +25,24 @@ function request(query: string): Request {
   return new Request(`http://localhost/api/market-data/candles?${query}`);
 }
 
+const originalMarketDataSource = process.env.MARKET_DATA_SOURCE;
+
 beforeEach(() => {
   vi.clearAllMocks();
+  process.env.MARKET_DATA_SOURCE = 'mock';
   mocks.getSession.mockResolvedValue({
-    user: { id: 'user-1', status: 'ACTIVE' },
+    user: { id: 'user-1', role: 'TRADER', status: 'ACTIVE' },
   });
   mocks.findAccount.mockResolvedValue({ id: 'account-1' });
   mocks.findInstrument.mockResolvedValue({ symbol: 'EURUSD' });
+});
+
+afterAll(() => {
+  if (originalMarketDataSource === undefined) {
+    delete process.env.MARKET_DATA_SOURCE;
+  } else {
+    process.env.MARKET_DATA_SOURCE = originalMarketDataSource;
+  }
 });
 
 describe('candle API ownership and serialization', () => {
@@ -48,6 +59,19 @@ describe('candle API ownership and serialization', () => {
     const response = await GET(request('symbol=EURUSD&timeframe=30m'));
 
     expect(response.status).toBe(400);
+    expect(mocks.findAccount).not.toHaveBeenCalled();
+  });
+
+  it('does not expose trial-backed candles to a non-staff account', async () => {
+    process.env.MARKET_DATA_SOURCE = 'twelve-data-trial';
+
+    const response = await GET(
+      request(
+        'accountId=account-1&symbol=EURUSD&timeframe=1m&limit=500&from=2026-09-04T08%3A00%3A00Z&to=2026-09-04T09%3A00%3A00Z',
+      ),
+    );
+
+    expect(response.status).toBe(403);
     expect(mocks.findAccount).not.toHaveBeenCalled();
   });
 

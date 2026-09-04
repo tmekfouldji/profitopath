@@ -48,7 +48,9 @@ export const runtimeEnvSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
-    MARKET_DATA_SOURCE: z.literal('mock').default('mock'),
+    MARKET_DATA_INTERNAL_TOKEN: z.string().min(32).optional(),
+    MARKET_DATA_SOURCE: z.enum(['mock', 'twelve-data-trial']).default('mock'),
+    MARKET_DATA_WORKER_INTERNAL_URL: z.string().url().optional(),
     MOCK_PAYMENT_SIGNING_SECRET: z.string().min(32),
     MOCK_MARKET_DATA_ENABLED: booleanString,
     NODE_ENV: z
@@ -70,6 +72,18 @@ export const runtimeEnvSchema = z
     SMTP_PORT: integerPort.optional(),
     SMTP_USER: z.string().email().optional(),
     TWELVE_DATA_API_KEY: z.string().min(1).optional(),
+    TWELVE_DATA_RECONNECT_INITIAL_MS: z.coerce
+      .number()
+      .int()
+      .min(500)
+      .max(30_000)
+      .default(1_000),
+    TWELVE_DATA_RECONNECT_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(30_000),
     TWELVE_DATA_POLL_INTERVAL_MS: z.coerce
       .number()
       .int()
@@ -77,6 +91,16 @@ export const runtimeEnvSchema = z
       .max(3_600_000)
       .default(300_000),
     TWELVE_DATA_PRIVATE_TEST_ENABLED: booleanString,
+    TWELVE_DATA_TRIAL_ENDS_AT: z.coerce.date().optional(),
+    TWELVE_DATA_TRIAL_HISTORY_MAX_MINUTES: z.coerce
+      .number()
+      .int()
+      .min(240)
+      .max(43_200)
+      .default(10_080),
+    TWELVE_DATA_TRIAL_STAFF_ONLY: booleanString.default(true),
+    TWELVE_DATA_TRIAL_SPREAD_EURUSD: z.string().optional(),
+    TWELVE_DATA_TRIAL_SPREAD_GBPUSD: z.string().optional(),
     VALKEY_URL: z.string().url().startsWith('redis://'),
   })
   .superRefine((value, context) => {
@@ -107,20 +131,104 @@ export const runtimeEnvSchema = z
         path: ['EMAIL_PROVIDER'],
       });
     }
+    if (value.MARKET_DATA_SOURCE === 'twelve-data-trial') {
+      if (value.TWELVE_DATA_PRIVATE_TEST_ENABLED) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_PRIVATE_TEST_ENABLED cannot be combined with MARKET_DATA_SOURCE=twelve-data-trial',
+          path: ['TWELVE_DATA_PRIVATE_TEST_ENABLED'],
+        });
+      }
+      if (value.MOCK_MARKET_DATA_ENABLED) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'MOCK_MARKET_DATA_ENABLED cannot be combined with MARKET_DATA_SOURCE=twelve-data-trial',
+          path: ['MOCK_MARKET_DATA_ENABLED'],
+        });
+      }
+      if (value.TWELVE_DATA_TRIAL_ENDS_AT === undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_TRIAL_ENDS_AT is required when MARKET_DATA_SOURCE=twelve-data-trial',
+          path: ['TWELVE_DATA_TRIAL_ENDS_AT'],
+        });
+      }
+      if (!value.TWELVE_DATA_TRIAL_STAFF_ONLY) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_TRIAL_STAFF_ONLY must remain true during the commercial trial',
+          path: ['TWELVE_DATA_TRIAL_STAFF_ONLY'],
+        });
+      }
+      if (
+        value.MARKET_DATA_INTERNAL_TOKEN === undefined ||
+        value.MARKET_DATA_WORKER_INTERNAL_URL === undefined
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'MARKET_DATA_INTERNAL_TOKEN and MARKET_DATA_WORKER_INTERNAL_URL are required when MARKET_DATA_SOURCE=twelve-data-trial',
+          path: ['MARKET_DATA_SOURCE'],
+        });
+      }
+      if (
+        value.TWELVE_DATA_TRIAL_SPREAD_EURUSD === undefined ||
+        value.TWELVE_DATA_TRIAL_SPREAD_GBPUSD === undefined
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_TRIAL_SPREAD_EURUSD and TWELVE_DATA_TRIAL_SPREAD_GBPUSD are required when MARKET_DATA_SOURCE=twelve-data-trial',
+          path: ['MARKET_DATA_SOURCE'],
+        });
+      }
+      if (
+        value.TWELVE_DATA_RECONNECT_MAX_MS <
+        value.TWELVE_DATA_RECONNECT_INITIAL_MS
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'TWELVE_DATA_RECONNECT_MAX_MS must be greater than or equal to TWELVE_DATA_RECONNECT_INITIAL_MS',
+          path: ['TWELVE_DATA_RECONNECT_MAX_MS'],
+        });
+      }
+    }
+  });
+
+export const serviceEnvSchema = runtimeEnvSchema.extend({
+  PORT: integerPort.default(3000),
+});
+
+/**
+ * Only the worker is permitted to read a Twelve Data provider credential.
+ * Other services validate their staff-only trial configuration without
+ * receiving that credential at all.
+ */
+export const workerServiceEnvSchema = serviceEnvSchema.superRefine(
+  (value, context) => {
+    if (
+      (value.MARKET_DATA_SOURCE === 'twelve-data-trial' ||
+        value.TWELVE_DATA_PRIVATE_TEST_ENABLED) &&
+      value.TWELVE_DATA_API_KEY === undefined
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'TWELVE_DATA_API_KEY is required for a worker-owned Twelve Data source',
+        path: ['TWELVE_DATA_API_KEY'],
+      });
+    }
     if (value.TWELVE_DATA_PRIVATE_TEST_ENABLED) {
       const origin = new URL(value.NEXTAUTH_URL);
       const isLoopbackOrigin =
         origin.hostname === 'localhost' ||
         origin.hostname === '127.0.0.1' ||
         origin.hostname === '::1';
-      if (value.TWELVE_DATA_API_KEY === undefined) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            'TWELVE_DATA_API_KEY is required when TWELVE_DATA_PRIVATE_TEST_ENABLED=true',
-          path: ['TWELVE_DATA_PRIVATE_TEST_ENABLED'],
-        });
-      }
       if (value.NODE_ENV === 'production' || !isLoopbackOrigin) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -130,11 +238,8 @@ export const runtimeEnvSchema = z
         });
       }
     }
-  });
-
-export const serviceEnvSchema = runtimeEnvSchema.extend({
-  PORT: integerPort.default(3000),
-});
+  },
+);
 
 export const seedEnvSchema = z.object({
   DEV_ELITE_STARTING_BALANCE_MINOR: minorUnits.default(4_000_000n),

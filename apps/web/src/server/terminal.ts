@@ -15,7 +15,21 @@ import {
   type SubmitPendingOrderCommand,
 } from '@profitopath/simulator';
 
-export const terminalCandleService = new MarketCandleService();
+import { WorkerBackfilledCandleService } from './twelve-data-trial-history';
+
+const terminalLocalCandleService = new MarketCandleService(
+  undefined,
+  process.env.MARKET_DATA_SOURCE === 'twelve-data-trial'
+    ? {
+        baseSources: ['TWELVE_DATA_TRIAL'],
+        derivedSources: ['DERIVED_TWELVE_DATA_TRIAL'],
+      }
+    : {},
+);
+export const terminalCandleService =
+  process.env.MARKET_DATA_SOURCE === 'twelve-data-trial'
+    ? new WorkerBackfilledCandleService(terminalLocalCandleService)
+    : terminalLocalCandleService;
 let quoteStore: ValkeyQuoteStore | undefined;
 let executionEngine: PersistentSimulatedExecutionEngine | undefined;
 
@@ -30,7 +44,7 @@ function getTerminalExecutionEngine(): PersistentSimulatedExecutionEngine {
   executionEngine ??= new PersistentSimulatedExecutionEngine(
     new CachedMarketDataProvider(
       getTerminalQuoteStore(),
-      terminalCandleService,
+      terminalLocalCandleService,
     ),
   );
   return executionEngine;

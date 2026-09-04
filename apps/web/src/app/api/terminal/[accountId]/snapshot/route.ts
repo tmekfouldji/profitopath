@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getSession } from '@/server/auth/session';
 import { getOwnedTerminalState } from '@/server/terminal-read-model';
+import { canAccessTwelveDataTrial } from '@/server/twelve-data-trial-access';
 
 export async function GET(
   _request: Request,
@@ -10,6 +11,9 @@ export async function GET(
   const session = await getSession();
   if (session?.user === undefined || session.user.status !== 'ACTIVE') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+  if (!canAccessTwelveDataTrial(session.user)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
   const { accountId } = await context.params;
   const state = await getOwnedTerminalState(accountId, session.user.id);

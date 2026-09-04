@@ -609,16 +609,46 @@ Rules:
   - Blocker: the key must be entered privately by the owner. Verify only the worker's symbol/count event;
     do not add it to the public host or show a provider price in a browser.
 
-## Blocked — Phase 9
+## In progress — Phase 9 — Twelve Data commercial trial
 
-- [!] P9-001 Obtain the selected real market-data provider, official API documentation, and
-  commercial-use approval before implementation.
-  - Blocker: the user/vendor must provide the provider selection, official streaming and historical-
-    candle API documentation, and documentary rights for customer-facing display, caching, and
-    simulated execution. Provider APIs and commercial permissions must not be invented or inferred.
-  - Acceptance: the approved provider, documentation version/links or supplied files, credential
-    and rate-limit model, redistribution/cache limits, symbol/session semantics, historical bounds,
-    and simulated-execution/display rights are recorded before P9 implementation tasks are expanded.
+- [x] P9-001 Record the selected provider, official documentation, and time-limited commercial trial
+      authorization.
+  - Evidence: on 1 September 2026, Twelve Data support confirmed a 12-day Unlimited trial through
+    13 September 2026, with 2,584 API credits and 2,500 WebSocket credits. In response to the
+    supplied simulated-trading use case, support confirmed it may be used during that period and that
+    a full $499 subscription is required afterwards. Preserve the source correspondence outside Git.
+  - Scope: this is a trial-only approval; it does not authorize use after 13 September 2026. The
+    current official REST/WebSocket documentation and commercial-use guidance are recorded in D-031.
+- [x] P9-002 Implement the server-owned Twelve Data trial feed with explicit synthetic bid/ask policy.
+  - Acceptance: the worker alone holds the API key and establishes the upstream connection; it
+    normalizes only approved symbols, applies per-symbol server-configured full spreads to the
+    provider midpoint, validates quote order/freshness, reconnects with bounded backoff, and fails
+    closed without a complete production-safe configuration. Browser code never accesses the provider.
+  - Implemented: a server-only REST/WebSocket adapter permits only EURUSD and GBPUSD; Twelve Data
+    midpoints are converted to Decimal bid/ask quotes with the D-031 full spreads. The key is never
+    placed in a REST URL or browser bundle; expiry, malformed data, stale quotes, incomplete
+    configuration, and upstream faults fail closed.
+- [x] P9-003 Add historical backfill, candle provenance, and distributed range coalescing for the
+      trial feed.
+  - Acceptance: only missing canonical UTC 1m ranges are fetched from Twelve Data, exact candles carry
+    a provider source/version, concurrent misses coalesce across workers, and existing local history is
+    served when upstream data is unavailable.
+  - Completed: `MarketDataCoverage` records canonical source-isolated ranges; worker-only backfills use
+    short-lived distributed leases; the web asks an authenticated worker endpoint without a provider key;
+    cached persisted history remains available if the worker or provider is unavailable.
+- [x] P9-004 Integrate the trial worker runtime with quote cache, simulator recovery/risk, and realtime.
+  - Acceptance: one elected worker subscription populates rebuildable Valkey quotes and server-built
+    candles; pending orders/risk run offline; stale/upstream outage state pauses trading; no duplicate
+    events or worker restart can silently alter the ledger.
+  - Completed: a Valkey lease elects one upstream subscriber; it recovers the staff-only persistent
+    simulated engine before backfill/subscription, assigns distributed quote sequences, and serially
+    feeds the cache, candle builder, simulator/risk, and staff-only realtime path. The web/API/order/
+    websocket gates exclude `TRADER` accounts, and public entry sales pause while the source is active.
+- [~] P9-005 Validate the staff-only live trial environment and roll back before expiry unless paid.
+  - Acceptance: provider-contract, recovery/outage, and full PostgreSQL tests pass; the credentialed
+    worker smoke verifies cache refresh and historical coverage; live-host staff/non-staff boundary checks
+    pass. No later than `2026-09-13T00:00:00.000Z`, revert to mock and remove the worker key unless the
+    owner explicitly records a paid continuation.
 
 ## In progress — Phase 10
 

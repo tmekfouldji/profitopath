@@ -54,7 +54,10 @@ integrationTest('PostgreSQL candle persistence', () => {
       database.marketCandle.count({ where: { symbol, timeframe: '1m' } }),
     ).resolves.toBe(5);
 
-    const service = new MarketCandleService(repository);
+    const service = new MarketCandleService(repository, {
+      baseSources: ['MOCK_TEST'],
+      derivedSources: ['DERIVED_MOCK_TEST'],
+    });
     const derived = await service.getCandles({
       from: new Date('2026-08-24T09:00:00.000Z'),
       limit: 10,

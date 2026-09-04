@@ -9,6 +9,7 @@ import { TerminalWorkspace } from '@/components/terminal-workspace';
 import { requireUser } from '@/server/auth/session';
 import { terminalCandleService } from '@/server/terminal';
 import { getOwnedTerminalState } from '@/server/terminal-read-model';
+import { canAccessTwelveDataTrial } from '@/server/twelve-data-trial-access';
 
 export default async function TerminalPage({
   params,
@@ -17,6 +18,9 @@ export default async function TerminalPage({
 }) {
   const { accountId } = await params;
   const user = await requireUser(`/terminal/${accountId}`);
+  if (!canAccessTwelveDataTrial(user)) {
+    notFound();
+  }
   const state = await getOwnedTerminalState(accountId, user.id);
   if (state === null) {
     notFound();
@@ -25,7 +29,15 @@ export default async function TerminalPage({
     state.positions[0]?.symbol ?? state.instruments[0]?.symbol ?? 'EURUSD';
   const latest = await database.marketCandle.findFirst({
     orderBy: { openTime: 'desc' },
-    where: { isFinal: true, symbol: initialSymbol, timeframe: '1m' },
+    where: {
+      isFinal: true,
+      source:
+        process.env.MARKET_DATA_SOURCE === 'twelve-data-trial'
+          ? 'TWELVE_DATA_TRIAL'
+          : { in: ['MOCK_SEED', 'MOCK_LIVE'] },
+      symbol: initialSymbol,
+      timeframe: '1m',
+    },
   });
   const to =
     latest?.closeTime ?? new Date(state.account.competition.tradingStartsAt);

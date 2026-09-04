@@ -841,4 +841,54 @@ integrationTest('persistent simulated execution engine', () => {
       },
     ]);
   });
+
+  it('does not mark or trigger non-staff accounts when worker quote processing is staff-scoped', async () => {
+    const fixture = await createFixture();
+    const { engine, provider } = await createEngine([
+      {
+        ask: '1.10020',
+        bid: '1.10000',
+        symbol: 'EURUSD',
+        timestamp: new Date('2026-08-24T09:00:00.000Z'),
+      },
+    ]);
+    const pending = await engine.submitPendingOrder({
+      clientOrderId: 'staff-only-limit',
+      price: new Decimal('1.09900'),
+      quantity: new Decimal('0.1'),
+      side: 'BUY',
+      submittedAt: new Date('2026-08-24T09:00:00.500Z'),
+      symbol: 'EURUSD',
+      tradingAccountId: fixture.accountId,
+      type: 'LIMIT',
+    });
+    const staffScopedEngine = new PersistentSimulatedExecutionEngine(provider, {
+      accountScope: {
+        competitionEntry: {
+          user: { role: { in: ['ADMIN', 'SUPERADMIN'] }, status: 'ACTIVE' },
+        },
+      },
+    });
+    const trigger = {
+      ask: new Decimal('1.09890'),
+      bid: new Decimal('1.09870'),
+      sequence: 2n,
+      symbol: 'EURUSD',
+      timestamp: new Date('2026-08-24T09:00:01.000Z'),
+    };
+
+    await staffScopedEngine.processQuote(trigger);
+    await expect(
+      database.order.findUniqueOrThrow({ where: { id: pending.orderId } }),
+    ).resolves.toMatchObject({ status: 'ACCEPTED' });
+
+    await database.user.update({
+      data: { role: 'ADMIN' },
+      where: { id: fixture.userId },
+    });
+    await staffScopedEngine.processQuote({ ...trigger, sequence: 3n });
+    await expect(
+      database.order.findUniqueOrThrow({ where: { id: pending.orderId } }),
+    ).resolves.toMatchObject({ status: 'FILLED' });
+  });
 });

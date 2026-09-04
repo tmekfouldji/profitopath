@@ -469,24 +469,26 @@ model ClosedTrade {
 }
 
 model InstrumentConfiguration {
-  id              String        @id @default(uuid()) @db.Uuid
-  symbol          String        @db.VarChar(32)
-  version         Int
-  active          Boolean       @default(true)
-  baseCurrency    String        @db.Char(3)
-  quoteCurrency   String        @db.Char(3)
-  priceScale      Int
-  quantityStep    Decimal       @db.Decimal(30, 12)
-  minimumQuantity Decimal       @db.Decimal(30, 12)
-  contractSize    Decimal       @db.Decimal(30, 12)
-  leverage        Decimal       @db.Decimal(30, 12)
-  marketHoursMode String        @default("UTC_24X5") @db.VarChar(32)
-  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
-  orders          Order[]
-  executions      Execution[]
-  positions       Position[]
-  closedTrades    ClosedTrade[]
+  id               String        @id @default(uuid()) @db.Uuid
+  symbol           String        @db.VarChar(32)
+  version          Int
+  active           Boolean       @default(true)
+  baseCurrency     String        @db.Char(3)
+  quoteCurrency    String        @db.Char(3)
+  priceScale       Int
+  quantityStep     Decimal       @db.Decimal(30, 12)
+  minimumQuantity  Decimal       @db.Decimal(30, 12)
+  contractSize     Decimal       @db.Decimal(30, 12)
+  leverage         Decimal       @db.Decimal(30, 12)
+  marketHoursMode  String        @default("UTC_24X5") @db.VarChar(32)
+  marketDataSource String        @default("MOCK") @db.VarChar(32)
+  syntheticSpread  Decimal?      @db.Decimal(30, 12)
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @db.Timestamptz(3)
+  orders           Order[]
+  executions       Execution[]
+  positions        Position[]
+  closedTrades     ClosedTrade[]
 
   @@unique([symbol, version])
   @@index([active, symbol])
@@ -509,8 +511,24 @@ model MarketCandle {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 
-  @@unique([symbol, timeframe, openTime])
-  @@index([symbol, timeframe, isFinal, openTime])
+  @@unique([source, symbol, timeframe, openTime])
+  @@index([source, symbol, timeframe, isFinal, openTime])
+}
+
+model MarketDataCoverage {
+  id          String   @id @default(uuid()) @db.Uuid
+  source      String   @db.VarChar(32)
+  symbol      String   @db.VarChar(32)
+  timeframe   String   @db.VarChar(8)
+  rangeStart  DateTime @db.Timestamptz(3)
+  rangeEnd    DateTime @db.Timestamptz(3)
+  dataVersion Int      @default(1)
+  completedAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([source, symbol, timeframe, rangeStart, rangeEnd])
+  @@index([source, symbol, timeframe, rangeStart, rangeEnd])
 }
 
 model AccountBalanceLedgerEntry {

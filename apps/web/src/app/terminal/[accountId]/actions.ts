@@ -13,6 +13,10 @@ import {
   submitOwnedMarketOrder,
   submitOwnedPendingOrder,
 } from '@/server/terminal';
+import {
+  assertTwelveDataTrialAccess,
+  TwelveDataTrialStaffAccessError,
+} from '@/server/twelve-data-trial-access';
 
 function formString(formData: FormData, name: string): string {
   return String(formData.get(name) ?? '').trim();
@@ -45,7 +49,8 @@ function optionalFormDecimal(formData: FormData, name: string): Decimal | null {
 function publicFailure(error: unknown): TerminalActionState {
   if (
     error instanceof SimulatorCommandError ||
-    error instanceof CachedQuoteUnavailableError
+    error instanceof CachedQuoteUnavailableError ||
+    error instanceof TwelveDataTrialStaffAccessError
   ) {
     return { message: error.message, status: 'ERROR' };
   }
@@ -63,6 +68,7 @@ export async function submitTerminalOrder(
   const callbackUrl = `/terminal/${encodeURIComponent(accountId)}`;
   const user = await requireUser(callbackUrl);
   try {
+    assertTwelveDataTrialAccess(user);
     const clientOrderId =
       formString(formData, 'clientOrderId') || crypto.randomUUID();
     const quantity = formDecimal(formData, 'quantity');
@@ -123,6 +129,7 @@ export async function cancelTerminalOrder(formData: FormData): Promise<void> {
   const accountId = formString(formData, 'accountId');
   const callbackUrl = `/terminal/${encodeURIComponent(accountId)}`;
   const user = await requireUser(callbackUrl);
+  assertTwelveDataTrialAccess(user);
   await cancelOwnedOrder(user.id, {
     orderId: formString(formData, 'orderId'),
     tradingAccountId: accountId,
@@ -138,6 +145,7 @@ export async function updatePositionProtection(
   const callbackUrl = `/terminal/${encodeURIComponent(accountId)}`;
   const user = await requireUser(callbackUrl);
   try {
+    assertTwelveDataTrialAccess(user);
     await setOwnedPositionProtection(user.id, {
       clientRequestId:
         formString(formData, 'clientRequestId') || crypto.randomUUID(),

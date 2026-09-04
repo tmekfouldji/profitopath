@@ -6,10 +6,12 @@ import {
   recomputeFrozenLeaderboard,
   recomputeLiveLeaderboard,
 } from '@profitopath/competition';
-import { checkDatabase, database } from '@profitopath/database';
+import { checkDatabase, database, type Prisma } from '@profitopath/database';
 import {
   LiveCandleProcessor,
   MockMarketDataProvider,
+  TwelveDataHistoricalBackfill,
+  TwelveDataMarketDataProvider,
   TwelveDataPrivateProbe,
   ValkeyQuoteStore,
   twelveDataPrivateTestSymbols,
@@ -19,7 +21,7 @@ import {
   createLogger,
   createValkeyClient,
   runReadinessChecks,
-  serviceEnvSchema,
+  workerServiceEnvSchema,
 } from '@profitopath/shared';
 import {
   createDevelopmentMockQuoteSeeds,
@@ -31,10 +33,17 @@ import {
 import { config } from 'dotenv';
 
 import { CompetitionJobRunner } from './competition-jobs';
+import { assertTwelveDataTrialInstrumentConfigurations } from './twelve-data-trial-configuration';
+import { TwelveDataTrialRuntime } from './twelve-data-trial-runtime';
+import {
+  hasInternalMarketDataAuthorization,
+  parseTrialBackfillRequest,
+  TwelveDataTrialInternalApiError,
+} from './twelve-data-trial-internal-api';
 
 config({ path: '../../.env', quiet: true });
 
-const env = serviceEnvSchema.parse({
+const env = workerServiceEnvSchema.parse({
   ...process.env,
   PORT: process.env.WORKER_PORT ?? 3002,
 });
@@ -46,6 +55,9 @@ const valkey = createValkeyClient(env.VALKEY_URL, (error) => {
 let mockCycleTimer: ReturnType<typeof setTimeout> | null = null;
 let competitionJobTimer: ReturnType<typeof setTimeout> | null = null;
 let twelveDataPrivateProbeTimer: ReturnType<typeof setTimeout> | null = null;
+let twelveDataTrialRuntime: TwelveDataTrialRuntime | null = null;
+let twelveDataTrialHistoricalBackfill: TwelveDataHistoricalBackfill | null =
+  null;
 let shuttingDown = false;
 
 if (env.COMPETITION_JOBS_ENABLED) {
@@ -109,7 +121,7 @@ if (env.COMPETITION_JOBS_ENABLED) {
   void runCompetitionJobs();
 }
 
-if (env.MOCK_MARKET_DATA_ENABLED) {
+if (env.MARKET_DATA_SOURCE === 'mock' && env.MOCK_MARKET_DATA_ENABLED) {
   const candleProcessor = new LiveCandleProcessor(valkey);
   const quotePublisher = new ValkeyQuoteStore(valkey);
   let nextQuoteSequence = 1n;
@@ -157,6 +169,103 @@ if (env.MOCK_MARKET_DATA_ENABLED) {
     }
   };
   void runMockCycle();
+}
+
+if (env.MARKET_DATA_SOURCE === 'twelve-data-trial') {
+  const provider = new TwelveDataMarketDataProvider({
+    apiKey: env.TWELVE_DATA_API_KEY!,
+    fullSpreads: {
+      EURUSD: env.TWELVE_DATA_TRIAL_SPREAD_EURUSD!,
+      GBPUSD: env.TWELVE_DATA_TRIAL_SPREAD_GBPUSD!,
+    },
+    onFault: (error) => {
+      logger.warn(
+        { error: error.message },
+        'Twelve Data trial provider event rejected',
+      );
+    },
+    reconnectInitialDelayMs: env.TWELVE_DATA_RECONNECT_INITIAL_MS,
+    reconnectMaxDelayMs: env.TWELVE_DATA_RECONNECT_MAX_MS,
+    sequence: async () =>
+      BigInt(await valkey.incr('market:sequence:v1:twelve-data-trial')),
+    trialEndsAt: env.TWELVE_DATA_TRIAL_ENDS_AT!,
+  });
+  twelveDataTrialHistoricalBackfill = new TwelveDataHistoricalBackfill({
+    leaseClient: valkey,
+    provider,
+  });
+  const staffOnlyAccountScope: Prisma.TradingAccountWhereInput = {
+    competitionEntry: {
+      user: {
+        role: { in: ['ADMIN', 'SUPERADMIN'] },
+        status: 'ACTIVE',
+      },
+    },
+  };
+  twelveDataTrialRuntime = new TwelveDataTrialRuntime({
+    backfill: async () => {
+      const latestFinalMinute = new Date(
+        Math.floor(Date.now() / 60_000) * 60_000,
+      );
+      const results = [];
+      for (const symbol of ['EURUSD', 'GBPUSD']) {
+        results.push(
+          await twelveDataTrialHistoricalBackfill!.backfill({
+            from: new Date(
+              latestFinalMinute.getTime() -
+                env.TWELVE_DATA_TRIAL_HISTORY_MAX_MINUTES * 60_000,
+            ),
+            symbol,
+            to: latestFinalMinute,
+          }),
+        );
+      }
+      logger.info(
+        {
+          coalescedRanges: results.reduce(
+            (total, result) => total + result.coalescedRanges,
+            0,
+          ),
+          fetchedBars: results.reduce(
+            (total, result) => total + result.fetchedBars,
+            0,
+          ),
+          fetchedRanges: results.reduce(
+            (total, result) => total + result.fetchedRanges,
+            0,
+          ),
+          skippedRanges: results.reduce(
+            (total, result) => total + result.skippedRanges,
+            0,
+          ),
+        },
+        'Twelve Data trial historical bootstrap completed',
+      );
+    },
+    candleProcessor: new LiveCandleProcessor(
+      valkey,
+      undefined,
+      'TWELVE_DATA_TRIAL',
+    ),
+    leaseClient: valkey,
+    logger,
+    processor: new PersistentSimulatedExecutionEngine(provider, {
+      accountScope: staffOnlyAccountScope,
+    }),
+    provider,
+    quotePublisher: new ValkeyQuoteStore(valkey),
+    recover: () => recoverSimulatorState(new Date(), staffOnlyAccountScope),
+    symbols: ['EURUSD', 'GBPUSD'],
+    trialEndsAt: env.TWELVE_DATA_TRIAL_ENDS_AT!,
+    verifyInstrumentConfiguration: () =>
+      assertTwelveDataTrialInstrumentConfigurations({
+        EURUSD: env.TWELVE_DATA_TRIAL_SPREAD_EURUSD!,
+        GBPUSD: env.TWELVE_DATA_TRIAL_SPREAD_GBPUSD!,
+      }),
+  });
+  void twelveDataTrialRuntime.start().catch((error: unknown) => {
+    logger.error({ error }, 'Twelve Data trial feed could not initialize');
+  });
 }
 
 if (env.TWELVE_DATA_PRIVATE_TEST_ENABLED) {
@@ -217,6 +326,60 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  if (
+    request.method === 'POST' &&
+    request.url === '/internal/market-data/twelve-data-trial/backfill'
+  ) {
+    if (
+      env.MARKET_DATA_SOURCE !== 'twelve-data-trial' ||
+      twelveDataTrialHistoricalBackfill === null
+    ) {
+      response.statusCode = 404;
+      response.end(JSON.stringify({ error: 'not_found' }));
+      return;
+    }
+    if (
+      !hasInternalMarketDataAuthorization(
+        request.headers.authorization,
+        env.MARKET_DATA_INTERNAL_TOKEN!,
+      )
+    ) {
+      response.statusCode = 401;
+      response.end(JSON.stringify({ error: 'unauthorized' }));
+      return;
+    }
+    try {
+      const chunks: Buffer[] = [];
+      let size = 0;
+      for await (const chunk of request) {
+        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        size += buffer.length;
+        if (size > 8_192) {
+          throw new TwelveDataTrialInternalApiError('body is too large');
+        }
+        chunks.push(buffer);
+      }
+      const input = parseTrialBackfillRequest(
+        JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown,
+        env.TWELVE_DATA_TRIAL_HISTORY_MAX_MINUTES,
+      );
+      const result = await twelveDataTrialHistoricalBackfill.backfill(input);
+      response.end(JSON.stringify({ ...result, status: 'ok' }));
+    } catch (error: unknown) {
+      response.statusCode =
+        error instanceof TwelveDataTrialInternalApiError ? 400 : 503;
+      response.end(
+        JSON.stringify({
+          error:
+            error instanceof TwelveDataTrialInternalApiError
+              ? 'invalid_backfill_request'
+              : 'backfill_unavailable',
+        }),
+      );
+    }
+    return;
+  }
+
   response.statusCode = 404;
   response.end(JSON.stringify({ error: 'not_found' }));
 });
@@ -238,6 +401,7 @@ async function shutdown(signal: string): Promise<void> {
   if (twelveDataPrivateProbeTimer !== null) {
     clearTimeout(twelveDataPrivateProbeTimer);
   }
+  await twelveDataTrialRuntime?.stop();
   valkey.disconnect();
   await database.$disconnect();
 }

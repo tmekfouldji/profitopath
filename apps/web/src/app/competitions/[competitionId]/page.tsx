@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { WeekTape } from '@/components/week-tape';
 import { formatCompetitionWindow, statusLabel } from '@/lib/format';
 import { getCompetition } from '@/server/queries';
+import { isTwelveDataTrialMode } from '@/server/twelve-data-trial-access';
 
 import { startCheckout } from './actions';
 
@@ -29,6 +30,7 @@ export default async function CompetitionPage({
   const signupOpen =
     (competition.status === 'SCHEDULED' || competition.status === 'ACTIVE') &&
     new Date() < competition.signupClosesAt;
+  const internalMarketDataValidation = isTwelveDataTrialMode();
 
   return (
     <main className="content-page">
@@ -57,6 +59,12 @@ export default async function CompetitionPage({
         <p className="notice-banner notice-error" role="alert">
           This checkout is no longer available. Refresh the competition state or
           choose another open tier.
+        </p>
+      ) : null}
+      {internalMarketDataValidation ? (
+        <p className="notice-banner" role="status">
+          Internal market-data validation is in progress. New public entries are
+          paused while staff validate the trading terminal.
         </p>
       ) : null}
 
@@ -133,14 +141,16 @@ export default async function CompetitionPage({
                 <input name="tierId" type="hidden" value={tier.id} />
                 <button
                   className="button button-primary"
-                  disabled={!signupOpen}
+                  disabled={!signupOpen || internalMarketDataValidation}
                   type="submit"
                 >
-                  {signupOpen
+                  {signupOpen && !internalMarketDataValidation
                     ? competition.status === 'SCHEDULED'
                       ? `Preorder ${tier.name}`
                       : `Join ${tier.name}`
-                    : 'Entry unavailable'}
+                    : internalMarketDataValidation
+                      ? 'Internal validation in progress'
+                      : 'Entry unavailable'}
                 </button>
               </form>
             </article>

@@ -24,6 +24,7 @@ export interface MarketCandle {
 export interface CandleRangeRequest {
   from: Date;
   limit: number;
+  sources?: readonly string[];
   symbol: string;
   timeframe: CandleTimeframe;
   to: Date;
@@ -32,6 +33,11 @@ export interface CandleRangeRequest {
 export interface CandleRepository {
   findFinalRange(input: CandleRangeRequest): Promise<MarketCandle[]>;
   insertMissing(candles: readonly MarketCandle[]): Promise<void>;
+}
+
+export interface MarketCandleServiceOptions {
+  baseSources?: readonly string[];
+  derivedSources?: readonly string[];
 }
 
 const minuteMs = 60_000;
@@ -43,6 +49,8 @@ const timeframeMinutes: Readonly<Record<CandleTimeframe, number>> = {
   '5m': 5,
   '15m': 15,
 };
+const mockBaseSources = ['MOCK_SEED', 'MOCK_LIVE'] as const;
+const mockDerivedSources = ['DERIVED_MOCK_SEED', 'DERIVED_MOCK_LIVE'] as const;
 
 export class InvalidCandleRangeError extends Error {
   constructor(message: string) {
@@ -123,6 +131,9 @@ export class PrismaCandleRepository implements CandleRepository {
       where: {
         isFinal: true,
         openTime: { gte: input.from, lt: input.to },
+        ...(input.sources === undefined
+          ? {}
+          : { source: { in: [...input.sources] } }),
         symbol: normalizeSymbol(input.symbol),
         timeframe: input.timeframe,
       },
@@ -202,7 +213,7 @@ export function aggregateFinalCandles(
       low: Decimal.min(...candles.map((candle) => candle.low)),
       open: first.open,
       openTime: new Date(start),
-      source: 'DERIVED_MOCK',
+      source: `DERIVED_${first.source}`,
       symbol: first.symbol,
       timeframe,
       volume,
@@ -218,14 +229,29 @@ function requestKey(input: CandleRangeRequest): string {
     input.from.toISOString(),
     input.to.toISOString(),
     input.limit,
+    ...(input.sources === undefined ? [] : [...input.sources].sort()),
   ].join(':');
 }
 
+function withSources(
+  input: CandleRangeRequest,
+  sources: readonly string[] | undefined,
+): CandleRangeRequest {
+  return sources === undefined ? input : { ...input, sources };
+}
+
 export class MarketCandleService {
+  readonly #baseSources: readonly string[] | undefined;
+  readonly #derivedSources: readonly string[] | undefined;
   readonly #inFlight = new Map<string, Promise<MarketCandle[]>>();
   readonly #repository: CandleRepository;
 
-  constructor(repository: CandleRepository = new PrismaCandleRepository()) {
+  constructor(
+    repository: CandleRepository = new PrismaCandleRepository(),
+    options: MarketCandleServiceOptions = {},
+  ) {
+    this.#baseSources = options.baseSources ?? mockBaseSources;
+    this.#derivedSources = options.derivedSources ?? mockDerivedSources;
     this.#repository = repository;
   }
 
@@ -246,19 +272,28 @@ export class MarketCandleService {
 
   async #load(input: CandleRangeRequest): Promise<MarketCandle[]> {
     if (input.timeframe === '1m') {
-      return this.#repository.findFinalRange(input);
+      return this.#repository.findFinalRange(
+        withSources(input, this.#baseSources),
+      );
     }
     const minutes = timeframeMinutes[input.timeframe];
-    const source = await this.#repository.findFinalRange({
-      ...input,
-      from: new Date(bucketStart(input.from, minutes)),
-      limit: input.limit * minutes,
-      timeframe: '1m',
-    });
+    const source = await this.#repository.findFinalRange(
+      withSources(
+        {
+          ...input,
+          from: new Date(bucketStart(input.from, minutes)),
+          limit: input.limit * minutes,
+          timeframe: '1m',
+        },
+        this.#baseSources,
+      ),
+    );
     await this.#repository.insertMissing(
       aggregateFinalCandles(source, input.timeframe),
     );
-    return this.#repository.findFinalRange(input);
+    return this.#repository.findFinalRange(
+      withSources(input, this.#derivedSources),
+    );
   }
 }
 
@@ -273,6 +308,11 @@ function midpoint(quote: Quote): Decimal {
 
 export class QuoteCandleBuilder {
   #current: MarketCandle | null = null;
+  readonly #source: string;
+
+  constructor(source = 'MOCK_LIVE') {
+    this.#source = source;
+  }
 
   update(quote: Quote): CandleBuilderUpdate {
     const symbol = normalizeSymbol(quote.symbol);
@@ -293,7 +333,7 @@ export class QuoteCandleBuilder {
         low: price,
         open: price,
         openTime: new Date(start),
-        source: 'MOCK_LIVE',
+        source: this.#source,
         symbol,
         timeframe: '1m',
         volume: null,

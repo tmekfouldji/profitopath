@@ -113,7 +113,7 @@ export async function getActiveMemberCount(): Promise<number | null> {
 
 export function configurationHealth(input: {
   emailProvider: 'console' | 'smtp';
-  marketDataSource: 'mock';
+  marketDataSource: 'mock' | 'twelve-data-trial';
   mockMarketDataEnabled: boolean;
   nowPaymentsApiKeyConfigured: boolean;
   nowPaymentsIpnSecretConfigured: boolean;
@@ -129,13 +129,16 @@ export function configurationHealth(input: {
         ? 'SMTP verification enabled'
         : 'SMTP verification not configured',
     emailProvider: input.emailProvider,
-    marketData: input.twelveDataPrivateTestEnabled
-      ? input.mockMarketDataEnabled
-        ? 'Mock feed enabled; local Twelve Data probe enabled'
-        : 'Mock feed held; local Twelve Data probe enabled'
-      : input.mockMarketDataEnabled
-        ? 'Mock feed enabled'
-        : 'Mock feed held',
+    marketData:
+      input.marketDataSource === 'twelve-data-trial'
+        ? 'Twelve Data commercial trial feed enabled'
+        : input.twelveDataPrivateTestEnabled
+          ? input.mockMarketDataEnabled
+            ? 'Mock feed enabled; local Twelve Data probe enabled'
+            : 'Mock feed held; local Twelve Data probe enabled'
+          : input.mockMarketDataEnabled
+            ? 'Mock feed enabled'
+            : 'Mock feed held',
     marketDataSource: input.marketDataSource,
     nowPayments: nowPaymentsConfigured
       ? input.paymentProvider === 'nowpayments'

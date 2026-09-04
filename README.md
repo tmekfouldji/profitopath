@@ -75,6 +75,7 @@ Codex must treat the project-tracking files in the repository as persistent memo
 - `10_MARKET_DATA_CACHING_AND_CANDLES.md` for market-data/charting work
 - `11_TRADERMADE_TRIAL_ACTIVATION.md` for the provider-trial approval and activation gate
 - `14_TWELVE_DATA_PRIVATE_TESTING.md` for the strictly local Twelve Data Basic-plan connectivity probe
+- `15_TWELVE_DATA_TRIAL_ACTIVATION.md` for the time-limited staff-only Twelve Data validation feed
 - `12_AUTH_SESSION_HARDENING.md` for authentication controls and production follow-up work
 - `13_PREORDER_PAYMENT_ACTIVATION.md` for the NOWPayments preorder deployment handoff
 

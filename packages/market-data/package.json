@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@profitopath/database": "workspace:*",
-    "decimal.js": "10.6.0"
+    "decimal.js": "10.6.0",
+    "ws": "8.18.3"
   },
   "devDependencies": {
+    "@types/ws": "8.18.1",
     "typescript": "5.9.3"
   }
 }

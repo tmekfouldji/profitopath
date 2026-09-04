@@ -11,8 +11,8 @@ This file is the authoritative high-level state for Codex.
 - Payment target: NOWPayments hosted invoices, preorder implementation and launch composition complete;
   repository/local default remains mock while the protected launch host uses NOWPayments
 - Legal/company working assumption: SVG Business Company, final approval pending
-- Current implementation phase: **Phase 10 — preorder checkout activation, mandatory email confirmation,
-  and owner operations (public stack and email delivery active; controlled payment test/schedule pending)**
+- Current implementation phase: **Phase 9 — Twelve Data commercial-trial staff-only live validation
+  (server-owned, time-limited; Phase 10 checkout operations remain separate)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
   through `20260830211500_password_reset_recovery` are applied. Revision `3de46b7` is deployed; its
@@ -24,23 +24,37 @@ This file is the authoritative high-level state for Codex.
   and GBPUSD simulated-instrument configurations required by that feed, and the browser terminal has been
   verified with live mock prices plus an enabled server-authoritative ticket.
 - Production-shaped local Docker environment: complete and verified
-- Real market-data integration: no customer-facing provider integration; a local-only, server-owned
-  Twelve Data Basic connectivity probe is implemented but awaits a privately supplied local API key
+- Real market-data integration: Twelve Data support has authorized the stated use for a 12-day trial ending
+  13 September 2026. The EURUSD/GBPUSD adapter, source-isolated historical coverage/candle persistence,
+  elected worker runtime, and worker-only secret boundary are complete. Local credentialed validation
+  succeeded: 20,204 initial one-minute bars persisted, both quote-cache keys refreshed, and the protected
+  worker endpoint backfilled a fresh 27-bar range. The next action is staff-only live-host validation. The
+  public site stays online but does not sell new entries or deliver trial data to non-staff, and the runtime
+  stops no later than `2026-09-13T00:00:00.000Z` unless an earlier exact expiry is supplied.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
 
 ## Active milestone
 
-Phase 0 through Phase 8 and the Phase 10 backend integration are complete. On 30 August 2026, the product
+Phase 0 through Phase 8 and the Phase 10 backend integration are complete. On 1 September 2026, Twelve
+Data support confirmed a 12-day Unlimited trial through 13 September 2026 with 2,584 API credits and
+2,500 WebSocket credits, approved the supplied customer-display/fan-out/cache/simulated-execution use
+case for that period, and stated that a $499 full subscription is required after trial. The source email
+must be retained outside Git. This unblocks only a time-limited server-owned trial integration: Twelve
+Data's documented feed has no bid/ask, so D-031 records fixed server-side synthetic trial spreads of 1.2
+pips for EURUSD and 2.4 pips for GBPUSD. The Phase 9 adapter and single-subscriber worker pipeline are
+implemented, including worker-owned historical backfill/range coalescing and local credentialed smoke.
+The remaining validation is strictly staff-only on the live host: public checkout pauses and non-staff
+cannot receive or trigger on provider data. The deployment must revert to mock no later than
+`2026-09-13T00:00:00.000Z` unless a paid continuation is explicitly recorded. On 30 August 2026, the product
 owner reported NOWPayments approval and receipt of the merchant API key, and requested a preorder launch
 before the market-data rollout. That key is not present in the repository or this runtime. On 24 August 2026, TraderMade offered pricing and a paid,
 seven-day refundable trial, but stated that commercial terms can be discussed after testing. The reply
 does not supply official API documentation or confirm rights for customer-facing chart display,
-caching/fanout, or simulated execution. Phase 9 therefore remains blocked. Twelve Data's official Basic
-pricing/docs now support only a loopback, non-display `/price` connectivity probe (D-030); it does not
-enter cache, candles, execution, or browser delivery and does not clear the Phase 9 gate. Mock market data
-remains the only authorized client source. The NOWPayments implementation follows its documented
+caching/fanout, or simulated execution. TraderMade remains blocked. Twelve Data Basic pricing/docs support
+only a loopback, non-display `/price` connectivity probe (D-030), but the separate D-031 commercial trial
+authorization governs the explicitly limited Twelve Data trial implementation. The NOWPayments implementation follows its documented
 hosted-invoice and IPN flow, but production activation remains blocked on merchant acceptance, SVG legal
 approval evidence retention, secret-manager provisioning, final public origin/DNS, a public HTTPS IPN
 endpoint test, an explicit launch competition schedule, and managed PostgreSQL/Valkey endpoints. The
@@ -236,9 +250,9 @@ sections to approve the first `SCHEDULED` competition.
 P10-010 password recovery is deployed at `/reset-password`; migration
 `20260830211500_password_reset_recovery` applied successfully and its public reset page/API health smoke
 tests passed. P10-011 evergreen preorder entitlement is explicitly scoped but needs approved
-pricing/expiry/refund policy. P9-T-002 awaits a privately entered local Twelve Data API key for one
-server-only probe sample; P9-001 remains intentionally deferred until customer-facing provider rights,
-production bid/ask semantics, history, and resilience requirements are approved.
+pricing/expiry/refund policy. P9-T-002 still awaits a privately entered local Twelve Data API key for the
+separate non-display probe, while the commercial-trial path awaits its separately provisioned isolated
+credential, exact expiry timestamp, historical-range implementation, and smoke test.
 
 ## Quality status
 
@@ -256,6 +270,10 @@ production bid/ask semantics, history, and resilience requirements are approved.
   tests), then formatter, full typecheck, lint, default suite (215 passed / 40 environment-dependent
   skipped), and production build passed. Live HTTPS home/competition/dashboard checks had no application
   console errors; Caddy, web, realtime, worker, PostgreSQL, and Valkey readiness checks were all HTTP 200.
+- Twelve Data commercial-trial implementation: Prisma validation/generation, local migration deploy and
+  idempotent seed, typecheck, lint, the full PostgreSQL-backed suite (76 files / 224 tests), and a
+  production-mode build passed. The repository-wide formatter is blocked solely by the pre-existing user
+  edit in `apps/realtime/src/protocol.test.ts`; all files changed for this work were formatted.
 - Live terminal repair: focused quote-cache coverage, formatter, full typecheck, lint, default suite (176
   passed / 40 skipped), and production build passed. Revision `3de46b7` is deployed. The public authenticated
   WebSocket relay received a snapshot and quote delta. The owner-authorized, audited, idempotent launch-data
@@ -416,14 +434,14 @@ production bid/ask semantics, history, and resilience requirements are approved.
 - exact drawdown semantics not finally approved
 - TraderMade offered pricing/a paid trial, but commercial terms, official documentation, and required
   client-display/redistribution/simulated-execution rights are not approved or integrated
-- official provider API documentation and commercial-use/redistribution approval not supplied
-- Twelve Data Basic permits only internal non-display use; its local probe is not permission to serve prices
-  to customers or use them for simulated execution
+- Twelve Data trial ends 13 September 2026. Local credentialed validation is complete; the remaining work is
+  staff-only live-host validation and rollback no later than `2026-09-13T00:00:00.000Z` unless paid terms
+  are explicitly recorded. The Basic-plan local probe remains non-display only.
 - NOWPayments merchant acceptance, production credential provisioning, and public HTTPS IPN verification
   are not completed; real checkout remains disabled
 - SVG legal opinion not completed
 
-The market-data selection/documentation/rights blocker prevents Phase 9 implementation under the
-repository provider rules. Do not infer an API, scrape a provider, or present unapproved data as
+The time-limited Twelve Data trial authorization permits only its documented, server-owned path through
+13 September. Do not infer APIs, scrape a provider, or present data outside that authorization as
 commercially usable. The Phase 10 code path is complete but its real-checkout activation and Phase 11
 DigitalOcean production work remain explicitly deferred.

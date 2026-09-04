@@ -53,6 +53,12 @@ export interface SubmitMarketOrderResult {
   status: 'FILLED' | 'REJECTED';
 }
 
+export interface PersistentSimulatedExecutionEngineOptions {
+  /** Restricts worker-owned quote processing; direct commands remain separately authorized. */
+  accountScope?: Prisma.TradingAccountWhereInput;
+  maxQuoteAgeMs?: number;
+}
+
 export interface SubmitPendingOrderCommand {
   clientOrderId: string;
   price: Decimal;
@@ -445,13 +451,15 @@ async function persistSnapshotAndMaybeBreach(
 }
 
 export class PersistentSimulatedExecutionEngine {
+  readonly #accountScope: Prisma.TradingAccountWhereInput | undefined;
   readonly #maxQuoteAgeMs: number;
   readonly #provider: MarketDataProvider;
 
   constructor(
     provider: MarketDataProvider,
-    options: { maxQuoteAgeMs?: number } = {},
+    options: PersistentSimulatedExecutionEngineOptions = {},
   ) {
+    this.#accountScope = options.accountScope;
     this.#provider = provider;
     this.#maxQuoteAgeMs = options.maxQuoteAgeMs ?? 5_000;
   }
@@ -1769,6 +1777,9 @@ export class PersistentSimulatedExecutionEngine {
       ],
       select: { id: true, tradingAccountId: true },
       where: {
+        ...(this.#accountScope === undefined
+          ? {}
+          : { tradingAccount: this.#accountScope }),
         status: 'ACCEPTED',
         symbol: normalizedQuote.symbol,
         type: { in: ['LIMIT', 'STOP', 'STOP_LOSS', 'TAKE_PROFIT'] },
@@ -1893,6 +1904,9 @@ export class PersistentSimulatedExecutionEngine {
     const accounts = await database.tradingAccount.findMany({
       select: { id: true },
       where: {
+        ...(this.#accountScope === undefined
+          ? {}
+          : { AND: [this.#accountScope] }),
         positions: { some: { status: 'OPEN', symbol } },
         status: 'ACTIVE',
       },
@@ -1959,6 +1973,7 @@ export class PersistentSimulatedExecutionEngine {
 
 export async function recoverSimulatorState(
   recoveredAt = new Date(),
+  accountScope?: Prisma.TradingAccountWhereInput,
 ): Promise<SimulatorRecoveryState> {
   const accounts = await database.tradingAccount.findMany({
     include: {
@@ -1975,7 +1990,10 @@ export async function recoverSimulatorState(
       },
     },
     orderBy: { id: 'asc' },
-    where: { status: 'ACTIVE' },
+    where: {
+      ...(accountScope === undefined ? {} : { AND: [accountScope] }),
+      status: 'ACTIVE',
+    },
   });
   return {
     accounts: accounts.map((account) => ({

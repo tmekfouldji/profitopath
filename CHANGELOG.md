@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Added the time-bounded, server-only Twelve Data commercial-trial adapter for EURUSD and GBPUSD. It
+  consumes provider midpoints only, derives auditable Decimal bid/ask quotes from the approved fixed
+  full synthetic spreads, validates freshness, reconnects with bounded backoff, and stops at the
+  configured trial expiry. A Valkey lease elects one worker feed and recovers persistent trading state
+  before it subscribes; browser code never receives a provider credential. Trial candle provenance and
+  instrument-configuration migrations prevent the new feed from mixing with mock data.
+- Completed the staff-only internal-validation path: worker-owned historical backfill persists canonical
+  source coverage, coalesces concurrent ranges, and serves the web through an authenticated internal
+  boundary. The Twelve Data key is supplied only to the worker container; active `ADMIN`/`SUPERADMIN`
+  accounts alone may receive/feed/process trial market data, while public terminal access and new entry
+  checkout are paused. The provider's minute-granular FX stream time is bounded then normalized to
+  authenticated receipt time for quote freshness. The source has a conservative automatic cutoff of
+  `2026-09-13T00:00:00.000Z`.
 - Fixed live terminal initialization when its server-rendered instrument reads begin concurrently: one lazy
   Valkey connection is now shared instead of producing a false unavailable-quote state. The temporary launch
   QA environment also now has explicit, audited version-1 EURUSD and GBPUSD simulated-instrument

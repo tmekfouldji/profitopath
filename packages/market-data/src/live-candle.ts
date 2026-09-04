@@ -39,14 +39,19 @@ export class LiveCandleProcessor {
   constructor(
     publisher: CandleEventPublisher,
     repository: CandleRepository = new PrismaCandleRepository(),
+    source = 'MOCK_LIVE',
   ) {
     this.#publisher = publisher;
     this.#repository = repository;
+    this.#source = source;
   }
+
+  readonly #source: string;
 
   async process(quote: Quote): Promise<LiveCandleResult> {
     const symbol = normalizeSymbol(quote.symbol);
-    const builder = this.#builders.get(symbol) ?? new QuoteCandleBuilder();
+    const builder =
+      this.#builders.get(symbol) ?? new QuoteCandleBuilder(this.#source);
     this.#builders.set(symbol, builder);
     const update = builder.update({ ...quote, symbol });
     if (update.finalized !== null) {

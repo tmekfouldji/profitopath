@@ -16,6 +16,11 @@ services:
 
   web:
     <<: *application-environment
+    # This file contains only the web-to-worker internal token and URL. The
+    # Twelve Data provider key is deliberately unavailable to the web process.
+    env_file:
+      - ${LAUNCH_ENV_FILE:-.env.launch}
+      - ${LAUNCH_MARKET_DATA_ENV_FILE:-.env.market-data.launch}
     build:
       args:
         NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL:?Set NEXT_PUBLIC_REALTIME_URL in .env.launch and pass it with --env-file.}
@@ -57,6 +62,11 @@ services:
 
   worker:
     <<: *application-environment
+    # The provider credential is worker-only; never add it to .env.launch.
+    env_file:
+      - ${LAUNCH_ENV_FILE:-.env.launch}
+      - ${LAUNCH_MARKET_DATA_ENV_FILE:-.env.market-data.launch}
+      - ${LAUNCH_WORKER_ENV_FILE:-.env.worker.launch}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile

@@ -80,6 +80,26 @@ describe('market candle service', () => {
     expect(results.every((result) => result.length === 1)).toBe(true);
   });
 
+  it('keeps a configured provider candle source separate from mock history', async () => {
+    const findFinalRange = vi.fn(async () => [candle(0)]);
+    const service = new MarketCandleService(
+      { findFinalRange, insertMissing: vi.fn() },
+      { baseSources: ['TWELVE_DATA_TRIAL'] },
+    );
+
+    await service.getCandles({
+      from: new Date('2026-08-24T09:00:00.000Z'),
+      limit: 10,
+      symbol: 'EURUSD',
+      timeframe: '1m',
+      to: new Date('2026-08-24T10:00:00.000Z'),
+    });
+
+    expect(findFinalRange).toHaveBeenCalledWith(
+      expect.objectContaining({ sources: ['TWELVE_DATA_TRIAL'] }),
+    );
+  });
+
   it('builds midpoint live candles and replaces the handoff bucket', () => {
     const builder = new QuoteCandleBuilder();
     const first = builder.update({

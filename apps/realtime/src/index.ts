@@ -38,6 +38,14 @@ const sockets = new Map<WebSocket, SocketContext>();
 const websocketServer = new WebSocketServer({ noServer: true });
 const authorizationRevalidationIntervalMs = 60_000;
 
+function canReceiveTrialMarketData(role: unknown): boolean {
+  return (
+    env.MARKET_DATA_SOURCE !== 'twelve-data-trial' ||
+    role === 'ADMIN' ||
+    role === 'SUPERADMIN'
+  );
+}
+
 function requestCookies(header: string | undefined): Record<string, string> {
   if (header === undefined) {
     return {};
@@ -134,7 +142,14 @@ async function revalidateSocketAuthorizations(): Promise<void> {
               ...new Set(activeSockets.map(([, context]) => context.accountId)),
             ],
           },
-          competitionEntry: { user: { status: 'ACTIVE' } },
+          competitionEntry: {
+            user: {
+              ...(env.MARKET_DATA_SOURCE === 'twelve-data-trial'
+                ? { role: { in: ['ADMIN', 'SUPERADMIN'] } }
+                : {}),
+              status: 'ACTIVE',
+            },
+          },
         },
       })
     ).map((account) => account.id),
@@ -210,7 +225,8 @@ server.on('upgrade', async (request, socket, head) => {
     if (
       accountId === null ||
       token?.sub === undefined ||
-      token.status !== 'ACTIVE'
+      token.status !== 'ACTIVE' ||
+      !canReceiveTrialMarketData(token.role)
     ) {
       socket.destroy();
       return;
@@ -218,7 +234,15 @@ server.on('upgrade', async (request, socket, head) => {
     const account = await database.tradingAccount.findFirst({
       select: { id: true },
       where: {
-        competitionEntry: { user: { status: 'ACTIVE' }, userId: token.sub },
+        competitionEntry: {
+          user: {
+            ...(env.MARKET_DATA_SOURCE === 'twelve-data-trial'
+              ? { role: { in: ['ADMIN', 'SUPERADMIN'] } }
+              : {}),
+            status: 'ACTIVE',
+          },
+          userId: token.sub,
+        },
         id: accountId,
       },
     });
