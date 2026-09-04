@@ -15,8 +15,9 @@ This file is the authoritative high-level state for Codex.
   (server-owned, time-limited; Phase 10 checkout operations remain separate)**
 - Production deployment: `https://profitopath.com` is served over valid HTTPS from the launch host. Docker
   Caddy/web/realtime/worker services and private PostgreSQL 17/Valkey 8 containers are healthy; migrations
-  through `20260830211500_password_reset_recovery` are applied. Revision `3de46b7` is deployed; its
-  Twelve Data Basic probe is explicitly disabled on the production host. On 31 August 2026 the owner
+  through `20260904110000_market_data_coverage` are applied. Revision `49945eb` is deployed with the
+  staff-only Twelve Data trial configuration; its Basic probe is explicitly disabled on the production host.
+  On 31 August 2026 the owner
   authorized a short-lived `QA-FLOW-20260831-1750` terminal-flow competition and a complimentary, audited
   Rookie simulated account for the verified owner account; it records no payment or revenue. The worker's
   server-owned deterministic mock feed is enabled for this controlled QA flow and continues to be the only
@@ -28,9 +29,11 @@ This file is the authoritative high-level state for Codex.
   13 September 2026. The EURUSD/GBPUSD adapter, source-isolated historical coverage/candle persistence,
   elected worker runtime, and worker-only secret boundary are complete. Local credentialed validation
   succeeded: 20,204 initial one-minute bars persisted, both quote-cache keys refreshed, and the protected
-  worker endpoint backfilled a fresh 27-bar range. The next action is staff-only live-host validation. The
-  public site stays online but does not sell new entries or deliver trial data to non-staff, and the runtime
-  stops no later than `2026-09-13T00:00:00.000Z` unless an earlier exact expiry is supplied.
+  worker endpoint backfilled a fresh 27-bar range. The staff-only live-host deployment also succeeded:
+  20,258 bars bootstrapped, both cache keys refreshed, public checkout paused, unauthenticated candle access
+  denied, and worker backfill bearer authentication rejected invalid callers. The public site stays online
+  but does not sell new entries or deliver trial data to non-staff, and the runtime stops no later than
+  `2026-09-13T00:00:00.000Z` unless an earlier exact expiry is supplied.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
@@ -44,10 +47,11 @@ case for that period, and stated that a $499 full subscription is required after
 must be retained outside Git. This unblocks only a time-limited server-owned trial integration: Twelve
 Data's documented feed has no bid/ask, so D-031 records fixed server-side synthetic trial spreads of 1.2
 pips for EURUSD and 2.4 pips for GBPUSD. The Phase 9 adapter and single-subscriber worker pipeline are
-implemented, including worker-owned historical backfill/range coalescing and local credentialed smoke.
-The remaining validation is strictly staff-only on the live host: public checkout pauses and non-staff
-cannot receive or trigger on provider data. The deployment must revert to mock no later than
-`2026-09-13T00:00:00.000Z` unless a paid continuation is explicitly recorded. On 30 August 2026, the product
+implemented, including worker-owned historical backfill/range coalescing, local credentialed smoke, and
+staff-only live deployment. The remaining validation is an owner-signed-in staff terminal/order smoke;
+public checkout remains paused and non-staff cannot receive or trigger on provider data. The deployment must
+revert to mock no later than `2026-09-13T00:00:00.000Z` unless a paid continuation is explicitly recorded.
+On 30 August 2026, the product
 owner reported NOWPayments approval and receipt of the merchant API key, and requested a preorder launch
 before the market-data rollout. That key is not present in the repository or this runtime. On 24 August 2026, TraderMade offered pricing and a paid,
 seven-day refundable trial, but stated that commercial terms can be discussed after testing. The reply

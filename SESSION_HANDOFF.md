@@ -2,9 +2,9 @@
 
 ## Current state
 
-Phase 9 is code-complete and awaiting the last step: a staff-only validation deployment to the existing
-launch host. The product remains weekly simulated competitions only. There is no brokerage execution,
-customer deposit/custody, funded account, or copy trading.
+Phase 9 is deployed in staff-only validation mode on the existing launch host at revision `49945eb`. The
+product remains weekly simulated competitions only. There is no brokerage execution, customer
+deposit/custody, funded account, or copy trading.
 
 Twelve Data support wrote that the account's 12-day Unlimited trial is active until **13 September 2026**,
 with 2,584 API credits and 2,500 WebSocket credits; it would require a $499 subscription afterwards. Their
@@ -55,25 +55,24 @@ This is not a commercial launch.
   `apps/realtime/src/protocol.test.ts`. Do not reformat or overwrite that user change. All Twelve Data files
   were formatted separately.
 
-## Next deployment procedure
+## Live deployment evidence and remaining work
 
-1. Commit the scoped Twelve Data changes only; do not include `marketing/`, `package-lock.json`, or the
-   pre-existing `apps/realtime/src/protocol.test.ts` change.
-2. Inspect `root@72.62.90.38` before deploying; preserve any unrelated host changes. The current deployment
-   lives at `/opt/profitopath` and uses `docker-compose.launch.yml`.
-3. On the host, create mode-0600 `.env.market-data.launch` with a fresh 32+ character
-   `MARKET_DATA_INTERNAL_TOKEN` and `MARKET_DATA_WORKER_INTERNAL_URL=http://worker:3002`; create mode-0600
-   `.env.worker.launch` with the existing Twelve Data key. Keep `TWELVE_DATA_API_KEY` out of `.env.launch`.
-4. Set the common `.env.launch` trial configuration from
-   `15_TWELVE_DATA_TRIAL_ACTIVATION.md`, including the conservative cutoff, fixed spreads,
-   `TWELVE_DATA_TRIAL_STAFF_ONLY=true`, seven-day history cap, and disabled mock/private probe.
-5. Validate compose without outputting secret values; pull/build, apply migrations, then run the worker-only
-   activation command. Start the stack and verify health, a single lease acquisition, cache-key refresh, and
-   source provenance.
-6. Perform an authenticated browser staff terminal/order smoke and a non-staff denial smoke. Do not expose
-   price values in terminal/log output. Keep checkout paused.
-7. Before the cutoff, revert the common source to `mock`, remove the worker key file, restart, and record the
-   rollback unless the owner explicitly approves and records paid Twelve Data continuation.
+- On 4 September 2026, `root@72.62.90.38:/opt/profitopath` applied the three trial migrations and the
+  worker activation command created immutable EURUSD/GBPUSD version-2 trial configurations. Its first
+  worker bootstrap persisted 20,258 bars, acquired the lease, and refreshed both quote-cache keys.
+- `.env.launch`, `.env.market-data.launch`, `.env.worker.launch`, and the pre-switch backup are mode 0600.
+  The common file does not contain the provider key; the web/realtime containers do not receive it. The
+  internal endpoint rejected an invalid bearer token with HTTP 401.
+- Public HTTPS home/readiness returned HTTP 200. The unauthenticated candle route returned HTTP 401. Browser
+  validation found the active competition page's explicit internal-validation notice and three disabled
+  checkout buttons.
+- Realtime initially failed closed because it received neither worker-only boundary secret. `49945eb` scopes
+  that validation to web/worker and the rebuilt realtime container now reports healthy. No provider data was
+  emitted during that restart loop.
+- Do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke (view chart and quote, then a controlled order
+  only if desired). Do not automate login or submit an order without the owner's active-session authority.
+- Before the cutoff, set `MARKET_DATA_SOURCE=mock`, remove `.env.worker.launch`, restart the compose stack,
+  and record the rollback unless the owner explicitly approves and records paid Twelve Data continuation.
 
 The operative runbook is `15_TWELVE_DATA_TRIAL_ACTIVATION.md`. D-031 and D-032 are the controlling market
 data and access decisions.

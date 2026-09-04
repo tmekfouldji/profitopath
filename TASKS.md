@@ -649,6 +649,13 @@ Rules:
     worker smoke verifies cache refresh and historical coverage; live-host staff/non-staff boundary checks
     pass. No later than `2026-09-13T00:00:00.000Z`, revert to mock and remove the worker key unless the
     owner explicitly records a paid continuation.
+  - Live deployment: on 4 September 2026, the protected launch host applied all three trial migrations,
+    created immutable EURUSD/GBPUSD version-2 trial configurations, completed a 20,258-bar bootstrap, and
+    refreshed both quote-cache keys. Public home/readiness returned HTTP 200; unauthenticated candle access
+    returned 401; the active competition page visibly paused checkout; and invalid worker-backfill bearer
+    authentication returned 401. Realtime's first container image lacked its service-scoped validation fix;
+    commit `49945eb` rebuilt it and it is now healthy. Remaining: owner-signed-in staff terminal/order smoke
+    without involving a non-staff account, plus mandatory rollback before the cutoff.
 
 ## In progress — Phase 10
 

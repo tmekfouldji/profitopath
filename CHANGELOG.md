@@ -15,6 +15,10 @@
   checkout are paused. The provider's minute-granular FX stream time is bounded then normalized to
   authenticated receipt time for quote freshness. The source has a conservative automatic cutoff of
   `2026-09-13T00:00:00.000Z`.
+- Deployed the staff-only trial mode to the protected host: three migrations and immutable version-2 trial
+  instruments are active, the worker bootstrapped 20,258 bars and refreshed both quote-cache keys, public
+  checkout is visibly paused, and unauthenticated market-data requests are denied. A follow-up scopes the
+  internal worker credentials to web/worker only so realtime can enforce staff access without holding them.
 - Fixed live terminal initialization when its server-rendered instrument reads begin concurrently: one lazy
   Valkey connection is now shared instead of producing a false unavailable-quote state. The temporary launch
   QA environment also now has explicit, audited version-1 EURUSD and GBPUSD simulated-instrument
