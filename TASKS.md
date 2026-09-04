@@ -690,7 +690,8 @@ Rules:
     draggable provisional chart line and require an explicit placement confirmation; market actions remain
     authoritative server submissions. Unset SL/TP are compact adjacent entry-line controls, with no misleading
     pre-positioned protection levels. Focused coverage (27 tests), typecheck, lint, full suite (202 tests), and
-    production build passed.
+    production build passed. GitHub revision `28e81eb` is deployed on the launch host as `eb81cc5`; its rebuilt
+    web container is healthy and public HTTPS readiness returned HTTP 200.
 
 ## In progress — Phase 10
 

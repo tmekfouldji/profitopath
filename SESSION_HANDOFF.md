@@ -115,10 +115,12 @@ This is not a commercial launch.
   host commit `25ebba8`, and `web`, `realtime`, and `worker` were rebuilt/recreated without changing the secret
   boundary. All three passed Docker health checks; public HTTPS readiness returned HTTP 200; and the worker
   completed bootstrap then acquired the staff-scoped EURUSD/GBPUSD feed lease.
-- The immediate-timeframe and chart-entry release is locally validated and ready to deploy. It passed 27 focused
-  tests, the full 202-test suite, typecheck, lint, and the production build. After deployment, perform the same
-  signed-in staff smoke without placing an unintended order: switch timeframes quickly, arm/cancel a limit or
-  stop line, and confirm that unset TP/SL remain entry-adjacent.
+- The immediate-timeframe and chart-entry release is deployed: GitHub revision `28e81eb` was applied to the host
+  as `eb81cc5`, and only the web service was rebuilt because the worker/feed boundary did not change. It passed 27
+  focused tests, the full 202-test suite, typecheck, lint, and the production build; the new web container is
+  healthy and public HTTPS readiness returned HTTP 200. Perform the signed-in staff smoke without placing an
+  unintended order: switch timeframes quickly, arm/cancel a limit or stop line, and confirm that unset TP/SL
+  remain entry-adjacent.
 - Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke: change a TP/SL while preserving the chart
   viewport, star a symbol, and observe a controlled fill only if the owner chooses to submit it. Do not automate
   login or submit an order without the owner's active-session authority.

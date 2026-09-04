@@ -56,6 +56,8 @@ This file is the authoritative high-level state for Codex.
   changes. The ticket exposes Buy Bid/Market/Limit/Stop and Sell Ask/Market/Limit/Stop. Limit and stop selections
   arm a draggable provisional chart price before the owner explicitly places the server-authoritative pending
   order. Unset TP/SL are compact controls beside the position entry instead of false full-width protection levels.
+  Revision `28e81eb` is deployed on the launch host as `eb81cc5`; the rebuilt web container is healthy and public
+  HTTPS readiness returned HTTP 200.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
