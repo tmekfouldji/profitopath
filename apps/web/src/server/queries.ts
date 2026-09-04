@@ -10,7 +10,11 @@ import {
 
 export function listCompetitions() {
   return database.competition.findMany({
-    include: { _count: { select: { entries: true } } },
+    include: {
+      _count: {
+        select: { entries: { where: { tier: { active: true } } } },
+      },
+    },
     orderBy: { tradingStartsAt: 'asc' },
     take: 20,
     where: { status: { in: ['SCHEDULED', 'ACTIVE', 'FROZEN', 'FINALIZED'] } },
@@ -28,7 +32,11 @@ export function listActiveChallengeTiers() {
 export async function getCompetition(id: string) {
   const [competition, tiers] = await Promise.all([
     database.competition.findFirst({
-      include: { _count: { select: { entries: true } } },
+      include: {
+        _count: {
+          select: { entries: { where: { tier: { active: true } } } },
+        },
+      },
       where: {
         id,
         status: { in: ['SCHEDULED', 'ACTIVE', 'FROZEN', 'FINALIZED'] },

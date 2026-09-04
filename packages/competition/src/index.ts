@@ -5,3 +5,4 @@ export * from './lifecycle-service';
 export * from './prize-service';
 export * from './state-machine';
 export * from './transition-service';
+export * from './twelve-data-trial-staff-account-service';

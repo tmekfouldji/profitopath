@@ -368,6 +368,23 @@ runtime must therefore use 2026-09-13T00:00:00.000Z as the conservative automati
 supplies a more precise, authoritative UTC expiry. It may never be extended by assumption. This decision
 does not authorize a paid launch, a customer trial, or provider use after the stated end date.
 
+## D-033 — Internal trial accounts are complimentary, isolated, and auditable
+
+Status: Accepted for implementation on 4 September 2026
+
+An active `ADMIN` or `SUPERADMIN` who has no active simulated account in the current validation competition
+may receive exactly one temporary account through the protected worker-side staff provisioner. It creates an
+inactive, zero-fee `TD-STAFF-202609` tier that mirrors the current competition's active-tier rule and balance
+configuration, then creates the active `CompetitionEntry`, `TradingAccount`, initial-balance ledger entry,
+and idempotent audit records in one transaction. It never creates a `Payment`, provider invoice, payment
+event, or revenue record.
+
+The staff tier is unavailable to checkout and excluded from public competition counts and public leaderboard
+tiers/standings. The provisioner rejects a non-staff actor, ambiguous/inactive competition, an unsafe existing
+staff-tier configuration, and every request at or after D-032's conservative cutoff. This is a temporary
+test-access mechanism only; it does not introduce a browser-controlled grant, customer promotion, or paid
+market-data continuation.
+
 ## Pending decisions
 
 - starting balance per tier

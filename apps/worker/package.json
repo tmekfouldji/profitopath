@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "market-data:activate-twelve-data-trial": "tsx src/activate-twelve-data-trial.ts",
+    "market-data:provision-twelve-data-trial-staff-account": "tsx src/provision-twelve-data-trial-staff-account.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },

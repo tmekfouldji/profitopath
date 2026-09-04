@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added an idempotent protected worker provisioner for a current active staff member who lacks a terminal
+  during the Twelve Data validation window. It creates a complimentary inactive zero-fee internal tier,
+  active simulated account, initial-balance ledger event, and correlated audit records without a payment,
+  invoice, or revenue. Internal-tier entries are excluded from public competition counts and public
+  leaderboard views.
 - Added the time-bounded, server-only Twelve Data commercial-trial adapter for EURUSD and GBPUSD. It
   consumes provider midpoints only, derives auditable Decimal bid/ask quotes from the approved fixed
   full synthetic spreads, validates freshness, reconnects with bounded backoff, and stops at the

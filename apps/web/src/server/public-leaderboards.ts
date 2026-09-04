@@ -85,7 +85,11 @@ export function toPublicLeaderboardTiers(
 
 export function listPublicLeaderboardCompetitions() {
   return database.competition.findMany({
-    include: { _count: { select: { entries: true } } },
+    include: {
+      _count: {
+        select: { entries: { where: { tier: { active: true } } } },
+      },
+    },
     orderBy: { tradingEndsAt: 'desc' },
     take: 40,
     where: { status: { in: ['ACTIVE', 'FROZEN', 'FINALIZED', 'ARCHIVED'] } },
@@ -98,12 +102,17 @@ export async function getPublicLeaderboard(
   const competition = await database.competition.findUnique({
     include: {
       entries: {
+        where: { tier: { active: true } },
         select: { tier: { select: { code: true, id: true, name: true } } },
       },
       finalization: {
         include: {
           standings: {
-            include: { tier: { select: { code: true, id: true, name: true } } },
+            include: {
+              tier: {
+                select: { active: true, code: true, id: true, name: true },
+              },
+            },
             orderBy: [{ tierId: 'asc' }, { displayOrder: 'asc' }],
           },
         },
@@ -149,8 +158,9 @@ export async function getPublicLeaderboard(
   if (competition.finalization === null) {
     throw new Error('Finalized competition is missing its immutable result');
   }
-  const serialized: PublicSourceStanding[] =
-    competition.finalization.standings.map((standing) => {
+  const serialized: PublicSourceStanding[] = competition.finalization.standings
+    .filter((standing) => standing.tier.active)
+    .map((standing) => {
       tierMap.set(standing.tier.id, standing.tier);
       return {
         displayName: standing.displayName,

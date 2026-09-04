@@ -69,10 +69,18 @@ This is not a commercial launch.
 - Realtime initially failed closed because it received neither worker-only boundary secret. `49945eb` scopes
   that validation to web/worker and the rebuilt realtime container now reports healthy. No provider data was
   emitted during that restart loop.
-- Do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke (view chart and quote, then a controlled order
-  only if desired). Do not automate login or submit an order without the owner's active-session authority.
+- The initially signed-in superadmin has one completed account in the frozen QA competition and no active
+  account in the current validation competition. After deploying the next revision, run
+  `pnpm --filter @profitopath/worker market-data:provision-twelve-data-trial-staff-account` through the
+  protected worker compose environment. With exactly one active superadmin it selects that account; otherwise
+  provide `TWELVE_DATA_TRIAL_STAFF_USER_ID` and, if needed, `TWELVE_DATA_TRIAL_COMPETITION_ID` for the one
+  active validation competition. It is idempotent and creates an inactive zero-fee tier, active account,
+  initial balance, and audit trail without any payment/revenue. Inactive staff tiers are excluded from public
+  counts and leaderboards.
+- Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke (view chart and quote, then a controlled
+  order only if desired). Do not automate login or submit an order without the owner's active-session authority.
 - Before the cutoff, set `MARKET_DATA_SOURCE=mock`, remove `.env.worker.launch`, restart the compose stack,
   and record the rollback unless the owner explicitly approves and records paid Twelve Data continuation.
 
-The operative runbook is `15_TWELVE_DATA_TRIAL_ACTIVATION.md`. D-031 and D-032 are the controlling market
-data and access decisions.
+The operative runbook is `15_TWELVE_DATA_TRIAL_ACTIVATION.md`. D-031 through D-033 are the controlling
+market-data, access, and staff-account decisions.

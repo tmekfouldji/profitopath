@@ -112,9 +112,17 @@ with the commercial trial source.
    summary; logs must name only symbols/counts, never prices or the key.
 6. Verify both quote-cache keys refresh, the internal worker backfill endpoint accepts only its bearer
    secret, and one-minute candles carry `TWELVE_DATA_TRIAL` provenance.
-7. As a staff account, exercise market, limit, stop, SL/TP, reconnect, worker failover, and stale-quote
+7. If the signed-in staff member does not already have an active account in the validation competition, run
+   `pnpm --filter @profitopath/worker market-data:provision-twelve-data-trial-staff-account` through the
+   protected worker compose environment. It selects the only active superadmin by default; when more than one
+   exists, supply the exact `TWELVE_DATA_TRIAL_STAFF_USER_ID` (and only if necessary the exact active
+   `TWELVE_DATA_TRIAL_COMPETITION_ID`) for that operator. The command is idempotent, cannot run outside the
+   trial source/window, and creates an inactive zero-fee staff tier plus one active simulated account with an
+   initial ledger balance and audits. It never creates a payment, invoice, or revenue; public counts and
+   leaderboards exclude the inactive tier.
+8. As a staff account, exercise market, limit, stop, SL/TP, reconnect, worker failover, and stale-quote
    behavior. As a `TRADER` account, verify terminal, candle API, snapshot API, realtime upgrade, checkout,
    and order actions are denied or paused. Review audit/ledger records and source provenance.
-8. Before the conservative cutoff, record either paid continuation terms or the completed rollback to
+9. Before the conservative cutoff, record either paid continuation terms or the completed rollback to
    `MARKET_DATA_SOURCE=mock`; stop and remove the provider credential. Do not run customer market data on
    an expired trial.

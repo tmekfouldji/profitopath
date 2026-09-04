@@ -654,8 +654,11 @@ Rules:
     refreshed both quote-cache keys. Public home/readiness returned HTTP 200; unauthenticated candle access
     returned 401; the active competition page visibly paused checkout; and invalid worker-backfill bearer
     authentication returned 401. Realtime's first container image lacked its service-scoped validation fix;
-    commit `49945eb` rebuilt it and it is now healthy. Remaining: owner-signed-in staff terminal/order smoke
-    without involving a non-staff account, plus mandatory rollback before the cutoff.
+    commit `49945eb` rebuilt it and it is now healthy. The initially logged-in superadmin had only a completed
+    account in the frozen QA competition, so `market-data:provision-twelve-data-trial-staff-account` now
+    creates one complimentary, inactive-tier, fully audited active staff account in the current competition
+    without a payment/invoice/revenue record. Remaining: deploy/provision that account, owner-signed-in
+    staff terminal/order smoke without involving a non-staff account, and mandatory rollback before the cutoff.
 
 ## In progress — Phase 10
 
