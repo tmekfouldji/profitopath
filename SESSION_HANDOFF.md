@@ -101,6 +101,10 @@ This is not a commercial launch.
   idempotent for future staff setup: it selects the only active superadmin by default, or accepts exact
   `TWELVE_DATA_TRIAL_STAFF_USER_ID` and (if necessary) `TWELVE_DATA_TRIAL_COMPETITION_ID`. Inactive staff
   tiers are excluded from public counts and leaderboards.
+- The terminal-feedback release is deployed: GitHub revision `f3d2de8` was applied to the host as equivalent
+  host commit `25ebba8`, and `web`, `realtime`, and `worker` were rebuilt/recreated without changing the secret
+  boundary. All three passed Docker health checks; public HTTPS readiness returned HTTP 200; and the worker
+  completed bootstrap then acquired the staff-scoped EURUSD/GBPUSD feed lease.
 - Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke: change a TP/SL while preserving the chart
   viewport, star a symbol, and observe a controlled fill only if the owner chooses to submit it. Do not automate
   login or submit an order without the owner's active-session authority.

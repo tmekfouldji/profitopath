@@ -44,6 +44,8 @@ This file is the authoritative high-level state for Codex.
   processing order. The compact instrument rail renders every active server configuration, shows live
   bid/ask-derived spread, and remembers account-local favorites in the browser. It currently lists EURUSD and
   GBPUSD because D-031 authorizes only their trial configurations; no unapproved provider symbols were added.
+  This release is deployed on the launch host: web, realtime, and worker passed their Docker health checks;
+  public HTTPS readiness returned HTTP 200; and the worker re-acquired its staff-scoped EURUSD/GBPUSD feed lease.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.
