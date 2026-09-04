@@ -165,17 +165,6 @@ export const runtimeEnvSchema = z
         });
       }
       if (
-        value.MARKET_DATA_INTERNAL_TOKEN === undefined ||
-        value.MARKET_DATA_WORKER_INTERNAL_URL === undefined
-      ) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            'MARKET_DATA_INTERNAL_TOKEN and MARKET_DATA_WORKER_INTERNAL_URL are required when MARKET_DATA_SOURCE=twelve-data-trial',
-          path: ['MARKET_DATA_SOURCE'],
-        });
-      }
-      if (
         value.TWELVE_DATA_TRIAL_SPREAD_EURUSD === undefined ||
         value.TWELVE_DATA_TRIAL_SPREAD_GBPUSD === undefined
       ) {
@@ -204,6 +193,28 @@ export const serviceEnvSchema = runtimeEnvSchema.extend({
   PORT: integerPort.default(3000),
 });
 
+function requireInternalTrialBoundary(
+  value: z.infer<typeof runtimeEnvSchema>,
+  context: z.RefinementCtx,
+): void {
+  if (
+    value.MARKET_DATA_SOURCE === 'twelve-data-trial' &&
+    (value.MARKET_DATA_INTERNAL_TOKEN === undefined ||
+      value.MARKET_DATA_WORKER_INTERNAL_URL === undefined)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        'MARKET_DATA_INTERNAL_TOKEN and MARKET_DATA_WORKER_INTERNAL_URL are required for the Twelve Data web-to-worker boundary',
+      path: ['MARKET_DATA_SOURCE'],
+    });
+  }
+}
+
+export const webRuntimeEnvSchema = runtimeEnvSchema.superRefine(
+  requireInternalTrialBoundary,
+);
+
 /**
  * Only the worker is permitted to read a Twelve Data provider credential.
  * Other services validate their staff-only trial configuration without
@@ -211,6 +222,7 @@ export const serviceEnvSchema = runtimeEnvSchema.extend({
  */
 export const workerServiceEnvSchema = serviceEnvSchema.superRefine(
   (value, context) => {
+    requireInternalTrialBoundary(value, context);
     if (
       (value.MARKET_DATA_SOURCE === 'twelve-data-trial' ||
         value.TWELVE_DATA_PRIVATE_TEST_ENABLED) &&
@@ -247,13 +259,13 @@ export const seedEnvSchema = z.object({
   DEV_TRADER_STARTING_BALANCE_MINOR: minorUnits.default(2_000_000n),
 });
 
-export type RuntimeEnv = z.infer<typeof runtimeEnvSchema>;
+export type RuntimeEnv = z.infer<typeof webRuntimeEnvSchema>;
 export type SeedEnv = z.infer<typeof seedEnvSchema>;
 
 export function parseRuntimeEnv(
   input: NodeJS.ProcessEnv = process.env,
 ): RuntimeEnv {
-  return runtimeEnvSchema.parse(input);
+  return webRuntimeEnvSchema.parse(input);
 }
 
 export function parseSeedEnv(input: NodeJS.ProcessEnv = process.env): SeedEnv {

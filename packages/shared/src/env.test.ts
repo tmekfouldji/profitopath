@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRuntimeEnv, workerServiceEnvSchema } from './env';
+import {
+  parseRuntimeEnv,
+  serviceEnvSchema,
+  workerServiceEnvSchema,
+} from './env';
 
 describe('parseRuntimeEnv', () => {
   it('parses valid service configuration', () => {
@@ -102,6 +106,17 @@ describe('parseRuntimeEnv', () => {
     expect(() =>
       parseRuntimeEnv({ ...base, TWELVE_DATA_TRIAL_STAFF_ONLY: 'false' }),
     ).toThrow('TWELVE_DATA_TRIAL_STAFF_ONLY');
+    expect(() =>
+      parseRuntimeEnv({ ...base, MARKET_DATA_INTERNAL_TOKEN: undefined }),
+    ).toThrow('MARKET_DATA_INTERNAL_TOKEN');
+    expect(
+      serviceEnvSchema.parse({
+        ...base,
+        MARKET_DATA_INTERNAL_TOKEN: undefined,
+        MARKET_DATA_WORKER_INTERNAL_URL: undefined,
+        PORT: '3001',
+      }).MARKET_DATA_SOURCE,
+    ).toBe('twelve-data-trial');
     expect(
       parseRuntimeEnv({ ...base, TWELVE_DATA_API_KEY: undefined })
         .MARKET_DATA_SOURCE,
