@@ -37,6 +37,13 @@ This file is the authoritative high-level state for Codex.
   three audit events with no associated staff-tier payment. The public site stays online but does not sell new
   entries or deliver trial data to non-staff, and the runtime stops no later than `2026-09-13T00:00:00.000Z`
   unless an earlier exact expiry is supplied.
+- Terminal live-feedback validation: the trading desk now preserves the trader's chart viewport during
+  server-authoritative TP/SL edits, applies execution markers in place, and receives a post-simulation
+  account-state signal so filled orders appear without a follow-up action or page reload. Fast quote delivery
+  is decoupled from the ordered candle/simulator path; it remains server-owned and preserves persistent
+  processing order. The compact instrument rail renders every active server configuration, shows live
+  bid/ask-derived spread, and remembers account-local favorites in the browser. It currently lists EURUSD and
+  GBPUSD because D-031 authorizes only their trial configurations; no unapproved provider symbols were added.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.

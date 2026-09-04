@@ -51,6 +51,8 @@ function resultIsOne(value: unknown): boolean {
  * to acquire a new stream and repopulate Valkey from fresh provider events.
  */
 export class TwelveDataTrialRuntime {
+  readonly #accountStatePublisher:
+    { publish(quote: Quote): Promise<void> } | undefined;
   readonly #candleProcessor: { process(quote: Quote): Promise<unknown> };
   readonly #backfill: () => Promise<unknown>;
   readonly #leaseClient: TwelveDataTrialLeaseClient;
@@ -67,10 +69,12 @@ export class TwelveDataTrialRuntime {
   readonly #trialEndsAt: Date;
   readonly #verifyInstrumentConfiguration: () => Promise<void>;
   #leader = false;
+  #processing: Promise<void> = Promise.resolve();
   #running = false;
   #timer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(input: {
+    accountStatePublisher?: { publish(quote: Quote): Promise<void> };
     backfill?: () => Promise<unknown>;
     candleProcessor: { process(quote: Quote): Promise<unknown> };
     leaseClient: TwelveDataTrialLeaseClient;
@@ -86,6 +90,7 @@ export class TwelveDataTrialRuntime {
     if (Number.isNaN(input.trialEndsAt.getTime())) {
       throw new Error('Twelve Data trial end timestamp is invalid');
     }
+    this.#accountStatePublisher = input.accountStatePublisher;
     this.#candleProcessor = input.candleProcessor;
     this.#backfill = input.backfill ?? (() => Promise.resolve());
     this.#leaseClient = input.leaseClient;
@@ -105,9 +110,29 @@ export class TwelveDataTrialRuntime {
     }
     this.#running = true;
     this.#provider.onQuote(async (quote) => {
+      if (!this.#running) {
+        return;
+      }
       await this.#quotePublisher.publish(quote);
-      await this.#candleProcessor.process(quote);
-      await this.#processor.processQuote(quote);
+      if (!this.#running) {
+        return;
+      }
+      this.#processing = this.#processing
+        .then(async () => {
+          await this.#candleProcessor.process(quote);
+          await this.#processor.processQuote(quote);
+          await this.#accountStatePublisher?.publish(quote);
+        })
+        .catch((error: unknown) => {
+          this.#logger.error(
+            {
+              error,
+              sequence: quote.sequence.toString(),
+              symbol: quote.symbol,
+            },
+            'Twelve Data trial quote processing failed',
+          );
+        });
     });
     await this.#tick();
   }
@@ -119,6 +144,7 @@ export class TwelveDataTrialRuntime {
       this.#timer = undefined;
     }
     this.#provider.disconnect();
+    await this.#processing;
     if (this.#leader) {
       try {
         await this.#leaseClient.eval(

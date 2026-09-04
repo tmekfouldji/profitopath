@@ -12,7 +12,11 @@ import { config } from 'dotenv';
 import { getToken } from 'next-auth/jwt';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import { parseCandleDelta, parseQuoteDelta } from './protocol';
+import {
+  parseAccountStateDelta,
+  parseCandleDelta,
+  parseQuoteDelta,
+} from './protocol';
 
 config({ path: '../../.env', quiet: true });
 
@@ -261,12 +265,18 @@ server.on('upgrade', async (request, socket, head) => {
 });
 
 await quoteSubscriber.connect();
-await quoteSubscriber.subscribe('market:quotes:v1', 'market:candles:v1');
+await quoteSubscriber.subscribe(
+  'market:quotes:v1',
+  'market:candles:v1',
+  'market:accounts:v1',
+);
 quoteSubscriber.on('message', (channel, message) => {
   const delta =
     channel === 'market:candles:v1'
       ? parseCandleDelta(message)
-      : parseQuoteDelta(message);
+      : channel === 'market:accounts:v1'
+        ? parseAccountStateDelta(message)
+        : parseQuoteDelta(message);
   if (delta === null) {
     return;
   }

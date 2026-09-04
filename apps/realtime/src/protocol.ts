@@ -21,6 +21,13 @@ export interface RealtimeCandleDelta {
   timeframe: string;
 }
 
+export interface RealtimeAccountStateDelta {
+  kind: 'account-state';
+  sequence: string;
+  symbol: string;
+  timestamp: string;
+}
+
 export function parseQuoteDelta(message: string): RealtimeQuoteDelta | null {
   let value: unknown;
   try {
@@ -93,5 +100,37 @@ export function parseCandleDelta(message: string): RealtimeCandleDelta | null {
     source: String(value.source),
     symbol: String(value.symbol).toUpperCase(),
     timeframe: String(value.timeframe),
+  };
+}
+
+export function parseAccountStateDelta(
+  message: string,
+): RealtimeAccountStateDelta | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(message);
+  } catch {
+    return null;
+  }
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('kind' in value) ||
+    value.kind !== 'account-state' ||
+    !('sequence' in value) ||
+    !('symbol' in value) ||
+    !('timestamp' in value)
+  ) {
+    return null;
+  }
+  const timestamp = new Date(String(value.timestamp));
+  if (Number.isNaN(timestamp.getTime())) {
+    return null;
+  }
+  return {
+    kind: 'account-state',
+    sequence: String(value.sequence),
+    symbol: String(value.symbol).toUpperCase(),
+    timestamp: timestamp.toISOString(),
   };
 }

@@ -203,6 +203,19 @@ if (env.MARKET_DATA_SOURCE === 'twelve-data-trial') {
     },
   };
   twelveDataTrialRuntime = new TwelveDataTrialRuntime({
+    accountStatePublisher: {
+      publish: async (quote) => {
+        await valkey.publish(
+          'market:accounts:v1',
+          JSON.stringify({
+            kind: 'account-state',
+            sequence: quote.sequence.toString(),
+            symbol: quote.symbol,
+            timestamp: quote.timestamp.toISOString(),
+          }),
+        );
+      },
+    },
     backfill: async () => {
       const latestFinalMinute = new Date(
         Math.floor(Date.now() / 60_000) * 60_000,

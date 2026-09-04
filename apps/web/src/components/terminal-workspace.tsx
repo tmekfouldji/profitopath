@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import Decimal from 'decimal.js';
 
 import { initialTerminalActionState } from '@/app/terminal/[accountId]/action-state';
 import {
@@ -16,11 +17,7 @@ import {
 } from '@/app/terminal/[accountId]/actions';
 import type { OwnedTerminalState } from '@/server/terminal-read-model';
 
-import {
-  TerminalChart,
-  type TerminalChartCandle,
-  type TerminalChartMarker,
-} from './terminal-chart';
+import { TerminalChart, type TerminalChartCandle } from './terminal-chart';
 import { TerminalOrderTicket } from './terminal-order-ticket';
 
 type ConnectionState = 'CONNECTING' | 'LIVE' | 'OFFLINE' | 'STALE';
@@ -53,6 +50,147 @@ function dateTime(value: string | null): string {
     month: 'short',
     timeZone: 'UTC',
   }).format(new Date(value));
+}
+
+function favoriteSymbolsStorageKey(accountId: string): string {
+  return `profitopath:terminal-favorites:v1:${accountId}`;
+}
+
+function liveSpreadPips(
+  quote: OwnedTerminalState['quotes'][number] | undefined,
+  priceScale: number | undefined,
+): string {
+  if (
+    quote?.status !== 'LIVE' ||
+    quote.ask === null ||
+    quote.bid === null ||
+    priceScale === undefined
+  ) {
+    return '—';
+  }
+  try {
+    const pips = new Decimal(quote.ask)
+      .minus(quote.bid)
+      .times(new Decimal(10).pow(priceScale - 1));
+    return `${pips.toFixed(pips.decimalPlaces() > 1 ? 2 : 1)} pips`;
+  } catch {
+    return '—';
+  }
+}
+
+function TerminalInstrumentRail({
+  accountId,
+  instruments,
+  quotes,
+  selectedSymbol,
+  setSelectedSymbol,
+}: {
+  accountId: string;
+  instruments: OwnedTerminalState['instruments'];
+  quotes: OwnedTerminalState['quotes'];
+  selectedSymbol: string;
+  setSelectedSymbol(symbol: string): void;
+}) {
+  const storageKey = favoriteSymbolsStorageKey(accountId);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored: unknown = JSON.parse(
+        window.localStorage.getItem(storageKey) ?? '[]',
+      );
+      setFavorites(
+        Array.isArray(stored)
+          ? stored.filter(
+              (symbol): symbol is string => typeof symbol === 'string',
+            )
+          : [],
+      );
+    } catch {
+      setFavorites([]);
+    }
+  }, [storageKey]);
+
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+  const orderedInstruments = useMemo(
+    () =>
+      [...instruments].sort(
+        (left, right) =>
+          Number(favoriteSet.has(right.symbol)) -
+            Number(favoriteSet.has(left.symbol)) ||
+          left.symbol.localeCompare(right.symbol),
+      ),
+    [favoriteSet, instruments],
+  );
+
+  function toggleFavorite(symbol: string) {
+    setFavorites((current) => {
+      const next = current.includes(symbol)
+        ? current.filter((candidate) => candidate !== symbol)
+        : [...current, symbol];
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        // Favorites are optional browser preference, never terminal authority.
+      }
+      return next;
+    });
+  }
+
+  return (
+    <aside
+      aria-label="Instrument watchlist"
+      className="terminal-instrument-rail"
+    >
+      <header>
+        <span className="data-label">Instruments</span>
+        <strong>{orderedInstruments.length}</strong>
+      </header>
+      <ul>
+        {orderedInstruments.map((instrument) => {
+          const quote = quotes.find(
+            (candidate) => candidate.symbol === instrument.symbol,
+          );
+          const favorite = favoriteSet.has(instrument.symbol);
+          return (
+            <li
+              className={
+                instrument.symbol === selectedSymbol ? 'is-selected' : ''
+              }
+              key={instrument.symbol}
+            >
+              <button
+                aria-pressed={instrument.symbol === selectedSymbol}
+                className="terminal-instrument-select"
+                onClick={() => setSelectedSymbol(instrument.symbol)}
+                type="button"
+              >
+                <strong>{instrument.symbol}</strong>
+                <span>
+                  <b>{quote?.bid ?? '—'}</b>
+                  <b>{quote?.ask ?? '—'}</b>
+                </span>
+                <small>{liveSpreadPips(quote, instrument.priceScale)}</small>
+              </button>
+              <button
+                aria-label={`${favorite ? 'Remove' : 'Add'} ${instrument.symbol} ${
+                  favorite ? 'from' : 'to'
+                } favorites`}
+                aria-pressed={favorite}
+                className="terminal-favorite-toggle"
+                onClick={() => toggleFavorite(instrument.symbol)}
+                title={favorite ? 'Remove favorite' : 'Add favorite'}
+                type="button"
+              >
+                ★
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <p>Star instruments to keep them at the top on this device.</p>
+    </aside>
+  );
 }
 
 function ProtectionForm({
@@ -111,6 +249,20 @@ function TerminalLedger({ state }: { state: OwnedTerminalState }) {
   const [tab, setTab] = useState<
     'EXECUTIONS' | 'HISTORY' | 'ORDERS' | 'POSITIONS'
   >('POSITIONS');
+  const newestExecutionId = state.executions[0]?.id;
+  const hasReceivedInitialState = useRef(false);
+  const priorExecutionId = useRef(newestExecutionId);
+  useEffect(() => {
+    if (
+      hasReceivedInitialState.current &&
+      newestExecutionId !== undefined &&
+      newestExecutionId !== priorExecutionId.current
+    ) {
+      setTab('EXECUTIONS');
+    }
+    priorExecutionId.current = newestExecutionId;
+    hasReceivedInitialState.current = true;
+  }, [newestExecutionId]);
   const pendingOrders = state.orders.filter((order) =>
     ['ACCEPTED', 'PARTIALLY_FILLED'].includes(order.status),
   );
@@ -354,7 +506,6 @@ export function TerminalWorkspace({
   initialRenderedAt,
   initialSymbol,
   initialState,
-  markers,
   realtimeUrl,
 }: {
   historyAnchor: string;
@@ -362,7 +513,6 @@ export function TerminalWorkspace({
   initialRenderedAt: string;
   initialSymbol: string;
   initialState: OwnedTerminalState;
-  markers: TerminalChartMarker[];
   realtimeUrl: string;
 }) {
   const [state, setState] = useState(initialState);
@@ -386,6 +536,7 @@ export function TerminalWorkspace({
   const selectedSymbolRef = useRef(selectedSymbol);
   const staleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshQueued = useRef(false);
+  const refreshRequested = useRef(false);
   const terminalRef = useRef<HTMLElement>(null);
 
   useEffect(() => setState(initialState), [initialState]);
@@ -401,20 +552,24 @@ export function TerminalWorkspace({
 
   const refreshState = useCallback(async () => {
     if (refreshQueued.current) {
+      refreshRequested.current = true;
       return;
     }
     refreshQueued.current = true;
     try {
-      const response = await fetch(
-        `/api/terminal/${encodeURIComponent(initialState.account.id)}/snapshot`,
-        { cache: 'no-store' },
-      );
-      if (response.ok) {
-        const payload = (await response.json()) as {
-          state: OwnedTerminalState;
-        };
-        setState(payload.state);
-      }
+      do {
+        refreshRequested.current = false;
+        const response = await fetch(
+          `/api/terminal/${encodeURIComponent(initialState.account.id)}/snapshot`,
+          { cache: 'no-store' },
+        );
+        if (response.ok) {
+          const payload = (await response.json()) as {
+            state: OwnedTerminalState;
+          };
+          setState(payload.state);
+        }
+      } while (refreshRequested.current);
     } finally {
       refreshQueued.current = false;
     }
@@ -523,6 +678,10 @@ export function TerminalWorkspace({
                 : quote,
             ),
           }));
+          return;
+        }
+        if (message.kind === 'account-state') {
+          setConnection('LIVE');
           void refreshState();
           return;
         }
@@ -564,9 +723,32 @@ export function TerminalWorkspace({
   const selectedQuote = state.quotes.find(
     (quote) => quote.symbol === selectedSymbol,
   );
+  const selectedInstrument = state.instruments.find(
+    (instrument) => instrument.symbol === selectedSymbol,
+  );
+  const executionMarkers = useMemo(
+    () =>
+      state.executions.map((execution) => ({
+        color: execution.side === 'BUY' ? '#82a8ff' : '#ff806d',
+        position:
+          execution.side === 'BUY'
+            ? ('belowBar' as const)
+            : ('aboveBar' as const),
+        shape:
+          execution.side === 'BUY'
+            ? ('arrowUp' as const)
+            : ('arrowDown' as const),
+        text: `${execution.symbol} ${execution.side} ${execution.quantity}`,
+        time: execution.executedAt,
+      })),
+    [state.executions],
+  );
   const visibleMarkers = useMemo(
-    () => markers.filter((marker) => marker.text.startsWith(selectedSymbol)),
-    [markers, selectedSymbol],
+    () =>
+      executionMarkers.filter((marker) =>
+        marker.text.startsWith(selectedSymbol),
+      ),
+    [executionMarkers, selectedSymbol],
   );
   const drawdown = Number(state.metrics.currentDrawdownMinor);
   const drawdownLimit = Number(state.account.tier.maxDrawdownMinor);
@@ -596,10 +778,16 @@ export function TerminalWorkspace({
           <strong>{selectedQuote?.bid ?? '—'}</strong>
           <i>/</i>
           <strong>{selectedQuote?.ask ?? '—'}</strong>
+          <small>
+            Spread{' '}
+            {liveSpreadPips(selectedQuote, selectedInstrument?.priceScale)}
+          </small>
         </div>
         <div className={`connection-chip is-${connection.toLowerCase()}`}>
           <span />{' '}
-          {connection === 'LIVE' ? 'Live mock link' : connection.toLowerCase()}
+          {connection === 'LIVE'
+            ? 'Live market link'
+            : connection.toLowerCase()}
         </div>
         <button
           aria-pressed={fullscreen}
@@ -691,6 +879,13 @@ export function TerminalWorkspace({
             (candidate) => candidate.symbol === selectedSymbol,
           )}
           symbol={selectedSymbol}
+        />
+        <TerminalInstrumentRail
+          accountId={state.account.id}
+          instruments={state.instruments}
+          quotes={state.quotes}
+          selectedSymbol={selectedSymbol}
+          setSelectedSymbol={setSelectedSymbol}
         />
         <TerminalOrderTicket
           accountActive={state.account.status === 'ACTIVE'}

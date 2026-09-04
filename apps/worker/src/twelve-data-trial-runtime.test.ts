@@ -51,6 +51,11 @@ describe('TwelveDataTrialRuntime', () => {
       set: vi.fn().mockResolvedValue('OK'),
     };
     const runtime = new TwelveDataTrialRuntime({
+      accountStatePublisher: {
+        publish: vi.fn(async () => {
+          events.push('account-state');
+        }),
+      },
       backfill: vi.fn(async () => {
         events.push('backfill');
       }),
@@ -90,6 +95,9 @@ describe('TwelveDataTrialRuntime', () => {
     expect(events).toEqual(['recover', 'backfill', 'subscribe']);
     expect(provider.subscribe).toHaveBeenCalledWith(['EURUSD', 'GBPUSD']);
     await provider.publish();
+    expect(events).toContain('quote');
+
+    await runtime.stop();
     expect(events).toEqual([
       'recover',
       'backfill',
@@ -97,9 +105,8 @@ describe('TwelveDataTrialRuntime', () => {
       'quote',
       'candle',
       'risk',
+      'account-state',
     ]);
-
-    await runtime.stop();
     expect(provider.disconnect).toHaveBeenCalledOnce();
   });
 

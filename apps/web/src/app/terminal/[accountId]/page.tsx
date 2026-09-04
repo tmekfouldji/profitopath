@@ -1,10 +1,7 @@
 import { database } from '@profitopath/database';
 import { notFound } from 'next/navigation';
 
-import type {
-  TerminalChartCandle,
-  TerminalChartMarker,
-} from '@/components/terminal-chart';
+import type { TerminalChartCandle } from '@/components/terminal-chart';
 import { TerminalWorkspace } from '@/components/terminal-workspace';
 import { requireUser } from '@/server/auth/session';
 import { terminalCandleService } from '@/server/terminal';
@@ -57,14 +54,6 @@ export default async function TerminalPage({
     open: candle.open.toString(),
     openTime: candle.openTime.toISOString(),
   }));
-  const markers: TerminalChartMarker[] = state.executions.map((execution) => ({
-    color: execution.side === 'BUY' ? '#82a8ff' : '#ff806d',
-    position: execution.side === 'BUY' ? 'belowBar' : 'aboveBar',
-    shape: execution.side === 'BUY' ? 'arrowUp' : 'arrowDown',
-    text: `${execution.symbol} ${execution.side} ${execution.quantity}`,
-    time: execution.executedAt,
-  }));
-
   return (
     <TerminalWorkspace
       historyAnchor={to.toISOString()}
@@ -72,7 +61,6 @@ export default async function TerminalPage({
       initialRenderedAt={new Date().toISOString()}
       initialSymbol={initialSymbol}
       initialState={state}
-      markers={markers}
       realtimeUrl={
         process.env.NEXT_PUBLIC_REALTIME_URL ?? 'ws://localhost:3001'
       }

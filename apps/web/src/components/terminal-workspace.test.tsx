@@ -1,6 +1,13 @@
 /** @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,6 +25,7 @@ vi.mock('@/app/terminal/[accountId]/actions', () => ({
 
 vi.mock('./terminal-chart', () => ({
   TerminalChart: (props: {
+    markers: Array<{ text: string }>;
     positions: Array<{
       averageEntryPrice: string;
       markPrice: string | null;
@@ -34,6 +42,11 @@ vi.mock('./terminal-chart', () => ({
           `${position.averageEntryPrice}/${position.markPrice}/${position.takeProfitPrice}`,
         ),
       ),
+      createElement(
+        'output',
+        { 'data-testid': 'terminal-markers' },
+        props.markers.map((marker) => marker.text).join(', '),
+      ),
     ),
 }));
 
@@ -43,8 +56,19 @@ vi.mock('./terminal-order-ticket', () => ({
 }));
 
 class TestWebSocket {
+  static latest: TestWebSocket | undefined;
+  onmessage: ((event: { data: string }) => void) | null = null;
+
+  constructor() {
+    TestWebSocket.latest = this;
+  }
+
   close() {}
   send() {}
+
+  emit(message: unknown) {
+    this.onmessage?.({ data: JSON.stringify(message) });
+  }
 }
 
 const state: OwnedTerminalState = {
@@ -119,6 +143,8 @@ vi.stubGlobal('WebSocket', TestWebSocket);
 
 afterEach(() => {
   cleanup();
+  TestWebSocket.latest = undefined;
+  window.localStorage.clear();
   vi.clearAllMocks();
 });
 
@@ -137,7 +163,6 @@ describe('terminal workstation presentation', () => {
         initialRenderedAt: '2026-08-24T12:00:00.000Z',
         initialSymbol: 'EURUSD',
         initialState: state,
-        markers: [],
         realtimeUrl: 'ws://localhost:3001',
       }),
     );
@@ -148,6 +173,7 @@ describe('terminal workstation presentation', () => {
     expect(screen.getByRole('cell', { name: '1.10000' })).toBeTruthy();
     expect(screen.getAllByText('-$2.00')).toHaveLength(2);
     expect(screen.getByText('-2.0 pips')).toBeTruthy();
+    expect(screen.getByText('Spread 2.0 pips')).toBeTruthy();
     expect(screen.getByTestId('terminal-chart').textContent).toContain(
       '1.10020/1.10000/1.10200',
     );
@@ -172,7 +198,6 @@ describe('terminal workstation presentation', () => {
         initialRenderedAt: '2026-08-24T12:00:00.000Z',
         initialSymbol: 'EURUSD',
         initialState: state,
-        markers: [],
         realtimeUrl: 'ws://localhost:3001',
       }),
     );
@@ -180,5 +205,119 @@ describe('terminal workstation presentation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }));
 
     expect(mocks.requestFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a server-confirmed execution as soon as its realtime signal arrives', async () => {
+    mocks.updatePositionProtection.mockResolvedValue({
+      message: '',
+      status: 'IDLE',
+    });
+    const executedState: OwnedTerminalState = {
+      ...state,
+      executions: [
+        {
+          executedAt: '2026-08-24T09:00:01.000Z',
+          id: 'execution-1',
+          orderId: 'order-1',
+          price: '1.10020',
+          quantity: '0.10',
+          side: 'BUY',
+          symbol: 'EURUSD',
+        },
+      ],
+    };
+    const snapshot = vi.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue({ state: executedState }),
+      ok: true,
+    });
+    vi.stubGlobal('fetch', snapshot);
+    const { TerminalWorkspace } = await import('./terminal-workspace');
+
+    render(
+      createElement(TerminalWorkspace, {
+        historyAnchor: '2026-08-24T12:00:00.000Z',
+        initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
+        initialSymbol: 'EURUSD',
+        initialState: state,
+        realtimeUrl: 'ws://localhost:3001',
+      }),
+    );
+
+    await waitFor(() => expect(TestWebSocket.latest).toBeDefined());
+    await act(async () => {
+      TestWebSocket.latest?.emit({
+        kind: 'account-state',
+        sequence: '2',
+        symbol: 'EURUSD',
+        timestamp: '2026-08-24T09:00:01.000Z',
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('terminal-markers').textContent).toContain(
+        'EURUSD BUY 0.10',
+      ),
+    );
+    expect(snapshot).toHaveBeenCalledOnce();
+    expect(screen.getByText('Executed UTC')).toBeTruthy();
+  });
+
+  it('stores starred configured instruments and brings them to the top of the rail', async () => {
+    mocks.updatePositionProtection.mockResolvedValue({
+      message: '',
+      status: 'IDLE',
+    });
+    const configuredState: OwnedTerminalState = {
+      ...state,
+      instruments: [
+        ...state.instruments,
+        {
+          minimumQuantity: '0.01',
+          priceScale: 5,
+          quantityStep: '0.01',
+          symbol: 'GBPUSD',
+        },
+      ],
+      quotes: [
+        ...state.quotes,
+        {
+          ask: '1.28020',
+          bid: '1.28000',
+          sequence: '1',
+          status: 'LIVE',
+          symbol: 'GBPUSD',
+          timestamp: '2026-08-24T09:00:00.000Z',
+        },
+      ],
+    };
+    const { TerminalWorkspace } = await import('./terminal-workspace');
+
+    render(
+      createElement(TerminalWorkspace, {
+        historyAnchor: '2026-08-24T12:00:00.000Z',
+        initialCandles: [],
+        initialRenderedAt: '2026-08-24T12:00:00.000Z',
+        initialSymbol: 'EURUSD',
+        initialState: configuredState,
+        realtimeUrl: 'ws://localhost:3001',
+      }),
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add GBPUSD to favorites' }),
+    );
+
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          'profitopath:terminal-favorites:v1:account-1',
+        ) ?? '[]',
+      ),
+    ).toEqual(['GBPUSD']);
+    expect(
+      screen.getByLabelText('Instrument watchlist').querySelector('li')
+        ?.textContent,
+    ).toContain('GBPUSD');
   });
 });

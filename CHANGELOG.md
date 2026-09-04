@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Improved the staff terminal's live trading feedback: quote updates no longer wait on persistence work,
+  completed simulation processing emits an authenticated account refresh signal, fills switch directly to the
+  executions ledger and update chart markers without reconstructing or recentering the chart. The terminal now
+  has a persistent account-local instrument watchlist with favorites, visible live bid/ask spreads, and
+  simultaneous direction-correct TP/SL drag controls. The rail renders all active server configurations;
+  the trial remains deliberately configured only for the D-031 EURUSD/GBPUSD scope.
 - Added an idempotent protected worker provisioner for a current active staff member who lacks a terminal
   during the Twelve Data validation window. It creates a complimentary inactive zero-fee internal tier,
   active simulated account, initial-balance ledger event, and correlated audit records without a payment,

@@ -8,6 +8,7 @@ import {
   LineSeries,
   type Coordinate,
   type IChartApi,
+  type ISeriesMarkersPluginApi,
   type ISeriesApi,
   type Logical,
   type MouseEventParams,
@@ -103,12 +104,12 @@ const timeframeSeconds = {
 
 type ChartTimeframe = keyof typeof timeframeSeconds;
 type ChartTool = 'CURSOR' | 'MEASURE' | TerminalChartDrawingKind;
-type ProtectionKind = 'STOP_LOSS' | 'TAKE_PROFIT';
+export type TerminalProtectionKind = 'STOP_LOSS' | 'TAKE_PROFIT';
 
 const futureChartMarginBars = 16;
 
 interface ProtectionDrag {
-  kind: ProtectionKind;
+  kind: TerminalProtectionKind;
   pointerId: number;
   position: TerminalChartPosition;
   price: string;
@@ -184,8 +185,19 @@ function priceText(value: number, priceScale: number): string {
   return value.toFixed(priceScale);
 }
 
-function protectionLabel(kind: ProtectionKind): string {
+function protectionLabel(kind: TerminalProtectionKind): string {
   return kind === 'STOP_LOSS' ? 'SL' : 'TP';
+}
+
+export function defaultTerminalProtectionPrice(
+  position: TerminalChartPosition,
+  kind: TerminalProtectionKind,
+): string {
+  const entry = Number(position.averageEntryPrice);
+  const pip = 10 ** (1 - position.priceScale);
+  const direction = position.side === 'LONG' ? 1 : -1;
+  const offset = (kind === 'TAKE_PROFIT' ? direction : -direction) * 10 * pip;
+  return priceText(entry + offset, position.priceScale);
 }
 
 function drawingLabel(kind: TerminalChartDrawingKind): string {
@@ -231,7 +243,7 @@ export function TerminalChart({
   markers: TerminalChartMarker[];
   onOrderSideSelect(side: 'BUY' | 'SELL'): void;
   onProtectionDrop(input: {
-    kind: ProtectionKind;
+    kind: TerminalProtectionKind;
     position: TerminalChartPosition;
     price: string;
   }): void;
@@ -251,6 +263,7 @@ export function TerminalChart({
   const indicatorSeriesRef = useRef<
     Array<{ id: string; series: ISeriesApi<'Line'> }>
   >([]);
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const chartPanelRef = useRef<HTMLElement>(null);
   const overlayRefreshFrameRef = useRef<number | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -558,11 +571,7 @@ export function TerminalChart({
     });
     chartRef.current = chart;
     seriesRef.current = series;
-    const markerData: SeriesMarker<Time>[] = markers.map((marker) => ({
-      ...marker,
-      time: chartTime(marker.time),
-    }));
-    createSeriesMarkers(series, markerData);
+    markersRef.current = createSeriesMarkers(series, []);
     const onChartClick = (param: MouseEventParams<Time>) => {
       const hoveredSeries =
         param.hoveredInfo?.series ?? param.hoveredSeries ?? null;
@@ -611,9 +620,18 @@ export function TerminalChart({
       chart.unsubscribeClick?.(onChartClick);
       chart.remove();
       chartRef.current = null;
+      markersRef.current = null;
       seriesRef.current = null;
     };
-  }, [loadRange, markers, requestOverlayRefresh]);
+  }, [loadRange, requestOverlayRefresh]);
+
+  useEffect(() => {
+    const markerData: SeriesMarker<Time>[] = markers.map((marker) => ({
+      ...marker,
+      time: chartTime(marker.time),
+    }));
+    markersRef.current?.setMarkers(markerData);
+  }, [markers]);
 
   useEffect(() => {
     seriesRef.current?.setData(chartData(candles));
@@ -1077,7 +1095,7 @@ export function TerminalChart({
   function handleProtectionPointerDown(
     event: PointerEvent<HTMLButtonElement>,
     position: TerminalChartPosition,
-    kind: ProtectionKind,
+    kind: TerminalProtectionKind,
     startingPrice: string,
   ) {
     if (!canEditProtection || event.button !== 0) return;
@@ -1705,7 +1723,7 @@ export function TerminalChart({
                     </span>
                   );
                 const protection = (
-                  ['STOP_LOSS', 'TAKE_PROFIT'] as ProtectionKind[]
+                  ['STOP_LOSS', 'TAKE_PROFIT'] as TerminalProtectionKind[]
                 ).flatMap((kind) => {
                   const existing =
                     kind === 'STOP_LOSS'
@@ -1714,8 +1732,8 @@ export function TerminalChart({
                   const displayPrice =
                     drag?.position.id === position.id && drag.kind === kind
                       ? drag.price
-                      : (existing ?? position.markPrice);
-                  if (displayPrice === null) return [];
+                      : (existing ??
+                        defaultTerminalProtectionPrice(position, kind));
                   const top = overlayTop(displayPrice);
                   if (top === null) return [];
                   return [

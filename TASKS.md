@@ -662,6 +662,16 @@ Rules:
     ledger record are verified; the three staff-provision audit records are present and the staff-tier entry
     has no payment. Remaining: owner refreshes the dashboard and completes staff terminal/order smoke without
     involving a non-staff account, then mandatory rollback before the cutoff.
+- [x] P9-006 Finish staff-terminal live-feedback and instrument-navigation validation.
+  - Acceptance: editing server-authoritative SL/TP never recenters the chart; executions appear on their
+    originating realtime event; every configured instrument is available with persistent account-local symbol
+    favorites; simultaneous SL/TP controls remain visually distinct; live bid/ask spread is legible; and the
+    worker quote cadence remains responsive without exceeding the trial feed's authorized limits.
+  - Implemented: marker updates are now in-place, post-simulation account-state signals refresh the authorized
+    ledger immediately after fills, and live quote deltas no longer wait on simulator/database work. The
+    terminal now renders the complete active instrument configuration as an account-local persistent watchlist,
+    with live bid/ask/spread and stable long/short TP/SL defaults. D-031 still limits the trial configuration
+    itself to EURUSD and GBPUSD; adding symbols requires a new explicit spread/configuration decision.
 
 ## In progress — Phase 10
 

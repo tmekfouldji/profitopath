@@ -2,8 +2,8 @@
 
 ## Current state
 
-Phase 9 is deployed in staff-only validation mode on the existing launch host at revision `49945eb`. The
-product remains weekly simulated competitions only. There is no brokerage execution, customer
+Phase 9 is deployed in staff-only validation mode on the existing launch host, with the terminal-feedback
+release included in this deployment. The product remains weekly simulated competitions only. There is no brokerage execution, customer
 deposit/custody, funded account, or copy trading.
 
 Twelve Data support wrote that the account's 12-day Unlimited trial is active until **13 September 2026**,
@@ -42,6 +42,28 @@ This is not a commercial launch.
   `20260901133000_market_candle_source_provenance`, and
   `20260904110000_market_data_coverage`. The final migration uses short PostgreSQL-safe index names.
 
+## Terminal feedback release
+
+- `TerminalChart` owns its marker plugin separately from chart creation. Marker changes—including a freshly
+  filled execution—update in place and do not call `fitContent`, so TP/SL server-action revalidation preserves
+  the trader's viewport.
+- The Twelve Data runtime publishes each validated quote to the cache/realtime relay first, then serializes
+  candle building and simulator processing on its own ordered promise chain. After that processing completes,
+  it emits a generic `account-state` signal. It carries no account data; each authorized browser uses the normal
+  ownership-checked snapshot endpoint to refresh its own ledger and markers. Shutdown waits for queued work.
+- The browser applies quotes locally for responsive bid/ask/spread display and coalesces snapshot refreshes.
+  On the post-simulation signal it refreshes immediately, reveals the Executions ledger for a new fill, and
+  renders the execution marker.
+- The terminal includes a compact Instrument watchlist that renders every active server configuration, shows
+  bid, ask, and derived full spread, and stores star/favorite ordering in browser local storage scoped by account.
+  It does not grant market-data access or alter pricing. Unset protection controls have separate 10-pip visual
+  defaults around entry: long TP above/SL below and short TP below/SL above.
+- The active Twelve Data trial configuration intentionally remains **EURUSD** and **GBPUSD** only. D-031 fixes
+  their server-owned full synthetic spreads at `0.00012` (1.2 pips) and `0.00024` (2.4 pips). The watchlist will
+  automatically show a future active configuration, but adding symbols requires an explicit decision covering a
+  finite symbol list, versioned contract specification, and server-owned spread policy. Do not expose an
+  undefined/all-provider-symbol universe or invent executable spreads.
+
 ## Local validation evidence
 
 - Local PostgreSQL/Valkey worker smoke succeeded using the configured key without exposing it. It created
@@ -54,6 +76,8 @@ This is not a commercial launch.
 - Repository-wide `pnpm format` is expected to fail only on the user-preexisting unformatted
   `apps/realtime/src/protocol.test.ts`. Do not reformat or overwrite that user change. All Twelve Data files
   were formatted separately.
+- This release additionally passed the focused worker runtime, realtime account-state protocol, terminal
+  workspace, protection-default, and chart context-menu tests (**19 tests**), plus repository typecheck and lint.
 
 ## Live deployment evidence and remaining work
 
@@ -77,8 +101,9 @@ This is not a commercial launch.
   idempotent for future staff setup: it selects the only active superadmin by default, or accepts exact
   `TWELVE_DATA_TRIAL_STAFF_USER_ID` and (if necessary) `TWELVE_DATA_TRIAL_COMPETITION_ID`. Inactive staff
   tiers are excluded from public counts and leaderboards.
-- Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke (view chart and quote, then a controlled
-  order only if desired). Do not automate login or submit an order without the owner's active-session authority.
+- Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke: change a TP/SL while preserving the chart
+  viewport, star a symbol, and observe a controlled fill only if the owner chooses to submit it. Do not automate
+  login or submit an order without the owner's active-session authority.
 - Before the cutoff, set `MARKET_DATA_SOURCE=mock`, remove `.env.worker.launch`, restart the compose stack,
   and record the rollback unless the owner explicitly approves and records paid Twelve Data continuation.
 
