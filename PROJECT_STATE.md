@@ -43,13 +43,19 @@ This file is the authoritative high-level state for Codex.
   is decoupled from the ordered candle/simulator path; it remains server-owned and preserves persistent
   processing order. The compact instrument rail renders every active server configuration, shows live
   bid/ask-derived spread, and remembers account-local favorites in the browser. It currently lists EURUSD and
-  GBPUSD because D-031 authorizes only their trial configurations; no unapproved provider symbols were added.
+  GBPUSD because those are the only active server configurations, not because the provider trial lacks a wider
+  catalogue. Any additional simulated instruments still require a configured contract and server-owned spread.
   This release is deployed on the launch host: web, realtime, and worker passed their Docker health checks;
   public HTTPS readiness returned HTTP 200; and the worker re-acquired its staff-scoped EURUSD/GBPUSD feed lease.
 - Terminal interaction continuity: the chart uses Lightweight Charts' free crosshair mode rather than OHLC
   magnetization, while the existing Ctrl drawing modifier remains the deliberate way to snap annotations to a
   candle. The terminal also restores an account-local selected-symbol preference only when that symbol is still
   active in the server configuration.
+- Terminal execution and timeframe workflow: persisted history returns immediately while coverage refreshes in
+  the background; aligned, versioned timeframe requests and an idle warm-up prevent slow or out-of-order chart
+  changes. The ticket exposes Buy Bid/Market/Limit/Stop and Sell Ask/Market/Limit/Stop. Limit and stop selections
+  arm a draggable provisional chart price before the owner explicitly places the server-authoritative pending
+  order. Unset TP/SL are compact controls beside the position entry instead of false full-width protection levels.
 - Real payment integration: backend hosted-invoice and signed-IPN path complete; paid scheduled entries
   are preorders and `PAYMENT_PROVIDER=mock` remains the repository/local default. The protected launch host
   is configured for `PAYMENT_PROVIDER=nowpayments`; raw credentials remain server-only.

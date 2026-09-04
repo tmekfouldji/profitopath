@@ -69,6 +69,13 @@ export class WorkerBackfilledCandleService {
 
   async getCandles(input: CandleRangeRequest): Promise<MarketCandle[]> {
     const existing = await this.#candles.getCandles(input);
+    // Chart interaction must prefer the durable, source-isolated history we
+    // already have. A worker refresh is still useful, but it must not hold a
+    // timeframe switch hostage while it checks or extends coverage.
+    if (existing.length > 0) {
+      void this.#worker.backfill(input).catch(() => undefined);
+      return existing;
+    }
     try {
       await this.#worker.backfill(input);
     } catch {

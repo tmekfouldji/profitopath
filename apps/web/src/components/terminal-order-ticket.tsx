@@ -5,6 +5,8 @@ import { useActionState, useEffect, useState } from 'react';
 import { initialTerminalActionState } from '@/app/terminal/[accountId]/action-state';
 import { submitTerminalOrder } from '@/app/terminal/[accountId]/actions';
 
+import type { TerminalOrderDraft } from './terminal-chart';
+
 interface TicketInstrument {
   minimumQuantity: string;
   priceScale: number;
@@ -20,12 +22,23 @@ interface TicketQuote {
   timestamp: string | null;
 }
 
+function intentFor(draft: TerminalOrderDraft): string {
+  return `${draft.side}_${draft.type}`;
+}
+
+function orderLabel(draft: TerminalOrderDraft): string {
+  return `${draft.side === 'BUY' ? 'Buy' : 'Sell'} ${draft.type.toLowerCase()}`;
+}
+
 export function TerminalOrderTicket({
   accountActive,
   accountId,
   connectionLive,
   instruments,
+  onArmPendingOrder,
+  onCancelPendingOrder,
   onRefresh,
+  orderDraft,
   orderSide,
   quotes,
   selectedSymbol,
@@ -36,7 +49,10 @@ export function TerminalOrderTicket({
   accountId: string;
   connectionLive: boolean;
   instruments: TicketInstrument[];
+  onArmPendingOrder(side: 'BUY' | 'SELL', type: 'LIMIT' | 'STOP'): void;
+  onCancelPendingOrder(): void;
   onRefresh(): Promise<void>;
+  orderDraft: TerminalOrderDraft | null;
   orderSide: 'BUY' | 'SELL';
   quotes: TicketQuote[];
   selectedSymbol: string;
@@ -48,20 +64,27 @@ export function TerminalOrderTicket({
     initialTerminalActionState,
   );
   const [clientOrderId, setClientOrderId] = useState(() => crypto.randomUUID());
-  const [type, setType] = useState<'LIMIT' | 'MARKET' | 'STOP'>('MARKET');
   const quote = quotes.find((candidate) => candidate.symbol === selectedSymbol);
   const instrument = instruments.find(
     (candidate) => candidate.symbol === selectedSymbol,
   );
   const canTrade =
     accountActive && connectionLive && quote?.status === 'LIVE' && !pending;
+  const canBuyBid = canTrade && quote?.bid !== null;
+  const canSellAsk = canTrade && quote?.ask !== null;
 
   useEffect(() => {
     if (state.status === 'SUCCESS') {
       setClientOrderId(crypto.randomUUID());
+      onCancelPendingOrder();
       void onRefresh();
     }
-  }, [onRefresh, state]);
+  }, [onCancelPendingOrder, onRefresh, state]);
+
+  function armPendingOrder(side: 'BUY' | 'SELL', type: 'LIMIT' | 'STOP') {
+    setOrderSide(side);
+    onArmPendingOrder(side, type);
+  }
 
   return (
     <aside className="order-ticket" aria-label="Simulated order ticket">
@@ -74,20 +97,29 @@ export function TerminalOrderTicket({
           {canTrade ? 'Server ready' : 'Execution paused'}
         </span>
       </header>
-      <div className="quote-dealing-box" aria-label={`${selectedSymbol} quote`}>
-        <button onClick={() => setOrderSide('SELL')} type="button">
-          <span>Sell / bid</span>
-          <strong>{quote?.bid ?? '—'}</strong>
-        </button>
-        <button onClick={() => setOrderSide('BUY')} type="button">
-          <span>Buy / ask</span>
-          <strong>{quote?.ask ?? '—'}</strong>
-        </button>
-      </div>
       <form action={action} className="ticket-form">
         <input name="accountId" type="hidden" value={accountId} />
         <input name="clientOrderId" type="hidden" value={clientOrderId} />
         <input name="side" type="hidden" value={orderSide} />
+        <input name="type" type="hidden" value="MARKET" />
+        <input
+          name="bidPrice"
+          readOnly
+          type="hidden"
+          value={quote?.bid ?? ''}
+        />
+        <input
+          name="askPrice"
+          readOnly
+          type="hidden"
+          value={quote?.ask ?? ''}
+        />
+        <input
+          name="price"
+          readOnly
+          type="hidden"
+          value={orderDraft?.price ?? ''}
+        />
         <label>
           Symbol
           <select
@@ -102,21 +134,6 @@ export function TerminalOrderTicket({
             ))}
           </select>
         </label>
-        <fieldset className="order-type-switcher">
-          <legend>Order type</legend>
-          {(['MARKET', 'LIMIT', 'STOP'] as const).map((option) => (
-            <label key={option}>
-              <input
-                checked={type === option}
-                name="type"
-                onChange={() => setType(option)}
-                type="radio"
-                value={option}
-              />
-              <span>{option.toLowerCase()}</span>
-            </label>
-          ))}
-        </fieldset>
         <label>
           Quantity
           <input
@@ -132,62 +149,114 @@ export function TerminalOrderTicket({
             {instrument?.quantityStep ?? '—'}
           </small>
         </label>
-        {type !== 'MARKET' ? (
-          <label>
-            Trigger price
-            <input
-              defaultValue={
-                orderSide === 'BUY' ? (quote?.ask ?? '') : (quote?.bid ?? '')
-              }
-              inputMode="decimal"
-              key={`${selectedSymbol}:${orderSide}:${type}`}
-              name="price"
-              required
-              step={
-                instrument === undefined
-                  ? '0.00001'
-                  : `0.${'0'.repeat(instrument.priceScale - 1)}1`
-              }
-            />
-          </label>
-        ) : (
-          <input name="price" type="hidden" value="" />
-        )}
-        <div className="side-switcher" aria-label="Order side">
-          <button
-            aria-pressed={orderSide === 'SELL'}
-            className={orderSide === 'SELL' ? 'is-sell' : ''}
-            onClick={() => setOrderSide('SELL')}
-            type="button"
-          >
-            Sell
-          </button>
-          <button
-            aria-pressed={orderSide === 'BUY'}
-            className={orderSide === 'BUY' ? 'is-buy' : ''}
-            onClick={() => setOrderSide('BUY')}
-            type="button"
-          >
-            Buy
-          </button>
-        </div>
-        <button
-          className={`button ${
-            orderSide === 'BUY' ? 'button-buy' : 'button-sell'
-          }`}
-          disabled={!canTrade}
-          type="submit"
+        <section
+          aria-label="Execution actions"
+          className="execution-action-grid"
         >
-          {pending
-            ? 'Sending to server…'
-            : `${orderSide === 'BUY' ? 'Buy' : 'Sell'} ${type.toLowerCase()}`}
-        </button>
+          <div className="execution-action-column is-buy">
+            <button
+              disabled={!canBuyBid}
+              name="orderIntent"
+              onClick={() => setOrderSide('BUY')}
+              type="submit"
+              value="BUY_BID"
+            >
+              <span>Buy bid</span>
+              <b>{quote?.bid ?? '—'}</b>
+            </button>
+            <button
+              disabled={!canTrade}
+              name="orderIntent"
+              onClick={() => setOrderSide('BUY')}
+              type="submit"
+              value="BUY_MARKET"
+            >
+              Buy market
+            </button>
+            <button
+              disabled={!canTrade}
+              onClick={() => armPendingOrder('BUY', 'LIMIT')}
+              type="button"
+            >
+              Buy limit
+            </button>
+            <button
+              disabled={!canTrade}
+              onClick={() => armPendingOrder('BUY', 'STOP')}
+              type="button"
+            >
+              Buy stop
+            </button>
+          </div>
+          <div className="execution-action-column is-sell">
+            <button
+              disabled={!canSellAsk}
+              name="orderIntent"
+              onClick={() => setOrderSide('SELL')}
+              type="submit"
+              value="SELL_ASK"
+            >
+              <span>Sell ask</span>
+              <b>{quote?.ask ?? '—'}</b>
+            </button>
+            <button
+              disabled={!canTrade}
+              name="orderIntent"
+              onClick={() => setOrderSide('SELL')}
+              type="submit"
+              value="SELL_MARKET"
+            >
+              Sell market
+            </button>
+            <button
+              disabled={!canTrade}
+              onClick={() => armPendingOrder('SELL', 'LIMIT')}
+              type="button"
+            >
+              Sell limit
+            </button>
+            <button
+              disabled={!canTrade}
+              onClick={() => armPendingOrder('SELL', 'STOP')}
+              type="button"
+            >
+              Sell stop
+            </button>
+          </div>
+        </section>
+        {orderDraft === null ? null : (
+          <section aria-live="polite" className="pending-order-draft">
+            <div>
+              <strong>{orderLabel(orderDraft)}</strong>
+              <span>{orderDraft.price}</span>
+              <small>Drag the amber chart line to choose the trigger.</small>
+            </div>
+            <div>
+              <button
+                className={
+                  orderDraft.side === 'BUY' ? 'button-buy' : 'button-sell'
+                }
+                disabled={!canTrade}
+                name="orderIntent"
+                type="submit"
+                value={intentFor(orderDraft)}
+              >
+                {pending
+                  ? 'Sending to server…'
+                  : `Place ${orderLabel(orderDraft)}`}
+              </button>
+              <button onClick={onCancelPendingOrder} type="button">
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
         <p
           aria-live="polite"
           className={`ticket-message is-${state.status.toLowerCase()}`}
         >
           {state.message ||
-            'Fills, margin checks, and triggers are decided by the server.'}
+            'Market orders fill at the server quote. Limit and stop prices remain provisional until placed.'}
         </p>
       </form>
     </aside>

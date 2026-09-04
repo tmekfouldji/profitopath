@@ -94,6 +94,12 @@ export interface TerminalChartQuote {
   symbol: string;
 }
 
+export interface TerminalOrderDraft {
+  price: string;
+  side: 'BUY' | 'SELL';
+  type: 'LIMIT' | 'STOP';
+}
+
 const timeframeSeconds = {
   '1d': 86_400,
   '1h': 3_600,
@@ -108,6 +114,23 @@ type ChartTool = 'CURSOR' | 'MEASURE' | TerminalChartDrawingKind;
 export type TerminalProtectionKind = 'STOP_LOSS' | 'TAKE_PROFIT';
 
 const futureChartMarginBars = 16;
+
+function timeframeRange(
+  anchor: string,
+  timeframe: ChartTimeframe,
+  count: number,
+): { from: Date; to: Date } {
+  const intervalMilliseconds = timeframeSeconds[timeframe] * 1_000;
+  const anchorMilliseconds = new Date(anchor).getTime();
+  const to = new Date(
+    Math.floor(anchorMilliseconds / intervalMilliseconds) *
+      intervalMilliseconds,
+  );
+  return {
+    from: new Date(to.getTime() - intervalMilliseconds * count),
+    to,
+  };
+}
 
 interface ProtectionDrag {
   kind: TerminalProtectionKind;
@@ -190,15 +213,15 @@ function protectionLabel(kind: TerminalProtectionKind): string {
   return kind === 'STOP_LOSS' ? 'SL' : 'TP';
 }
 
-export function defaultTerminalProtectionPrice(
-  position: TerminalChartPosition,
-  kind: TerminalProtectionKind,
-): string {
-  const entry = Number(position.averageEntryPrice);
-  const pip = 10 ** (1 - position.priceScale);
-  const direction = position.side === 'LONG' ? 1 : -1;
-  const offset = (kind === 'TAKE_PROFIT' ? direction : -direction) * 10 * pip;
-  return priceText(entry + offset, position.priceScale);
+export function shouldDisplayTerminalProtectionLine(
+  existingPrice: string | null,
+  isDragging: boolean,
+): boolean {
+  return existingPrice !== null || isDragging;
+}
+
+function orderDraftLabel(draft: TerminalOrderDraft): string {
+  return `${draft.side === 'BUY' ? 'Buy' : 'Sell'} ${draft.type.toLowerCase()}`;
 }
 
 function drawingLabel(kind: TerminalChartDrawingKind): string {
@@ -227,8 +250,10 @@ export function TerminalChart({
   initialSymbol,
   liveCandle,
   markers,
+  onOrderDraftPriceChange,
   onOrderSideSelect,
   onProtectionDrop,
+  orderDraft = null,
   orderSide,
   positions,
   protectionMessage,
@@ -242,12 +267,14 @@ export function TerminalChart({
   initialSymbol: string;
   liveCandle: TerminalChartCandle | null;
   markers: TerminalChartMarker[];
+  onOrderDraftPriceChange?(price: string): void;
   onOrderSideSelect(side: 'BUY' | 'SELL'): void;
   onProtectionDrop(input: {
     kind: TerminalProtectionKind;
     position: TerminalChartPosition;
     price: string;
   }): void;
+  orderDraft?: TerminalOrderDraft | null;
   orderSide: 'BUY' | 'SELL';
   positions: TerminalChartPosition[];
   protectionMessage: string;
@@ -267,8 +294,14 @@ export function TerminalChart({
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const chartPanelRef = useRef<HTMLElement>(null);
   const overlayRefreshFrameRef = useRef<number | null>(null);
+  const orderDraftPointerRef = useRef<number | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const timeframeCacheRef = useRef(
+    new Map<ChartTimeframe, TerminalChartCandle[]>(),
+  );
+  const timeframeCacheScopeRef = useRef<string | null>(null);
+  const timeframeLoadVersionRef = useRef(0);
   const timeframeRef = useRef<ChartTimeframe>('1m');
   const loadingOlderRef = useRef(false);
   const [candles, setCandles] = useState(initialCandles);
@@ -477,13 +510,12 @@ export function TerminalChart({
     }
   }, [accountId, drawings, drawingsScope, symbol]);
 
-  const loadRange = useCallback(
+  const fetchRange = useCallback(
     async (input: {
-      append: boolean;
       from: Date;
       timeframe: ChartTimeframe;
       to: Date;
-    }) => {
+    }): Promise<TerminalChartCandle[]> => {
       const query = new URLSearchParams({
         accountId,
         from: input.from.toISOString(),
@@ -501,34 +533,81 @@ export function TerminalChart({
       const payload = (await response.json()) as {
         candles: TerminalChartCandle[];
       };
-      setCandles((current) =>
-        input.append ? mergeCandles(current, payload.candles) : payload.candles,
-      );
-      return payload.candles.length;
+      return payload.candles;
     },
     [accountId, symbol],
   );
 
+  const loadRange = useCallback(
+    async (input: {
+      append: boolean;
+      from: Date;
+      timeframe: ChartTimeframe;
+      to: Date;
+    }): Promise<number | null> => {
+      const loadVersion = timeframeLoadVersionRef.current;
+      const loaded = await fetchRange(input);
+      if (loadVersion !== timeframeLoadVersionRef.current) {
+        return null;
+      }
+      setCandles((current) =>
+        input.append ? mergeCandles(current, loaded) : loaded,
+      );
+      if (!input.append) {
+        timeframeCacheRef.current.set(input.timeframe, loaded);
+      }
+      return loaded.length;
+    },
+    [fetchRange],
+  );
+
   useEffect(() => {
+    const loadVersion = timeframeLoadVersionRef.current + 1;
+    timeframeLoadVersionRef.current = loadVersion;
+    timeframeCacheRef.current.clear();
+    timeframeCacheScopeRef.current = `${symbol}:${historyAnchor}`;
     setTimeframe('1m');
     setHistoryState('LOADING');
     if (symbol === initialSymbol) {
       setCandles(initialCandles);
+      timeframeCacheRef.current.set('1m', initialCandles);
       setHistoryState('IDLE');
       return;
     }
-    const to = new Date(historyAnchor);
-    const from = new Date(to.getTime() - 500 * timeframeSeconds['1m'] * 1_000);
-    void loadRange({ append: false, from, timeframe: '1m', to })
-      .then((count) => {
-        setHistoryState(count === 0 ? 'EXHAUSTED' : 'IDLE');
+    const { from, to } = timeframeRange(historyAnchor, '1m', 500);
+    void fetchRange({ from, timeframe: '1m', to })
+      .then((loaded) => {
+        if (loadVersion !== timeframeLoadVersionRef.current) return;
+        setCandles(loaded);
+        timeframeCacheRef.current.set('1m', loaded);
+        setHistoryState(loaded.length === 0 ? 'EXHAUSTED' : 'IDLE');
         chartRef.current?.timeScale().fitContent();
       })
       .catch(() => {
+        if (loadVersion !== timeframeLoadVersionRef.current) return;
         setCandles([]);
         setHistoryState('EXHAUSTED');
       });
-  }, [historyAnchor, initialCandles, initialSymbol, loadRange, symbol]);
+  }, [fetchRange, historyAnchor, initialCandles, initialSymbol, symbol]);
+
+  useEffect(() => {
+    const cacheScope = timeframeCacheScopeRef.current;
+    const timer = window.setTimeout(() => {
+      for (const option of Object.keys(timeframeSeconds) as ChartTimeframe[]) {
+        if (option === '1m' || timeframeCacheRef.current.has(option)) {
+          continue;
+        }
+        const { from, to } = timeframeRange(historyAnchor, option, 240);
+        void fetchRange({ from, timeframe: option, to })
+          .then((loaded) => {
+            if (timeframeCacheScopeRef.current !== cacheScope) return;
+            timeframeCacheRef.current.set(option, loaded);
+          })
+          .catch(() => undefined);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchRange, historyAnchor, symbol]);
 
   useEffect(() => {
     if (liveCandle !== null && timeframe === '1m') {
@@ -609,6 +688,7 @@ export function TerminalChart({
           timeframe: activeTimeframe,
           to,
         });
+        if (count === null) return;
         setHistoryState(count === 0 ? 'EXHAUSTED' : 'IDLE');
       } catch {
         setHistoryState('IDLE');
@@ -739,27 +819,29 @@ export function TerminalChart({
   }, [chartGeneration, selectedIndicatorId]);
 
   async function selectTimeframe(next: ChartTimeframe) {
+    if (next === timeframeRef.current) return;
+    const loadVersion = timeframeLoadVersionRef.current + 1;
+    timeframeLoadVersionRef.current = loadVersion;
     setTimeframe(next);
     setHistoryState('LOADING');
-    const latest = candlesRef.current.at(-1);
-    const to =
-      latest === undefined
-        ? new Date()
-        : new Date(
-            new Date(latest.openTime).getTime() +
-              timeframeSeconds[timeframeRef.current] * 1_000,
-          );
-    const from = new Date(to.getTime() - timeframeSeconds[next] * 240 * 1_000);
+    const cached = timeframeCacheRef.current.get(next);
+    if (cached !== undefined) {
+      setCandles(cached);
+      setHistoryState(cached.length === 0 ? 'EXHAUSTED' : 'IDLE');
+      chartRef.current?.timeScale().fitContent();
+      return;
+    }
+    setCandles([]);
+    const { from, to } = timeframeRange(historyAnchor, next, 240);
     try {
-      const count = await loadRange({
-        append: false,
-        from,
-        timeframe: next,
-        to,
-      });
-      setHistoryState(count === 0 ? 'EXHAUSTED' : 'IDLE');
+      const loaded = await fetchRange({ from, timeframe: next, to });
+      timeframeCacheRef.current.set(next, loaded);
+      if (loadVersion !== timeframeLoadVersionRef.current) return;
+      setCandles(loaded);
+      setHistoryState(loaded.length === 0 ? 'EXHAUSTED' : 'IDLE');
       chartRef.current?.timeScale().fitContent();
     } catch {
+      if (loadVersion !== timeframeLoadVersionRef.current) return;
       setHistoryState('EXHAUSTED');
     }
   }
@@ -1112,6 +1194,23 @@ export function TerminalChart({
     });
   }
 
+  function handleUnsetProtectionPointerDown(
+    event: PointerEvent<HTMLButtonElement>,
+    position: TerminalChartPosition,
+    kind: TerminalProtectionKind,
+  ) {
+    // An unset TP/SL is a compact entry-line control, not a real protection
+    // level. It only becomes a draggable line while the trader is choosing a
+    // price, and a tap without movement cannot create an invalid entry-level
+    // protection order.
+    handleProtectionPointerDown(
+      event,
+      position,
+      kind,
+      position.averageEntryPrice,
+    );
+  }
+
   function handleProtectionPointerMove(event: PointerEvent<HTMLButtonElement>) {
     if (drag?.pointerId !== event.pointerId) return;
     const stage = stageRef.current;
@@ -1135,12 +1234,50 @@ export function TerminalChart({
   function handleProtectionPointerUp(event: PointerEvent<HTMLButtonElement>) {
     if (drag?.pointerId !== event.pointerId) return;
     event.currentTarget.releasePointerCapture(event.pointerId);
+    if (drag.price === drag.position.averageEntryPrice) {
+      setDrag(null);
+      return;
+    }
     onProtectionDrop({
       kind: drag.kind,
       position: drag.position,
       price: drag.price,
     });
     setDrag(null);
+  }
+
+  function handleOrderDraftPointerDown(event: PointerEvent<HTMLButtonElement>) {
+    if (orderDraft === null || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    orderDraftPointerRef.current = event.pointerId;
+  }
+
+  function handleOrderDraftPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    if (
+      orderDraft === null ||
+      orderDraftPointerRef.current !== event.pointerId ||
+      onOrderDraftPriceChange === undefined
+    ) {
+      return;
+    }
+    const stage = stageRef.current;
+    const series = seriesRef.current;
+    if (stage === null || series === null) return;
+    const bounds = stage.getBoundingClientRect();
+    const price = series.coordinateToPrice(
+      (event.clientY - bounds.top) as Coordinate,
+    );
+    if (price !== null) {
+      onOrderDraftPriceChange(priceText(price, priceScale));
+    }
+  }
+
+  function handleOrderDraftPointerUp(event: PointerEvent<HTMLButtonElement>) {
+    if (orderDraftPointerRef.current !== event.pointerId) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    orderDraftPointerRef.current = null;
   }
 
   function overlayTop(price: string): number | null {
@@ -1721,7 +1858,56 @@ export function TerminalChart({
                       key={`${position.id}:entry`}
                       style={{ top: `${entryTop}px` }}
                     >
-                      Entry {position.averageEntryPrice}
+                      <b>Entry</b>
+                      <span>{position.averageEntryPrice}</span>
+                      {position.stopLossPrice === null ? (
+                        <button
+                          aria-label={`Set stop loss for ${position.symbol}`}
+                          aria-pressed={
+                            drag?.position.id === position.id &&
+                            drag.kind === 'STOP_LOSS'
+                          }
+                          className="chart-protection-chip is-stop_loss"
+                          disabled={!canEditProtection}
+                          onPointerDown={(event) =>
+                            handleUnsetProtectionPointerDown(
+                              event,
+                              position,
+                              'STOP_LOSS',
+                            )
+                          }
+                          onPointerMove={handleProtectionPointerMove}
+                          onPointerUp={handleProtectionPointerUp}
+                          title={`Drag from entry to set SL for ${position.symbol}`}
+                          type="button"
+                        >
+                          SL
+                        </button>
+                      ) : null}
+                      {position.takeProfitPrice === null ? (
+                        <button
+                          aria-label={`Set take profit for ${position.symbol}`}
+                          aria-pressed={
+                            drag?.position.id === position.id &&
+                            drag.kind === 'TAKE_PROFIT'
+                          }
+                          className="chart-protection-chip is-take_profit"
+                          disabled={!canEditProtection}
+                          onPointerDown={(event) =>
+                            handleUnsetProtectionPointerDown(
+                              event,
+                              position,
+                              'TAKE_PROFIT',
+                            )
+                          }
+                          onPointerMove={handleProtectionPointerMove}
+                          onPointerUp={handleProtectionPointerUp}
+                          title={`Drag from entry to set TP for ${position.symbol}`}
+                          type="button"
+                        >
+                          TP
+                        </button>
+                      ) : null}
                     </span>
                   );
                 const protection = (
@@ -1731,11 +1917,15 @@ export function TerminalChart({
                     kind === 'STOP_LOSS'
                       ? position.stopLossPrice
                       : position.takeProfitPrice;
-                  const displayPrice =
-                    drag?.position.id === position.id && drag.kind === kind
-                      ? drag.price
-                      : (existing ??
-                        defaultTerminalProtectionPrice(position, kind));
+                  const isDragging =
+                    drag?.position.id === position.id && drag.kind === kind;
+                  if (
+                    !shouldDisplayTerminalProtectionLine(existing, isDragging)
+                  ) {
+                    return [];
+                  }
+                  const displayPrice = isDragging ? drag.price : existing;
+                  if (displayPrice === null) return [];
                   const top = overlayTop(displayPrice);
                   if (top === null) return [];
                   return [
@@ -1762,7 +1952,9 @@ export function TerminalChart({
                       <span>{protectionLabel(kind)}</span>
                       <b>{displayPrice}</b>
                       <i>
-                        {existing === null ? 'Drag to set' : 'Drag to modify'}
+                        {existing === null
+                          ? 'Choosing price'
+                          : 'Drag to modify'}
                       </i>
                     </button>,
                   ];
@@ -1770,6 +1962,28 @@ export function TerminalChart({
                 return [entry, ...protection];
               })
             : null}
+          {orderDraft === null
+            ? null
+            : (() => {
+                const top = overlayTop(orderDraft.price);
+                if (top === null) return null;
+                return (
+                  <button
+                    className={`chart-order-draft-line is-${orderDraft.side.toLowerCase()}`}
+                    key={`order-draft:${orderDraft.side}:${orderDraft.type}`}
+                    onPointerDown={handleOrderDraftPointerDown}
+                    onPointerMove={handleOrderDraftPointerMove}
+                    onPointerUp={handleOrderDraftPointerUp}
+                    style={{ top: `${top}px` }}
+                    title={`Drag to choose the ${orderDraftLabel(orderDraft)} price`}
+                    type="button"
+                  >
+                    <span>{orderDraftLabel(orderDraft)}</span>
+                    <b>{orderDraft.price}</b>
+                    <i>Drag to choose price</i>
+                  </button>
+                );
+              })()}
           {measure !== null && measureStyle !== undefined ? (
             <div className="chart-measurement" style={measureStyle}>
               <span>

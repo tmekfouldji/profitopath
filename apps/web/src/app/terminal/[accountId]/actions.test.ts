@@ -98,6 +98,35 @@ describe('terminal server actions', () => {
     expect(mocks.submitOwnedPendingOrder).not.toHaveBeenCalled();
   });
 
+  it('maps the explicit Buy bid action to a pending buy limit at the selected bid', async () => {
+    mocks.submitOwnedPendingOrder.mockResolvedValue({ status: 'ACCEPTED' });
+
+    const result = await submitTerminalOrder(
+      initialTerminalActionState,
+      orderForm({
+        bidPrice: '1.10000',
+        orderIntent: 'BUY_BID',
+      }),
+    );
+
+    expect(result).toEqual({
+      message: 'limit order accepted.',
+      status: 'SUCCESS',
+    });
+    expect(mocks.submitOwnedPendingOrder).toHaveBeenCalledWith('user-1', {
+      clientOrderId: 'client-order-1',
+      price: expect.any(Decimal),
+      quantity: expect.any(Decimal),
+      side: 'BUY',
+      symbol: 'EURUSD',
+      tradingAccountId: 'account-1',
+      type: 'LIMIT',
+    });
+    expect(
+      mocks.submitOwnedPendingOrder.mock.calls[0]?.[1].price.toString(),
+    ).toBe('1.1');
+  });
+
   it('sends a chart protection drop through the owner-checked server command', async () => {
     mocks.setOwnedPositionProtection.mockResolvedValue({
       positionId: 'position-1',

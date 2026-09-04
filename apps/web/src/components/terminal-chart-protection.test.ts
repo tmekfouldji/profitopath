@@ -1,36 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultTerminalProtectionPrice } from './terminal-chart';
+import { shouldDisplayTerminalProtectionLine } from './terminal-chart';
 
-const longPosition = {
-  averageEntryPrice: '1.10020',
-  id: 'position-1',
-  markPrice: '1.10000',
-  priceScale: 5,
-  side: 'LONG' as const,
-  stopLossPrice: null,
-  symbol: 'EURUSD',
-  takeProfitPrice: null,
-};
-
-describe('terminal protection control defaults', () => {
-  it('keeps an unset long TP above entry and SL below entry', () => {
-    expect(defaultTerminalProtectionPrice(longPosition, 'TAKE_PROFIT')).toBe(
-      '1.10120',
-    );
-    expect(defaultTerminalProtectionPrice(longPosition, 'STOP_LOSS')).toBe(
-      '1.09920',
-    );
+describe('terminal protection controls', () => {
+  it('keeps unset TP and SL as entry-line controls rather than preset price lines', () => {
+    expect(shouldDisplayTerminalProtectionLine(null, false)).toBe(false);
   });
 
-  it('reverses the visible TP and SL sides for a short position', () => {
-    const shortPosition = { ...longPosition, side: 'SHORT' as const };
-
-    expect(defaultTerminalProtectionPrice(shortPosition, 'TAKE_PROFIT')).toBe(
-      '1.09920',
-    );
-    expect(defaultTerminalProtectionPrice(shortPosition, 'STOP_LOSS')).toBe(
-      '1.10120',
-    );
+  it('shows a line only for an existing value or while the trader drags a new value', () => {
+    expect(shouldDisplayTerminalProtectionLine('1.10120', false)).toBe(true);
+    expect(shouldDisplayTerminalProtectionLine(null, true)).toBe(true);
   });
 });

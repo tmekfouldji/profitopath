@@ -31,12 +31,21 @@ const liveQuotes = [
 
 function TicketHarness({ connectionLive }: { connectionLive: boolean }) {
   const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
+  const [orderDraft, setOrderDraft] = useState<{
+    price: string;
+    side: 'BUY' | 'SELL';
+    type: 'LIMIT' | 'STOP';
+  } | null>(null);
   return createElement(TerminalOrderTicket, {
     accountActive: true,
     accountId: 'account-1',
     connectionLive,
     instruments,
+    onArmPendingOrder: (side, type) =>
+      setOrderDraft({ price: '1.09900', side, type }),
+    onCancelPendingOrder: () => setOrderDraft(null),
     onRefresh: vi.fn(),
+    orderDraft,
     orderSide,
     quotes: liveQuotes,
     selectedSymbol: 'EURUSD',
@@ -75,17 +84,19 @@ describe('terminal order ticket browser state', () => {
     expect(screen.getAllByText('1.10020')).toHaveLength(1);
   });
 
-  it('treats quote Buy/Sell controls as side selection, never form submission', () => {
+  it('arms a provisional chart-priced order instead of submitting when limit is selected', () => {
     const { container } = render(ticket(true));
     const form = container.querySelector('form');
     const submit = vi.fn();
     form?.addEventListener('submit', submit);
 
-    fireEvent.click(screen.getByRole('button', { name: /sell \/ bid/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy limit' }));
 
     expect(submit).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Buy limit')).toHaveLength(2);
+    expect(screen.getByText('1.09900')).toBeTruthy();
     expect(
-      container.querySelector('input[name="side"]')?.getAttribute('value'),
-    ).toBe('SELL');
+      screen.getByRole('button', { name: 'Place Buy limit' }),
+    ).toBeTruthy();
   });
 });

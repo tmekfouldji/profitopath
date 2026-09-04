@@ -60,13 +60,19 @@ This is not a commercial launch.
   symbol remains active in the server-supplied instrument configuration.
 - The terminal includes a compact Instrument watchlist that renders every active server configuration, shows
   bid, ask, and derived full spread, and stores star/favorite ordering in browser local storage scoped by account.
-  It does not grant market-data access or alter pricing. Unset protection controls have separate 10-pip visual
-  defaults around entry: long TP above/SL below and short TP below/SL above.
-- The active Twelve Data trial configuration intentionally remains **EURUSD** and **GBPUSD** only. D-031 fixes
-  their server-owned full synthetic spreads at `0.00012` (1.2 pips) and `0.00024` (2.4 pips). The watchlist will
-  automatically show a future active configuration, but adding symbols requires an explicit decision covering a
-  finite symbol list, versioned contract specification, and server-owned spread policy. Do not expose an
-  undefined/all-provider-symbol universe or invent executable spreads.
+  It does not grant market-data access or alter pricing. Unset SL/TP are compact adjacent entry-line controls;
+  a protection line is shown only for an actually persisted price or while the trader actively drags a handle.
+- Timeframe selection is cache-first and uses aligned, versioned requests, so a late response from an earlier
+  selection cannot overwrite the selected chart. Existing candle history returns before a non-blocking worker
+  coverage refresh, and idle preloading warms the other selectable timeframes.
+- The execution ticket presents Buy Bid/Market/Limit/Stop on the left and Sell Ask/Market/Limit/Stop on the right.
+  Bid/ask actions place a same-side pending limit at the displayed executable price; market actions submit a
+  market order. A selected limit/stop first arms a draggable provisional chart line, then requires the explicit
+  Place confirmation, which uses the existing owner-checked server order command.
+- The current active Twelve Data trial configuration is **EURUSD** and **GBPUSD** only, with server-owned full
+  synthetic spreads at `0.00012` (1.2 pips) and `0.00024` (2.4 pips). The watchlist will render every active
+  configuration. Expanding the configuration still needs a finite executable-symbol and contract/spread policy;
+  do not infer those from a provider catalogue.
 
 ## Local validation evidence
 
@@ -109,6 +115,10 @@ This is not a commercial launch.
   host commit `25ebba8`, and `web`, `realtime`, and `worker` were rebuilt/recreated without changing the secret
   boundary. All three passed Docker health checks; public HTTPS readiness returned HTTP 200; and the worker
   completed bootstrap then acquired the staff-scoped EURUSD/GBPUSD feed lease.
+- The immediate-timeframe and chart-entry release is locally validated and ready to deploy. It passed 27 focused
+  tests, the full 202-test suite, typecheck, lint, and the production build. After deployment, perform the same
+  signed-in staff smoke without placing an unintended order: switch timeframes quickly, arm/cancel a limit or
+  stop line, and confirm that unset TP/SL remain entry-adjacent.
 - Then do one owner-signed-in `ADMIN`/`SUPERADMIN` terminal smoke: change a TP/SL while preserving the chart
   viewport, star a symbol, and observe a controlled fill only if the owner chooses to submit it. Do not automate
   login or submit an order without the owner's active-session authority.

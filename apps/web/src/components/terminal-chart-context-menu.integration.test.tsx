@@ -80,11 +80,28 @@ beforeEach(() => {
 function renderChart({
   candleCount = 1,
   futureSpace = false,
+  orderDraft = null,
   overlayCoordinates = false,
+  positions = [],
 }: {
   candleCount?: number;
   futureSpace?: boolean;
+  orderDraft?: {
+    price: string;
+    side: 'BUY' | 'SELL';
+    type: 'LIMIT' | 'STOP';
+  } | null;
   overlayCoordinates?: boolean;
+  positions?: Array<{
+    averageEntryPrice: string;
+    id: string;
+    markPrice: string | null;
+    priceScale: number;
+    side: 'LONG' | 'SHORT';
+    stopLossPrice: string | null;
+    symbol: string;
+    takeProfitPrice: string | null;
+  }>;
 } = {}) {
   lineSeries.length = 0;
   chartMocks.createChart.mockReturnValue(chartApi);
@@ -113,7 +130,7 @@ function renderChart({
   };
   chartApi.timeScale.mockReturnValue(timeScale);
 
-  render(
+  const rendered = render(
     createElement(TerminalChart, {
       accountId: 'account-1',
       canEditProtection: false,
@@ -129,10 +146,12 @@ function renderChart({
       initialSymbol: 'EURUSD',
       liveCandle: null,
       markers: [],
+      onOrderDraftPriceChange: vi.fn(),
       onOrderSideSelect,
       onProtectionDrop: vi.fn(),
+      orderDraft,
       orderSide: 'BUY',
-      positions: [],
+      positions,
       protectionMessage: '',
       quote: {
         ask: '1.08452',
@@ -144,7 +163,7 @@ function renderChart({
     }),
   );
 
-  return { timeScale };
+  return { ...rendered, timeScale };
 }
 
 describe('terminal chart context-menu integration', () => {
@@ -154,6 +173,34 @@ describe('terminal chart context-menu integration', () => {
     expect(chartMocks.createChart.mock.calls[0]?.[1]).toMatchObject({
       crosshair: { mode: 0 },
     });
+  });
+
+  it('keeps unset TP and SL compact at entry and renders a dashed line only for a pending order draft', () => {
+    const { container } = renderChart({
+      orderDraft: { price: '1.08300', side: 'BUY', type: 'LIMIT' },
+      overlayCoordinates: true,
+      positions: [
+        {
+          averageEntryPrice: '1.08432',
+          id: 'position-1',
+          markPrice: '1.08400',
+          priceScale: 5,
+          side: 'LONG',
+          stopLossPrice: null,
+          symbol: 'EURUSD',
+          takeProfitPrice: null,
+        },
+      ],
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Set stop loss for EURUSD' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Set take profit for EURUSD' }),
+    ).toBeTruthy();
+    expect(container.querySelector('.chart-protection-line')).toBeNull();
+    expect(container.querySelector('.chart-order-draft-line')).toBeTruthy();
   });
 
   it('opens the command menu on right-click and adds a local horizontal ray at that chart point', () => {

@@ -17,7 +17,11 @@ import {
 } from '@/app/terminal/[accountId]/actions';
 import type { OwnedTerminalState } from '@/server/terminal-read-model';
 
-import { TerminalChart, type TerminalChartCandle } from './terminal-chart';
+import {
+  TerminalChart,
+  type TerminalChartCandle,
+  type TerminalOrderDraft,
+} from './terminal-chart';
 import { TerminalOrderTicket } from './terminal-order-ticket';
 
 type ConnectionState = 'CONNECTING' | 'LIVE' | 'OFFLINE' | 'STALE';
@@ -84,6 +88,25 @@ function liveSpreadPips(
   } catch {
     return '—';
   }
+}
+
+function defaultPendingOrderPrice(input: {
+  ask: string;
+  bid: string;
+  priceScale: number;
+  side: 'BUY' | 'SELL';
+  type: 'LIMIT' | 'STOP';
+}): string {
+  const pip = new Decimal(10).pow(1 - input.priceScale);
+  const offset = pip.times(10);
+  const isAboveMarket =
+    (input.side === 'BUY' && input.type === 'STOP') ||
+    (input.side === 'SELL' && input.type === 'LIMIT');
+  const reference =
+    input.side === 'BUY' ? new Decimal(input.ask) : new Decimal(input.bid);
+  return reference
+    .plus(isAboveMarket ? offset : offset.negated())
+    .toFixed(input.priceScale);
 }
 
 function TerminalInstrumentRail({
@@ -527,6 +550,7 @@ export function TerminalWorkspace({
   const [selectedSymbol, setSelectedSymbol] = useState(() =>
     defaultSelectedSymbol(initialState),
   );
+  const [orderDraft, setOrderDraft] = useState<TerminalOrderDraft | null>(null);
   const [orderSide, setOrderSide] = useState<'BUY' | 'SELL'>('BUY');
   const [connection, setConnection] = useState<ConnectionState>('CONNECTING');
   const [fullscreen, setFullscreen] = useState(false);
@@ -573,6 +597,7 @@ export function TerminalWorkspace({
   useEffect(() => {
     selectedSymbolRef.current = selectedSymbol;
     setLiveCandle(null);
+    setOrderDraft(null);
   }, [selectedSymbol]);
 
   const selectSymbol = useCallback(
@@ -782,6 +807,32 @@ export function TerminalWorkspace({
   const selectedInstrument = state.instruments.find(
     (instrument) => instrument.symbol === selectedSymbol,
   );
+  const armPendingOrder = useCallback(
+    (side: 'BUY' | 'SELL', type: 'LIMIT' | 'STOP') => {
+      if (
+        selectedQuote?.status !== 'LIVE' ||
+        selectedQuote.ask === null ||
+        selectedQuote.bid === null ||
+        selectedInstrument === undefined
+      ) {
+        return;
+      }
+      setOrderSide(side);
+      setOrderDraft({
+        price: defaultPendingOrderPrice({
+          ask: selectedQuote.ask,
+          bid: selectedQuote.bid,
+          priceScale: selectedInstrument.priceScale,
+          side,
+          type,
+        }),
+        side,
+        type,
+      });
+    },
+    [selectedInstrument, selectedQuote],
+  );
+  const cancelPendingOrder = useCallback(() => setOrderDraft(null), []);
   const executionMarkers = useMemo(
     () =>
       state.executions.map((execution) => ({
@@ -926,8 +977,14 @@ export function TerminalWorkspace({
           initialSymbol={initialSymbol}
           liveCandle={liveCandle}
           markers={visibleMarkers}
+          onOrderDraftPriceChange={(price) =>
+            setOrderDraft((current) =>
+              current === null ? null : { ...current, price },
+            )
+          }
           onOrderSideSelect={setOrderSide}
           onProtectionDrop={updateProtectionFromChart}
+          orderDraft={orderDraft}
           orderSide={orderSide}
           positions={state.positions}
           protectionMessage={protectionState.message}
@@ -948,7 +1005,10 @@ export function TerminalWorkspace({
           accountId={state.account.id}
           connectionLive={connection === 'LIVE'}
           instruments={state.instruments}
+          onArmPendingOrder={armPendingOrder}
+          onCancelPendingOrder={cancelPendingOrder}
           onRefresh={refreshState}
+          orderDraft={orderDraft}
           orderSide={orderSide}
           quotes={state.quotes}
           selectedSymbol={selectedSymbol}

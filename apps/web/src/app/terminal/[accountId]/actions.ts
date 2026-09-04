@@ -46,6 +46,68 @@ function optionalFormDecimal(formData: FormData, name: string): Decimal | null {
   }
 }
 
+type TerminalOrderIntent =
+  | 'BUY_BID'
+  | 'BUY_LIMIT'
+  | 'BUY_MARKET'
+  | 'BUY_STOP'
+  | 'SELL_ASK'
+  | 'SELL_LIMIT'
+  | 'SELL_MARKET'
+  | 'SELL_STOP';
+
+function orderDetails(formData: FormData): {
+  price: Decimal | null;
+  side: 'BUY' | 'SELL';
+  type: 'LIMIT' | 'MARKET' | 'STOP';
+} {
+  const intent = formString(formData, 'orderIntent') as TerminalOrderIntent;
+  const fromIntent: Readonly<
+    Record<
+      TerminalOrderIntent,
+      {
+        priceField?: 'askPrice' | 'bidPrice' | 'price';
+        side: 'BUY' | 'SELL';
+        type: 'LIMIT' | 'MARKET' | 'STOP';
+      }
+    >
+  > = {
+    BUY_BID: { priceField: 'bidPrice', side: 'BUY', type: 'LIMIT' },
+    BUY_LIMIT: { priceField: 'price', side: 'BUY', type: 'LIMIT' },
+    BUY_MARKET: { side: 'BUY', type: 'MARKET' },
+    BUY_STOP: { priceField: 'price', side: 'BUY', type: 'STOP' },
+    SELL_ASK: { priceField: 'askPrice', side: 'SELL', type: 'LIMIT' },
+    SELL_LIMIT: { priceField: 'price', side: 'SELL', type: 'LIMIT' },
+    SELL_MARKET: { side: 'SELL', type: 'MARKET' },
+    SELL_STOP: { priceField: 'price', side: 'SELL', type: 'STOP' },
+  };
+  const requested = fromIntent[intent];
+  if (requested !== undefined) {
+    return {
+      price:
+        requested.priceField === undefined
+          ? null
+          : formDecimal(formData, requested.priceField),
+      side: requested.side,
+      type: requested.type,
+    };
+  }
+
+  const side = formString(formData, 'side');
+  const type = formString(formData, 'type');
+  if (side !== 'BUY' && side !== 'SELL') {
+    throw new SimulatorCommandError('Order side is invalid');
+  }
+  if (type !== 'MARKET' && type !== 'LIMIT' && type !== 'STOP') {
+    throw new SimulatorCommandError('Order type is invalid');
+  }
+  return {
+    price: type === 'MARKET' ? null : formDecimal(formData, 'price'),
+    side,
+    type,
+  };
+}
+
 function publicFailure(error: unknown): TerminalActionState {
   if (
     error instanceof SimulatorCommandError ||
@@ -72,17 +134,13 @@ export async function submitTerminalOrder(
     const clientOrderId =
       formString(formData, 'clientOrderId') || crypto.randomUUID();
     const quantity = formDecimal(formData, 'quantity');
-    const side = formString(formData, 'side');
     const symbol = formString(formData, 'symbol');
-    const type = formString(formData, 'type');
-    if (side !== 'BUY' && side !== 'SELL') {
-      throw new SimulatorCommandError('Order side is invalid');
-    }
-    if (type === 'MARKET') {
+    const order = orderDetails(formData);
+    if (order.type === 'MARKET') {
       const result = await submitOwnedMarketOrder(user.id, {
         clientOrderId,
         quantity,
-        side,
+        side: order.side,
         symbol,
         tradingAccountId: accountId,
       });
@@ -94,17 +152,14 @@ export async function submitTerminalOrder(
           }
         : { message: 'Market order filled.', status: 'SUCCESS' };
     }
-    if (type !== 'LIMIT' && type !== 'STOP') {
-      throw new SimulatorCommandError('Order type is invalid');
-    }
     const result = await submitOwnedPendingOrder(user.id, {
       clientOrderId,
-      price: formDecimal(formData, 'price'),
+      price: order.price!,
       quantity,
-      side,
+      side: order.side,
       symbol,
       tradingAccountId: accountId,
-      type,
+      type: order.type,
     });
     revalidatePath(callbackUrl);
     if (result.status === 'REJECTED') {
@@ -116,8 +171,8 @@ export async function submitTerminalOrder(
     return {
       message:
         result.status === 'FILLED'
-          ? `${type.toLowerCase()} order filled.`
-          : `${type.toLowerCase()} order accepted.`,
+          ? `${order.type.toLowerCase()} order filled.`
+          : `${order.type.toLowerCase()} order accepted.`,
       status: 'SUCCESS',
     };
   } catch (error) {

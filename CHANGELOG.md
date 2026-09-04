@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Made terminal timeframe changes responsive: persisted candle history now renders before a non-blocking worker
+  coverage refresh, requests are aligned and versioned to reject late prior-timeframe responses, and selectable
+  timeframes are warmed in the background. Reworked order entry into explicit Buy Bid/Market/Limit/Stop and Sell
+  Ask/Market/Limit/Stop actions. Limit/stop actions arm a dashed draggable chart line and require explicit
+  placement; unset TP/SL remain compact entry-line controls rather than misleading full-width protection levels.
 - Restored a free terminal crosshair: it now follows the pointer continuously instead of snapping to OHLC values.
   Ctrl remains the explicit drawing-only candle snap modifier. The terminal also remembers the last active symbol
   per account/browser across a refresh and ignores stale local selections that are no longer configured.

@@ -679,6 +679,18 @@ Rules:
   - Implemented: Lightweight Charts now uses free crosshair mode, while Ctrl is still the explicit drawing-only
     candle-OHLC snapping modifier. The selected active symbol is persisted under an account-scoped browser key
     and restored after refresh only if it remains in the server-authoritative active configuration.
+- [x] P9-008 Make terminal timeframe changes immediate and redesign chart order entry.
+  - Acceptance: a persisted candle range renders without waiting for a redundant worker backfill; rapid
+    timeframe changes cannot apply an earlier response; Buy Bid/Market/Limit/Stop and Sell Ask/Market/Limit/Stop
+    are explicit actions; Limit/Stop use a provisional chart price line; and unset TP/SL remain compact controls
+    beside the entry line until the trader deliberately begins setting one.
+  - Completed: cached candle ranges return before their non-blocking coverage refresh; a versioned, aligned
+    request path and background timeframe warm-up prevent a stale or prior timeframe response from replacing the
+    selected chart. The ticket now has the eight explicit buy/sell actions. Limit/stop actions arm a dashed,
+    draggable provisional chart line and require an explicit placement confirmation; market actions remain
+    authoritative server submissions. Unset SL/TP are compact adjacent entry-line controls, with no misleading
+    pre-positioned protection levels. Focused coverage (27 tests), typecheck, lint, full suite (202 tests), and
+    production build passed.
 
 ## In progress — Phase 10
 
